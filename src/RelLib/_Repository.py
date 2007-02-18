@@ -100,40 +100,6 @@ class Repository(NoteBase, AddressBase, UrlBase, PrimaryObject):
             check_list.append(self.note)
         return check_list
 
-    def has_source_reference(self, src_handle) :
-        """
-        Returns True if any of the child objects has reference
-        to this source handle.
-
-        @param src_handle: The source handle to be checked.
-        @type src_handle: str
-        @return: Returns whether any of it's child objects has reference to this source handle.
-        @rtype: bool
-        """
-        return False
-
-    def remove_source_references(self, src_handle_list):
-        """
-        Removes references to all source handles in the list
-        in all child objects.
-
-        @param src_handle_list: The list of source handles to be removed.
-        @type src_handle_list: list
-        """
-        pass
-
-    def replace_source_references(self, old_handle, new_handle):
-        """
-        Replaces references to source handles in the list
-        in this object and all child objects.
-
-        @param old_handle: The source handle to be replaced.
-        @type old_handle: str
-        @param new_handle: The source handle to replace the old one with.
-        @type new_handle: str
-        """
-        pass
-
     def set_type(self, the_type):
         """
         @param the_type: descriptive type of the Repository

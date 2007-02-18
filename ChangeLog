@@ -1,18 +1,25 @@
-2007-02-18  Don Allingham  <don@gramps-project.org>
-	* src/GrampsDbUtils/_GedcomParse.py: more refactoring
+2007-02-18  Alex Roitman  <shura@gramps-project.org>
 
-2007-02-18  Martin Hawlisch  <Martin.Hawlisch@gmx.de>
-	* src/GrampsDbUtils/_GedcomParse.py: Work around some Tracebacks
+	* src/Editors/_EditAttribute.py (EditAttribute): Correct constant
+	names.
+	* src/Editors/_EditAddress.py (EditAddress): Correct constant
+	names.
 
-2007-02-16  Zsolt Foldvari  <zfoldvar@users.sourceforge.net>
-	* src/DisplayTabs/_NoteTab.py: accelerators replaced with key-press
-	signal handler.
-	* src/DisplayTabs/_ButtonTab.py: accelerators removed; wrong concept.
-	* src/DisplayTabs/_GrampsTab.py: accelerators removed; wrong concept.
-	* src/Editors/_EditPrimary.py: accelerators removed; wrong concept.
-	* src/Editors/_EditSecondary.py: accelerators removed; wrong concept.
-	* src/Editors/_EditReference.py: accelerators removed; wrong concept.
-	* src/ManagedWindow.py: accelerators removed; wrong concept.
+	* src/Config/_GrampsConfigKeys.py: Regenerate file.
+	* src/Config/gen_schema_keys.py (copy): Update comments.
+	* data/gramps.schemas.in: Add config for notes prefix.
+	* src/RelLib/_PrimaryObject.py: Change to derive from the
+	BasicPrimaryObject class.
+	* src/RelLib/_BasicPrimaryObject.py: Add new base class.
+	* src/GrampsDb/_GrampsBSDDB.py: Add map and methods for Notes.
+	* src/GrampsDb/_GrampsInMemDB.py: Add map and methods for Notes.
+	* src/GrampsDb/_GrampsDbBase.py: Add map and methods for Notes.
+	* src/GrampsDb/_GrampsDbConst.py: Add Note's constants.
+	* src/RelLib/_NoteType.py: Add note types.
+	* src/RelLib/_Note.py: Rewrite as a primary object.
+	* src/RelLib/_Repository.py (has_source_reference,
+	remove_source_references, replace_source_references): Remove
+	redundant methods.
 
 2007-02-17  Richard Taylor  <rjt-gramps@thegrindstone.me.uk>
 	* src/GrampsDb/_GrampsDbWriteXML.py: add non-gtk xml writer
