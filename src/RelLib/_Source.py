@@ -171,6 +171,16 @@ class Source(MediaBase, NoteBase, PrimaryObject):
         """
         return self.media_list + self.reporef_list
 
+    def get_referenced_handles(self):
+        """
+        Returns the list of (classname,handle) tuples for all directly
+        referenced primary objects.
+        
+        @return: List of (classname,handle) tuples for referenced objects.
+        @rtype: list
+        """
+        return self.get_referenced_note_handles()
+
     def has_source_reference(self, src_handle) :
         """
         Returns True if any of the child objects has reference
