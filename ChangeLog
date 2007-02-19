@@ -1,3 +1,25 @@
+2007-02-19  Alex Roitman  <shura@gramps-project.org>
+	* src/RelLib/_SourceRef.py (get_referenced_handles): Include notes.
+	* src/RelLib/_Source.py (get_referenced_handles): Include notes.
+	* src/RelLib/_Repository.py (get_referenced_handles): Include notes.
+	* src/RelLib/_RepoRef.py (get_referenced_handles): Include notes.
+	* src/RelLib/_Place.py (get_referenced_handles): Include notes.
+	* src/RelLib/_PersonRef.py (get_referenced_handles): Include notes.
+	* src/RelLib/_Person.py (get_referenced_handles): Include notes.
+	* src/RelLib/_Name.py (get_referenced_handles): Include notes.
+	* src/RelLib/_MediaRef.py (get_referenced_handles): Include notes.
+	* src/RelLib/_MediaObject.py (get_referenced_handles): Include notes.
+	* src/RelLib/_EventRef.py (get_referenced_handles): Include notes.
+	* src/RelLib/_LdsOrd.py (get_referenced_handles): Incclude notes.
+	* src/RelLib/_Family.py (get_referenced_handles): Include notes.
+	* src/RelLib/_Event.py (get_referenced_handles): Include notes.
+	* src/RelLib/_Address.py (get_referenced_handles): Include notes.
+	* src/RelLib/_Attribute.py (get_referenced_handles): Include notes.
+	* src/RelLib/_ChildRef.py (get_referenced_handles): Include notes.
+	* src/RelLib/_NoteBase.py (get_referenced_note_handles): Add method;
+	(set_note_list, get_note_list, remove_note, add_note): Add methods;
+	(__init__): Rewrite to support note list.
+
 2007-02-18  Alex Roitman  <shura@gramps-project.org>
 	* src/Editors/_EditAttribute.py (EditAttribute): Correct constant
 	names.
