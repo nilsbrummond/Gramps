@@ -691,7 +691,7 @@ class GrampsDbBase(GrampsDBCallback):
         as part of the transaction.
         """
 
-        self._commit_base(note, self.note_map, note_KEY, 
+        self._commit_base(note, self.note_map, NOTE_KEY, 
                           transaction.note_update,
                           transaction.note_add, 
                           transaction, change_time)
