@@ -1,10 +1,8 @@
 2007-02-18  Alex Roitman  <shura@gramps-project.org>
-
 	* src/Editors/_EditAttribute.py (EditAttribute): Correct constant
 	names.
 	* src/Editors/_EditAddress.py (EditAddress): Correct constant
 	names.
-
 	* src/Config/_GrampsConfigKeys.py: Regenerate file.
 	* src/Config/gen_schema_keys.py (copy): Update comments.
 	* data/gramps.schemas.in: Add config for notes prefix.
