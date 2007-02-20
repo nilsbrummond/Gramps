@@ -716,6 +716,7 @@ class GrampsParser(UpdateCallback):
         self.witness_comment = ""
         if attrs.has_key('name'):
             note = RelLib.Note()
+            note.handle = Utils.create_id()
             note.set(_("Witness name: %s") % attrs['name'])
             self.db.add_note(note,self.trans)
             self.event.add_note(note.handle)
@@ -1456,13 +1457,18 @@ class GrampsParser(UpdateCallback):
     def stop_witness(self,tag):
         # Parse witnesses created by older gramps
         if self.witness_comment:
-            note_text = self.event.get_note(markup=True) + "\n" + \
-                        _("Witness comment: %s") % self.witness_comment
-            self.event.set_note(note_text)
+            text = self.witness_comment
         elif tag.strip():
-            note_text = self.event.get_note(markup=True) + "\n" + \
-                        _("Witness comment: %s") % tag
-            self.event.set_note(note_text)
+            text = tag
+        else:
+            text = None
+
+        if text != None:
+            note = RelLib.Note()
+            note.handle = Utils.create_id()
+            note.set(_("Witness comment: %s") % text)
+            self.db.add_note(note,self.trans)
+            self.event.add_note(note.handle)
         self.in_witness = False
 
     def stop_attr_type(self,tag):
@@ -1562,9 +1568,11 @@ class GrampsParser(UpdateCallback):
     def stop_name(self,tag):
         if self.in_witness:
             # Parse witnesses created by older gramps
-            note_text = self.event.get_note(markup=True) + "\n" + \
-                        _("Witness name: %s") % tag
-            self.event.set_note(note_text)
+            note = RelLib.Note()
+            note.handle = Utils.create_id()
+            note.set(_("Witness name: %s") % tag)
+            self.db.add_note(note,self.trans)
+            self.event.add_note(note.handle)
         elif self.alt_name:
             # former aka tag -- alternate name
             if self.name.get_type() == "":
@@ -1703,10 +1711,14 @@ class GrampsParser(UpdateCallback):
     def stop_scomments(self,tag):
         if self.use_p:
             self.use_p = 0
-            note = fix_spaces(self.scomments_list)
+            text = fix_spaces(self.scomments_list)
         else:
-            note = tag
-        self.source_ref.set_note(note)
+            text = tag
+        note = RelLib.Note()
+        note.handle = Utils.create_id()
+        note.set(text)
+        self.db.add_note(note,self.trans)
+        self.source_ref.add_note(note.handle)
 
     def stop_last(self,tag):
         if self.name:
