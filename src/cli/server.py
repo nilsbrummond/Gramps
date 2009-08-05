@@ -34,13 +34,13 @@ Provides also two small base classes: CLIDbLoader, CLIManager
 #-------------------------------------------------------------------------
 import socket
 import threading
-import pickle
 from gettext import gettext as _
 import os
 import sys
 import signal
 import logging
 import traceback
+from xml.dom import minidom
 
 LOG = logging.getLogger(".grampscli")
 #-------------------------------------------------------------------------
@@ -55,6 +55,7 @@ import Errors
 import DbState
 from gen.db import (GrampsDBDir, FileVersionDeclineToUpgrade)
 import gen.db.exceptions
+from gen.lib import Person, Family, Event, Source, Place
 from gen.plug import PluginManager
 from Utils import get_researcher
 import RecentFiles
@@ -345,6 +346,123 @@ def ctrlc_handler(signum, frame, handler):
     handler.cleanup()
     sys.exit(0)
 
+def xml_pickle(obj):
+    """
+    Takes a Python object and returns an XML string.
+    """
+    if isinstance(obj, list):
+        retval = ""
+        for item in obj:
+            retval += xml_pickle(item)
+        return "<list>%s</list>" % retval
+    elif isinstance(obj, tuple):
+        retval = ""
+        for item in obj:
+            retval += xml_pickle(item)
+        return "<tuple>%s</tuple>" % retval
+    elif isinstance(obj, dict):
+        retval = ""
+        for key in obj:
+            retval += "<pair><key>%s</key><value>%s</value></pair>" % \
+                (xml_pickle(key), xml_pickle(obj[key]))
+        return "<dict>%s</dict>" % retval
+    elif isinstance(obj, Exception):
+        objType = "Exception"
+        data = str(obj)
+        xml_string = xml_pickle(data)
+        return '<object type="%s">%s</object>' % (objType, xml_string)
+    elif type(obj) == Person:
+        objType = "Person"
+        data = obj.serialize()
+        xml_string = xml_pickle(data)
+        return '<object type="%s">%s</object>' % (objType, xml_string)
+    elif type(obj) == Family:
+        objType = "Family"
+        data = obj.serialize()
+        xml_string = xml_pickle(data)
+        return '<object type="%s">%s</object>' % (objType, xml_string)
+    elif type(obj) == Event:
+        objType = "Event"
+        data = obj.serialize()
+        xml_string = xml_pickle(data)
+        return '<object type="%s">%s</object>' % (objType, xml_string)
+    elif type(obj) == Source:
+        objType = "Sorce"
+        data = obj.serialize()
+        xml_string = xml_pickle(data)
+        return '<object type="%s">%s</object>' % (objType, xml_string)
+    elif type(obj) == Place:
+        objType = "Place"
+        data = obj.serialize()
+        xml_string = xml_pickle(data)
+        return '<object type="%s">%s</object>' % (objType, xml_string)
+    else:
+        # int, str, float, long, bool, NoneType
+        typeName = str(type(obj)).split("'")[1]
+        if typeName == "str":
+            obj = obj.replace("<", "&lt;")
+        return "<%s>%s</%s>" % (typeName, obj, typeName)
+
+def xml_unpickle(xml):
+    """
+    Takes an XML string and returns Python objects.
+    """
+    xmldoc = minidom.parseString(xml)
+    if xmldoc.childNodes.length == 1:
+        return xml_unpickle_doc(xmldoc.childNodes[0])
+    else:
+        return None
+
+def xml_unpickle_doc(xmldoc):
+    """
+    Takes a minidom XML object and returns Python objects.
+    """
+    if xmldoc.nodeName == 'list':
+        return [xml_unpickle_doc(item) for item in xmldoc.childNodes]
+    elif xmldoc.nodeName == 'tuple':
+        return tuple([xml_unpickle_doc(item) for item in xmldoc.childNodes])
+    elif xmldoc.nodeName == 'dict':
+        retval = {}
+        for pair in xmldoc.childNodes:
+            key = xml_unpickle_doc(pair.childNodes[0].childNodes[0])
+            value = xml_unpickle_doc(pair.childNodes[1].childNodes[0])
+            retval[key] = value
+        return retval
+    elif xmldoc.nodeName == 'object':
+        objType = xmldoc.getAttributeNode("type").value
+        data = xml_unpickle_doc(xmldoc.childNodes[0])
+        if objType == 'Person':
+            return Person(data)
+        elif objType == 'Family':
+            return Family(data)
+        elif objType == 'Event':
+            return Event(data)
+        elif objType == 'Source':
+            return Source(data)
+        elif objType == 'Place':
+            return Place(data)
+        elif objType == 'Exception':
+            return Exception(data)
+        else:
+            return Exception("unknown xml object type: '%s'" % objType)
+    else:
+        # int, str, float, long, bool, NoneType
+        typeName = xmldoc.nodeName
+        if xmldoc.childNodes.length > 0:
+            nodeValue = xmldoc.childNodes[0].nodeValue
+        else:
+            nodeValue = ''
+        if typeName == "NoneType":
+            return None
+        elif typeName in ['int', 'str', 'float', 'long', 'bool']:
+            try:
+                return eval('''%s("""%s""")''' % (typeName, nodeValue))
+            except Exception, e:
+                print "    Evaluation error in conversion:", e
+                return Exception(str(e))
+        else:
+            return Exception("unknown xml type: '%s'" % typeName)
+
 class RemoteInterfaceHandler:
     """
     Class that handles requests that come in on a socket connection via
@@ -370,12 +488,17 @@ class RemoteInterfaceHandler:
         """
         Evaluate the remote command and return results.
         """
+        # TODO: do some other checking here
+        if not (command.startswith("self.") or 
+                command.startswith("repr(self") or
+                command.startswith("dir(self")):
+            return Exception("Illegal evaluation")
         retval = None
         try:
             retval = eval(command, self.env)
-        except:
-            exec command in self.env
-            retval = "ok"
+        except Exception, e:
+            print "    Evaluation error:", e
+            retval = Exception(str(e))
         return retval
 
 class BackgroundThread(threading.Thread):
@@ -418,19 +541,17 @@ class BackgroundThread(threading.Thread):
         """
         Process a remote request.
         """
+        # Get a command, such as self.dbstate.get_active_person()
         try:
             data = self.client_socket.recv(1024)
         except:
             data = None
         if data:
             print "    Request:", data
-            try:
-                result = self.remote_api.eval(data)
-                presult = pickle.dumps(result)
-            except Exception as exception:
-                result =  exception 
-                presult = pickle.dumps(result)
-                    
+            # evaluate the command:
+            result = self.remote_api.eval(data)
+            # get the result, and xml_pickle it
+            presult = xml_pickle(result)
             try:
                 self.client_socket.send(presult)
             except:

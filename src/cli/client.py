@@ -21,6 +21,7 @@
 # $Id$
 
 import pickle
+from server import xml_unpickle
 import socket
 import sys
 
@@ -82,11 +83,11 @@ class RemoteObject:
         if data != "":
             while True:
                 try:
-                    retval = pickle.loads(data)
+                    retval = xml_unpickle(data)
                     break
                 except:
                     data += self.socket.recv(1024)
-        if isinstance(retval, Exception):
+        if type(retval) == Exception:
             raise retval
         return retval
 
@@ -109,10 +110,12 @@ class RemoteObject:
         if data != "":
             while True:
                 try:
-                    retval =  pickle.loads(data)
+                    retval =  xml_unpickle(data)
                     break
                 except:
                     data += self.socket.recv(1024)
+        if type(retval) == Exception:
+            raise retval
         return retval
 
     def representation(self, item):
