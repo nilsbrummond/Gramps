@@ -804,6 +804,8 @@ class PedigreeView(PageView.PersonNavView):
                     ((8,26,1,1),None,None),
                     ((8,28,1,1),None,None),
                     ((8,30,1,1),None,None))
+        else:
+            return
 
         # Build ancestor tree only one for all different sizes
         lst = [None]*31
