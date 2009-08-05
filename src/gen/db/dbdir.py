@@ -787,6 +787,9 @@ class GrampsDBDir(GrampsDbBase, UpdateCallback):
         if callback:
             callback(12)
 
+    def find_backlink_handles_list(self, handle, include_classes=None):
+        return [x for x in self.find_backlink_handles(handle, include_classes)]
+
     def find_backlink_handles(self, handle, include_classes=None):
         try:
             return self.__find_backlink_handles(handle, include_classes)
