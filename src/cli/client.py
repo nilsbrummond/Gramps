@@ -20,13 +20,104 @@
 
 # $Id$
 
+#-------------------------------------------------------------------------
+#
+# Python modules
+#
+#-------------------------------------------------------------------------
 import pickle
-from server import xml_unpickle
 import socket
 import sys
+from xml.dom import minidom
 
+#-------------------------------------------------------------------------
+#
+# GRAMPS modules
+#
+#-------------------------------------------------------------------------
 from gen.lib import *
 
+#-------------------------------------------------------------------------
+#
+# Functions
+#
+#-------------------------------------------------------------------------
+def xml_unpickle(xml):
+    """
+    Takes an XML string and returns Python objects.
+    """
+    xmldoc = minidom.parseString(xml)
+    if xmldoc.childNodes.length == 1:
+        return xml_unpickle_doc(xmldoc.childNodes[0])
+    else:
+        return None
+
+def xml_unpickle_doc(xmldoc):
+    """
+    Takes a minidom XML object and returns Python objects.
+    """
+    if xmldoc.nodeName == 'list':
+        return [xml_unpickle_doc(item) for item in xmldoc.childNodes]
+    elif xmldoc.nodeName == 'tuple':
+        return tuple([xml_unpickle_doc(item) for item in xmldoc.childNodes])
+    elif xmldoc.nodeName == 'dict':
+        retval = {}
+        for pair in xmldoc.childNodes:
+            key = xml_unpickle_doc(pair.childNodes[0].childNodes[0])
+            value = xml_unpickle_doc(pair.childNodes[1].childNodes[0])
+            retval[key] = value
+        return retval
+    elif xmldoc.nodeName == 'object':
+        objType = xmldoc.getAttributeNode("type").value
+        data = xml_unpickle_doc(xmldoc.childNodes[0])
+        if objType == 'Person':
+            return Person(data)
+        elif objType == 'Family':
+            return Family(data)
+        elif objType == 'Event':
+            return Event(data)
+        elif objType == 'Source':
+            return Source(data)
+        elif objType == 'Place':
+            return Place(data)
+        elif objType == 'Date':
+            return Date(data)
+        elif objType == 'MediaObject':
+            return MediaObject(data)
+        elif objType == 'Repository':
+            return Repository(data)
+        elif objType == 'Note':
+            return Note(data)
+        elif objType == 'Exception':
+            return Exception(data)
+        else:
+            return Exception("unknown xml object type: '%s'" % objType)
+    else:
+        # int, str, unicode, float, long, bool, NoneType
+        typeName = xmldoc.nodeName
+        if xmldoc.childNodes.length > 0:
+            nodeValue = xmldoc.childNodes[0].nodeValue
+        else:
+            nodeValue = ''
+        if typeName == "NoneType":
+            return None
+        elif typeName in ['int', 'str', 'unicode', 'float', 'long', 'bool']:
+            if typeName in ['str', 'unicode']:
+                nodeValue = nodeValue.replace("&amp;", "&")
+                nodeValue = nodeValue.replace("&lt;", "<")
+            try:
+                return eval('''%s("""%s""")''' % (typeName, nodeValue))
+            except Exception, e:
+                print "    Evaluation error in conversion:", e
+                return Exception(str(e))
+        else:
+            return Exception("unknown xml type: '%s'" % typeName)
+
+#-------------------------------------------------------------------------
+#
+# Classes
+#
+#-------------------------------------------------------------------------
 class RemoteObject:
     """
     A wrapper to access underlying attributes by asking over a 
@@ -35,7 +126,7 @@ class RemoteObject:
     def __init__(self, host, port, prefix = "self."):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((host, port))
-        self.socket.settimeout(5) # 5 second timeout
+        self.socket.settimeout(10) # second timeout
         self.prefix = prefix
     
     def __repr__(self):

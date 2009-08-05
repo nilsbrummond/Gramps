@@ -40,7 +40,6 @@ import sys
 import signal
 import logging
 import traceback
-from xml.dom import minidom
 
 LOG = logging.getLogger(".grampscli")
 #-------------------------------------------------------------------------
@@ -55,7 +54,8 @@ import Errors
 import DbState
 from gen.db import (GrampsDBDir, FileVersionDeclineToUpgrade)
 import gen.db.exceptions
-from gen.lib import Person, Family, Event, Source, Place, Date
+from gen.lib import (Person, Family, Event, Source, Place, Date, 
+                     MediaObject, Repository, Note)
 from gen.plug import PluginManager
 from Utils import get_researcher
 import RecentFiles
@@ -401,74 +401,28 @@ def xml_pickle(obj):
         data = obj.serialize()
         xml_string = xml_pickle(data)
         return '<object type="%s">%s</object>' % (objType, xml_string)
+    elif type(obj) == MediaObject:
+        objType = "MediaObject"
+        data = obj.serialize()
+        xml_string = xml_pickle(data)
+        return '<object type="%s">%s</object>' % (objType, xml_string)
+    elif type(obj) == Repository:
+        objType = "Repository"
+        data = obj.serialize()
+        xml_string = xml_pickle(data)
+        return '<object type="%s">%s</object>' % (objType, xml_string)
+    elif type(obj) == Note:
+        objType = "Note"
+        data = obj.serialize()
+        xml_string = xml_pickle(data)
+        return '<object type="%s">%s</object>' % (objType, xml_string)
     else:
         # int, str, float, long, bool, NoneType
         typeName = str(type(obj)).split("'")[1]
-        if typeName == "str":
+        if typeName in ["str", "unicode"]:
             obj = obj.replace("<", "&lt;")
+            obj = obj.replace("&", "&amp;")
         return "<%s>%s</%s>" % (typeName, obj, typeName)
-
-def xml_unpickle(xml):
-    """
-    Takes an XML string and returns Python objects.
-    """
-    xmldoc = minidom.parseString(xml)
-    if xmldoc.childNodes.length == 1:
-        return xml_unpickle_doc(xmldoc.childNodes[0])
-    else:
-        return None
-
-def xml_unpickle_doc(xmldoc):
-    """
-    Takes a minidom XML object and returns Python objects.
-    """
-    if xmldoc.nodeName == 'list':
-        return [xml_unpickle_doc(item) for item in xmldoc.childNodes]
-    elif xmldoc.nodeName == 'tuple':
-        return tuple([xml_unpickle_doc(item) for item in xmldoc.childNodes])
-    elif xmldoc.nodeName == 'dict':
-        retval = {}
-        for pair in xmldoc.childNodes:
-            key = xml_unpickle_doc(pair.childNodes[0].childNodes[0])
-            value = xml_unpickle_doc(pair.childNodes[1].childNodes[0])
-            retval[key] = value
-        return retval
-    elif xmldoc.nodeName == 'object':
-        objType = xmldoc.getAttributeNode("type").value
-        data = xml_unpickle_doc(xmldoc.childNodes[0])
-        if objType == 'Person':
-            return Person(data)
-        elif objType == 'Family':
-            return Family(data)
-        elif objType == 'Event':
-            return Event(data)
-        elif objType == 'Source':
-            return Source(data)
-        elif objType == 'Place':
-            return Place(data)
-        elif objType == 'Date':
-            return Date(data)
-        elif objType == 'Exception':
-            return Exception(data)
-        else:
-            return Exception("unknown xml object type: '%s'" % objType)
-    else:
-        # int, str, float, long, bool, NoneType
-        typeName = xmldoc.nodeName
-        if xmldoc.childNodes.length > 0:
-            nodeValue = xmldoc.childNodes[0].nodeValue
-        else:
-            nodeValue = ''
-        if typeName == "NoneType":
-            return None
-        elif typeName in ['int', 'str', 'unicode', 'float', 'long', 'bool']:
-            try:
-                return eval('''%s("""%s""")''' % (typeName, nodeValue))
-            except Exception, e:
-                print "    Evaluation error in conversion:", e
-                return Exception(str(e))
-        else:
-            return Exception("unknown xml type: '%s'" % typeName)
 
 class RemoteInterfaceHandler:
     """
@@ -558,7 +512,10 @@ class BackgroundThread(threading.Thread):
             # evaluate the command:
             result = self.remote_api.eval(data)
             # get the result, and xml_pickle it
-            presult = xml_pickle(result)
+            try:
+                presult = xml_pickle(result)
+            except Exception, e:
+                presult = xml_pickle(Exception(e))
             try:
                 self.client_socket.send(presult)
             except:
