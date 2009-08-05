@@ -55,7 +55,7 @@ import Errors
 import DbState
 from gen.db import (GrampsDBDir, FileVersionDeclineToUpgrade)
 import gen.db.exceptions
-from gen.lib import Person, Family, Event, Source, Place
+from gen.lib import Person, Family, Event, Source, Place, Date
 from gen.plug import PluginManager
 from Utils import get_researcher
 import RecentFiles
@@ -396,6 +396,11 @@ def xml_pickle(obj):
         data = obj.serialize()
         xml_string = xml_pickle(data)
         return '<object type="%s">%s</object>' % (objType, xml_string)
+    elif type(obj) == Date:
+        objType = "Date"
+        data = obj.serialize()
+        xml_string = xml_pickle(data)
+        return '<object type="%s">%s</object>' % (objType, xml_string)
     else:
         # int, str, float, long, bool, NoneType
         typeName = str(type(obj)).split("'")[1]
@@ -441,6 +446,8 @@ def xml_unpickle_doc(xmldoc):
             return Source(data)
         elif objType == 'Place':
             return Place(data)
+        elif objType == 'Date':
+            return Date(data)
         elif objType == 'Exception':
             return Exception(data)
         else:
@@ -454,7 +461,7 @@ def xml_unpickle_doc(xmldoc):
             nodeValue = ''
         if typeName == "NoneType":
             return None
-        elif typeName in ['int', 'str', 'float', 'long', 'bool']:
+        elif typeName in ['int', 'str', 'unicode', 'float', 'long', 'bool']:
             try:
                 return eval('''%s("""%s""")''' % (typeName, nodeValue))
             except Exception, e:
