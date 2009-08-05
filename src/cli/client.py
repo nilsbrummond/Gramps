@@ -105,8 +105,10 @@ def xml_unpickle_doc(xmldoc):
             if typeName in ['str', 'unicode']:
                 nodeValue = nodeValue.replace("&amp;", "&")
                 nodeValue = nodeValue.replace("&lt;", "<")
+            if typeName != "bool":
+                nodeValue = '"""%s"""' % nodeValue
             try:
-                return eval('''%s("""%s""")''' % (typeName, nodeValue))
+                return eval('''%s(%s)''' % (typeName, nodeValue))
             except Exception, e:
                 print "    Evaluation error in conversion:", e
                 return Exception(str(e))

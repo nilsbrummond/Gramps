@@ -297,6 +297,7 @@ def start_server(errors, argparser):
     errors    : errors already encountered 
     argparser : ArgParser instance
     """
+    #global remote_interface
     if errors:
         #already errors encountered. Show first one on terminal and exit
         print _('Error encountered: %s') % errors[0][0]
@@ -417,7 +418,7 @@ def xml_pickle(obj):
         xml_string = xml_pickle(data)
         return '<object type="%s">%s</object>' % (objType, xml_string)
     else:
-        # int, str, float, long, bool, NoneType
+        # int, str, unicode, float, long, bool, NoneType
         typeName = str(type(obj)).split("'")[1]
         if typeName in ["str", "unicode"]:
             obj = obj.replace("<", "&lt;")
