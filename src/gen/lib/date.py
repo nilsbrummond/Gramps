@@ -680,7 +680,16 @@ class Date(object):
         else:
             raise AttributeError, "invalid args to Date: %s" % source
         #### ok, process either date or tuple
-        if isinstance(source, tuple):
+        if type(source) in [list, tuple] and len(source) == 7:
+            self.calendar = source[0]
+            self.modifier = source[1]
+            self.quality = source[2]
+            self.dateval = source[3]
+            self.text = source[4]
+            self.sortval = source[5]
+            self.newyear = source[6]
+            return 
+        elif isinstance(source, tuple):
             if calendar is None:
                 self.calendar = Date.CAL_GREGORIAN
             elif isinstance(calendar, int):
@@ -699,7 +708,7 @@ class Date(object):
             self.text     = u""
             self.sortval  = 0
             self.newyear = 0
-            self.set_yr_mon_day(*source)
+            self.set_yr_mon_day(*source[:3])
         elif isinstance(source, str) and source != "":
             if (calendar is not None or 
                 modifier is not None or 
