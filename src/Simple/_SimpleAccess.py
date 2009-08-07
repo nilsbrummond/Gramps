@@ -823,6 +823,45 @@ class SimpleAccess(object):
         assert(type(handle) in [str, unicode])
         return self.dbase.get_family_from_handle(handle)
 
+    def format(self, obj):
+        if isinstance(obj, gen.lib.Person):
+            return self.name(obj)
+        elif isinstance(obj, gen.lib.Family):
+            return "%s and %s " % (self.name(self.father(obj)), 
+                                   self.name(self.mother(obj)))
+
+    def name(self, person):
+        if isinstance(person, gen.lib.Person):
+            name = person.get_primary_name()
+            if not name:
+                name = gen.lib.Name()
+            return "%s, %s" % (name.get_surname(), name.get_first_name())
+
+    def details(self, obj):
+        if isinstance(obj, gen.lib.Person):
+            return {"Name": self.name(obj),
+                    "Gender": ["Male", "Female", "Unknown"][obj.get_gender()],
+                    "ID": obj.gramps_id,
+                    "Birth": self.birth_date(obj),
+                    "Death": self.death_date(obj),
+                    }
+        elif isinstance(obj, gen.lib.Family):
+            mother = self.mother(obj)
+            father = self.father(obj)
+            if mother:
+                mhandle = mother.handle
+            else:
+                mhandle = ""
+            if father:
+                fhandle = father .handle
+            else:
+                fhandle = ""
+            return {"Father": self.name(father),
+                    "Father handle": fhandle,
+                    "Mother": self.name(mother),
+                    "Mother handle": mhandle,
+                    }
+
 def by_date(event1, event2):
     """
     Sort function that will compare two events by their dates.
