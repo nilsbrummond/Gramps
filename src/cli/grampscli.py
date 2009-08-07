@@ -318,3 +318,42 @@ def startcli(errors, argparser):
     handler.handle_args_cli()
     
     sys.exit(0)
+
+def get_remote_interface(argparser):
+    """
+    Starts a cli session of GRAMPS. 
+    errors    : errors already encountered 
+    argparser : ArgParser instance
+    """
+    import Simple
+    #we need to keep track of the db state
+    dbstate = DbState.DbState()
+    #we need a manager for the CLI session
+    climanager = CLIManager(dbstate, True)
+    #load the plugins
+    climanager.do_load_plugins()
+    # handle the arguments
+    from arghandler import ArgHandler
+    handler = ArgHandler(dbstate, argparser, climanager)
+    # create a manager to manage the database
+    handler.handle_args_cli(cleanup=False) # cleanup later
+    simple_access = Simple.SimpleAccess(dbstate.db)
+    remote_interface = RemoteInterfaceHandler(dbstate, climanager, handler,
+                                              simple_access)
+    return remote_interface
+
+class RemoteInterfaceHandler:
+    """
+    Class that handles requests that come in on a socket connection via
+    the GRAMPS remote interface.
+    """
+    def __init__(self, dbstate, climanager, arghandler, simple_access):
+        """
+        Constructor for RI. Pass in objects necessary for interacting with
+        data and reports.
+        """
+        self.dbstate = dbstate
+        self.climanager = climanager
+        self.arghandler = arghandler
+        self.sdb = simple_access
+
