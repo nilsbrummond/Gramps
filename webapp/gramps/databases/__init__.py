@@ -32,11 +32,9 @@ print "GRAMPS database \"%s\" loading..." % GRAMPS_DATABASE
 _NAME_COL   = 3
 ngn = name_displayer.name_grouping_data
 nsn = name_displayer.raw_sorted_name
-gapi.dbstate.db.total = 0
 gapi.dbstate.db.sorted = []
 with gapi.dbstate.db.get_person_cursor() as cursor:
     for handle, data in cursor:
-        gapi.dbstate.db.total += 1
         name_data = data[_NAME_COL]
         group_name = ngn(gapi.dbstate.db, name_data)
         sorted_name = nsn(name_data)

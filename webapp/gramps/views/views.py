@@ -25,7 +25,7 @@ def page(request, view):
     output += "[<a href=\"?start=%s\">first</a>] " % 0
     output += "[<a href=\"?start=%s\">prev</a>] " % (start - 15)
     output += "[<a href=\"?start=%s\">next</a>] " % (start + 15)
-    output += "[<a href=\"?start=%s\">last</a>] " % (gapi.dbstate.db.total - 15)
+    output += "[<a href=\"?start=%s\">last</a>] " % (len(get_map(view)) - 15)
     return HttpResponse(output)
 
 def detail(request, view, handle):
@@ -47,6 +47,10 @@ def get_cursor(view):
     cursor = gapi.dbstate.db.__getattribute__("get_%s_cursor" % view)
     return cursor()
 
+def get_map(view):
+    map = gapi.dbstate.db.__getattribute__("%s_map" % view)
+    return map
+
 def get_object(view, handle=None, data=None):
     view = view.title()
     if data:
@@ -55,11 +59,8 @@ def get_object(view, handle=None, data=None):
         obj.unserialize(data) 
         return obj
     elif handle:
-        if view == 'Person':
-            return gapi.dbstate.db.get_person_from_handle(handle)
-        elif view == 'Family':
-            return gapi.dbstate.db.get_family_from_handle(handle)
-        else:
-            raise AttributeError("TODO: %s" % view)
+        map = get_map(view.lower())
+        data = map[str(handle)]
+        return get_object(view, data=data)
     else:
         raise AttributeError("can't get_object")

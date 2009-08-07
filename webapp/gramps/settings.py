@@ -83,4 +83,4 @@ INSTALLED_APPS = (
 )
 
 GRAMPS_PATH = "/home/dblank/gramps/exp-server/src"
-GRAMPS_DATABASE = "Blank Family"
+GRAMPS_DATABASE = "Family Tree 18"
