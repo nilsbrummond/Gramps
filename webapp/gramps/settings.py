@@ -4,7 +4,7 @@ DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
-    # ('Your Name', 'your_email@domain.com'),
+    ('admin', 'your_email@domain.com'),
 )
 
 MANAGERS = ADMINS
@@ -23,7 +23,7 @@ DATABASE_PORT = ''             # Set to empty string for default. Not used with 
 # although not all choices may be available on all operating systems.
 # If running in a Windows environment this must be set to the same as your
 # system time zone.
-TIME_ZONE = 'America/Chicago'
+TIME_ZONE = 'America/Philadelphia'
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
@@ -81,3 +81,6 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'gramps.views',
 )
+
+GRAMPS_PATH = "/home/dblank/gramps/exp-server/src"
+GRAMPS_DATABASE = "Blank Family"

@@ -5,7 +5,14 @@ os.environ["DJANGO_SETTINGS_MODULE"] = "gramps.settings"
 
 from gramps.views.models import View
 
-for view_name in ["People", "Events", "Family"]:
-    v = View(name=view_name)
+for name,constr in [("Person", "Person", ), 
+                    ("Event", "Event", ),
+                    ("Family", "Family", ),
+                    ("Place", "Place", ),
+                    ("Source", "Source", ),
+                    ("Media", "MediaObject", ),
+                    ("Repository", "Repository", ),
+                    ("Note", "Note", ),
+                    ]:
+    v = View(name=name, constructor=constr)
     v.save()
-

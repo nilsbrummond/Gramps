@@ -3,7 +3,6 @@ from django.conf.urls.defaults import *
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
 admin.autodiscover()
-#import gramps.views
 
 urlpatterns = patterns('',
     # Example:
@@ -15,5 +14,15 @@ urlpatterns = patterns('',
 
     # Uncomment the next line to enable the admin:
     (r'^admin/(.*)', admin.site.root),
-#    (r'^view/(.*)', gramps.views.display),
 )
+
+# View URLs:
+
+urlpatterns += patterns('',
+    (r'^$', 'gramps.homepage'),
+    (r'^view/$', 'gramps.views.index'),
+    (r'^view/(?P<view>(.*))/$', 'gramps.views.dispatch'),
+    (r'^view/(?P<view>(.*))/(?P<handle>(.*))$', 'gramps.views.dispatch'),
+)
+
+# Add other URLs here:

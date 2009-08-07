@@ -2,7 +2,7 @@ from gramps.views.models import View
 from django.contrib import admin
 
 class ViewAdmin(admin.ModelAdmin):
-    fields = ["name"]
+    fields = ["name", "constructor"]
     #fieldsets = [
     #    ("Name" | None, {"fields": ["name"], "classes": ["collapse"]}),
     #    ("Name" | None, {"fields": []}),
