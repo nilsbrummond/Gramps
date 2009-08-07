@@ -82,6 +82,15 @@ CLASS_TO_KEY_MAP = {Person.__name__: PERSON_KEY,
                     Repository.__name__:REPOSITORY_KEY,
                     Note.__name__: NOTE_KEY}
 
+CLASS_TO_OBJ_MAP = {Person.__name__: Person,
+                    Family.__name__: Family,
+                    Source.__name__: Source,
+                    Event.__name__: Event,
+                    MediaObject.__name__: MediaObject,
+                    Place.__name__: Place,
+                    Repository.__name__:Repository,
+                    Note.__name__: Note}
+                    
 KEY_TO_CLASS_MAP = {PERSON_KEY: Person.__name__, 
                     FAMILY_KEY: Family.__name__, 
                     SOURCE_KEY: Source.__name__, 
