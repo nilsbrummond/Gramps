@@ -829,6 +829,8 @@ class SimpleAccess(object):
         elif isinstance(obj, gen.lib.Family):
             return "%s and %s " % (self.name(self.father(obj)), 
                                    self.name(self.mother(obj)))
+        else:
+            return obj.__class__.__name__
 
     def name(self, person):
         if isinstance(person, gen.lib.Person):
@@ -861,6 +863,8 @@ class SimpleAccess(object):
                     "Mother": self.name(mother),
                     "Mother handle": mhandle,
                     }
+        else:
+            return {"Object Type": obj.__class__.__name__}
 
 def by_date(event1, event2):
     """
