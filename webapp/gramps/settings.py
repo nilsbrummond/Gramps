@@ -12,7 +12,7 @@ MANAGERS = ADMINS
 # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
 DATABASE_ENGINE = 'sqlite3'           
 # Or path to database file if using sqlite3.
-DATABASE_NAME = '/home/dblank/gramps/exp-server/webapp/gramps/admin.db' 
+DATABASE_NAME = '/home/dblank/gramps/gep-013-server/webapp/gramps/admin.db' 
 DATABASE_USER = ''             # Not used with sqlite3.
 DATABASE_PASSWORD = ''         # Not used with sqlite3.
 DATABASE_HOST = ''             # Set to empty string for localhost. Not used with sqlite3.
@@ -82,5 +82,5 @@ INSTALLED_APPS = (
     'gramps.views',
 )
 
-GRAMPS_PATH = "/home/dblank/gramps/exp-server/src"
-GRAMPS_DATABASE = "Family Tree 18"
+GRAMPS_PATH = "/home/dblank/gramps/gep-013-server/src"
+GRAMPS_DATABASE = "Test Data 50"
