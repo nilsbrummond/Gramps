@@ -48,7 +48,8 @@ import gen.lib
 import Errors
 from GrampsLocale import codeset
 
-from const import TEMP_DIR, USER_HOME, WINDOWS, MACOS, LINUX
+from const import TEMP_DIR, USER_HOME, WINDOWS, MACOS, LINUX, GRAMPS_UUID
+
 from TransUtils import sgettext as _
 
 #-------------------------------------------------------------------------
@@ -443,6 +444,13 @@ rand = random.Random(time.time())
 def create_id():
     return "%08x%08x" % ( int(time.time()*10000), 
                           rand.randint(0, sys.maxint))
+
+def create_uid(self, handle=None):
+    if handle:
+        uid = uuid.uuid5(GRAMPS_UUID, handle)
+    else:
+        uid = uid.uuid.uuid4()
+    return uid.hex.upper()
 
 #-------------------------------------------------------------------------
 #
@@ -1001,5 +1009,3 @@ def update_constants():
     _MAX_SIB_AGE_DIFF     = Config.get(Config.MAX_SIB_AGE_DIFF)
     _MIN_GENERATION_YEARS = Config.get(Config.MIN_GENERATION_YEARS)
     _AVG_GENERATION_GAP   = Config.get(Config.AVG_GENERATION_GAP)
-
-
