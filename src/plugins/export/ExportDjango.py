@@ -872,9 +872,13 @@ def exportData(database, filename, option_box=None, callback=None):
 # Register the plugin
 #
 #-------------------------------------------------------------------------
+
+class NoFilenameOptions(ExportOptions.WriterOptionBox):
+    no_fileselect = True
+
 _name = _('Django Export')
 _description = _('Django is a web framework working on a configured database')
-_config = (_('Django options'), ExportOptions.WriterOptionBox)
+_config = (_('Django options'), NoFilenameOptions)
 
 pmgr = PluginManager.get_instance()
 plugin = ExportPlugin(name            = _name, 
