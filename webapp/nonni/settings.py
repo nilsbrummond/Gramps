@@ -9,8 +9,13 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-DATABASE_ENGINE = 'postgresql_psycopg2'   # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-DATABASE_NAME = 'db_gramps'      # Or path to database file if using sqlite3.
+# 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
+DATABASE_ENGINE = 'postgresql_psycopg2'   
+#DATABASE_ENGINE = 'sqlite3'   
+# Database name if 'postgresql_psycopg2', 'postgresql', 'mysql', 'oracle':
+DATABASE_NAME = 'db_gramps'      
+# or full name and path to database file if using sqlite3.
+#DATABASE_NAME = '/home/dblank/gramps/gep-013-server/webapp/nonni/db_gramps.sql'      
 DATABASE_USER = 'gramps'             # Not used with sqlite3.
 DATABASE_PASSWORD = 'Grqmp0nR71lz'   # Not used with sqlite3.
 DATABASE_HOST = ''             # Set to empty string for localhost. Not used with sqlite3.
@@ -21,10 +26,12 @@ DATABASE_PORT = ''             # Set to empty string for default. Not used with 
 # although not all choices may be available on all operating systems.
 # If running in a Windows environment this must be set to the same as your
 # system time zone.
+#TIME_ZONE = 'America/New_York'
 TIME_ZONE = 'Europe/Brussels'
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
+#LANGUAGE_CODE = 'en-us'
 LANGUAGE_CODE = 'nl'
 
 SITE_ID = 1

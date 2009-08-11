@@ -2,7 +2,11 @@ from django.db import models
 
 ### START GRAMPS TYPES  
 def get_datamap(grampsclass):
-        return [(x[0],x[2]) for x in grampsclass._DATAMAP]
+    return [(x[0],x[2]) for x in grampsclass._DATAMAP]
+
+def get_class(grampsclass, val):
+    return [g[1] for g in grampsclass if g[0] == val][0]
+
 
 class mGrampsType(models.Model):
     """
@@ -20,6 +24,11 @@ class mGrampsType(models.Model):
     class Meta:
         abstract = True
 
+    def __unicode__(self):
+        if self.custom_name:
+            return get_class(self._DATAMAP, self.val) + ":" + self.custom_name 
+        else:
+            return get_class(self._DATAMAP, self.val)
 
 class MarkerType(mGrampsType):
     from gen.lib.markertype import MarkerType
@@ -99,6 +108,9 @@ class Handle(models.Model):
     handle = models.CharField(max_length=40, primary_key=True, unique=True)
     object = models.CharField('object type', max_length=1, choices=OBJECTS, 
                 blank=False)
+
+    def __unicode__(self):
+        return self.object + ":" + self.handle
     
 class PrimaryObject(models.Model):
     """
@@ -112,6 +124,9 @@ class PrimaryObject(models.Model):
 
     class Meta:
         abstract = True
+
+    def __unicode__(self):
+        return self.gramps_id 
 
 class Person(PrimaryObject):
     """
@@ -144,3 +159,6 @@ class SecondaryObject(models.Model):
 
     class Meta:
         abstract = True
+
+    def __unicode__(self):
+        return "SecondaryObject->" + (["Public", "Private"][self.private])

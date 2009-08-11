@@ -1,5 +1,63 @@
 Setting up everything for gramps webapp nonni:
 
+This example will allow you to create a Django Database, populate it
+through a GRAMPS export plugin, and then access/edit the data via the
+web.
+
+There are two ways to run this example: using a SQL engine via a
+webserver, or using a local SQL database. With either way, you'll be
+able to access/edit the data over the web. The only difference is
+whether GRAMPS and the webserver accesses the data locally or through
+a server.
+
+First, the easy way with a local sqlite database (steps 2, 3, and ):
+
+1/packages
+
+sudo yum install subversion sqlite
+
+2/DO STEP 2 BELOW
+
+3/DO STEP 3 BELOW
+
+4/Django settings
+
+Go to the branches/geps/gep-013-server/webapp/nonni dir and edit
+settings.py to reflect your setup:
+
+$ cd webapp/nonni
+$ gedit settings.py
+
+and make sure to set to the correct values:
+
+DATABASE_ENGINE = 'sqlite3'   
+# Set the DATABASE_NAME to a full name and path to database file
+# This file will be created, so make sure it is in a readable/writeable place.
+DATABASE_NAME = '/home/dblank/gramps/gep-013-server/webapp/nonni/db_gramps.sql'      
+# See file for examples for these:
+TIME_ZONE: your time zone
+LANGUAGE_CODE: your code
+
+5/Make and run a webserver:
+
+make clean
+make
+make run
+
+6/Run the Django Export plugin in this version of GRAMPS:
+
+python ../../src/gramps.py
+
+
+7/You can (after this plugin is finished) go back to eg pgadmin or the
+http://127.0.0.1:8000/admin to see that the objects have been
+saved. You can edit them here, too.
+
+See the following for more details, and for setting up a more
+sophisticated database server.
+
+----------------------------------------------
+
 1/packages 
 
 benny@antec:sudo apt-get install python-psycopg python-psycopg2 postgresql apache2 libapache2-mod-python subversion pgadmin3 pgadmin3-data
