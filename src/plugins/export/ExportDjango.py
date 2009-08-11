@@ -320,7 +320,10 @@ def export_person(person):
      ) = person
     
     phandle = nonna.models.Handle(handle=handle, object='P')
-    phandle.save()
+    try:
+        phandle.save()
+    except:
+        print "ERROR in handle save..."
     person = nonna.models.Person(gender=gender, gramps_id=gid, private=private,
                         change=datetime.datetime.fromtimestamp(change))
     person.handle = phandle
@@ -333,12 +336,19 @@ def export_person(person):
         else:
             new = nonna.models.MarkerType(val=value, 
                                           custom_name=custom)
-            new.save()
+            try:
+                new.save()
+            except:
+                print "ERROR in markertype save..."
             CUSTOMMARKER[custom] = new.id
             person.marker = new
     else:
         person.marker=nonna.models.MarkerType.objects.get(val=value)
-    person.save()
+    try:
+        person.save()
+    except:
+        print "ERROR in person save..."
+
 ##    db.query("""INSERT INTO person (
 ##                  handle, 
 ##                  gid, 
@@ -634,12 +644,18 @@ def exportData(database, filename, option_box=None, callback=None):
     defaults = get_datamap(MarkerType)
     for key in defaults:
         new = nonna.models.MarkerType(val=key)
-        new.save()
+        try:
+            new.save()
+        except:
+            print "ERROR in markertype save..."
     from gen.lib.nametype import NameType
     defaults = get_datamap(NameType)
     for key in defaults:
         new = nonna.models.NameType(val=key)
-        new.save()
+        try:
+            new.save()
+        except:
+            print "ERROR in datamap save..."
 ##    
 ##    # ---------------------------------
 ##    # Notes
