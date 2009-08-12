@@ -37,6 +37,11 @@ DATABASE_NAME = '/home/dblank/gramps/gep-013-server/webapp/nonni/db_gramps.sql'
 # See file for examples for these:
 TIME_ZONE: your time zone
 LANGUAGE_CODE: your code
+# Full path:
+TEMPLATE_DIRS = (
+    "/home/dblank/gramps/gep-013-server/webapp/html/templates",
+)
+
 
 5/Make and run a webserver:
 
@@ -151,6 +156,9 @@ DATABASE_USER: as given in 4/, standard is gramps
 DATABASE_PASSWORD: the password for the user in the database grampsonrails will create
 TIME_ZONE: your time zone
 LANGUAGE_CODE: your code
+TEMPLATE_DIRS = (
+    "/yourfullpath/gep-013-server/webapp/html/templates",
+)
 ....
 
 See the Django site for more info when changing variables: 
