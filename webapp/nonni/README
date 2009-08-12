@@ -10,7 +10,8 @@ able to access/edit the data over the web. The only difference is
 whether GRAMPS and the webserver accesses the data locally or through
 a server.
 
-First, the easy way with a local sqlite database (steps 2, 3, and ):
+First, the easy way with a local sqlite database (steps 2 and 3 are
+the same for both):
 
 1/packages
 
@@ -30,6 +31,7 @@ $ gedit settings.py
 
 and make sure to set to the correct values:
 
+----------------------------------------------
 DATABASE_ENGINE = 'sqlite3'   
 # Set the DATABASE_NAME to a full name and path to database file
 # This file will be created, so make sure it is in a readable/writeable place.
@@ -41,9 +43,9 @@ LANGUAGE_CODE: your code
 TEMPLATE_DIRS = (
     "/home/dblank/gramps/gep-013-server/webapp/html/templates",
 )
+----------------------------------------------
 
-
-5/Make and run a webserver:
+5/Make database, and then run a webserver:
 
 make clean
 make
@@ -51,16 +53,23 @@ make run
 
 6/Run the Django Export plugin in this version of GRAMPS:
 
+(you may need to ./autogen.sh; make in top level of branch)
+
 python ../../src/gramps.py
 
-Open a family tree, and select in menu Family Tree the export entry. Select Django export, and give a filename for now. The file will not be used, in reality the django installation is querried and the django backend as given in the settings is used to write to.
+Open a family tree, and select in menu Family Tree the export
+entry. Select Django export. (You used to have to give a filename;
+that is fixed now.) The django installation is querried and the django
+backend as given in the settings is used to write to.
 
-NOTE: You must manually empty the tables or delete them and regenerate for now if you reexport your data, as the export plugin expects an empty database. If the database is not empty, duplication errors will occur.
+NOTE: You must manually empty the tables or delete them and regenerate
+for now if you reexport your data, as the export plugin expects an
+empty database. If the database is not empty, duplication errors will
+occur.
 
-
-7/You can (after this plugin is finished) go back to eg pgadmin or the
-http://127.0.0.1:8000/admin to see that the objects have been
-saved. You can edit them here, too.
+7/You can (after this plugin has finished running) go back to eg
+pgadmin or the http://127.0.0.1:8000/admin to see that the objects
+have been saved. You can edit them here, too.
 
 See the following for more details, and for setting up a more
 sophisticated database server.
