@@ -48,6 +48,10 @@ make run
 
 python ../../src/gramps.py
 
+Open a family tree, and select in menu Family Tree the export entry. Select Django export, and give a filename for now. The file will not be used, in reality the django installation is querried and the django backend as given in the settings is used to write to.
+
+NOTE: You must manually empty the tables or delete them and regenerate for now if you reexport your data, as the export plugin expects an empty database. If the database is not empty, duplication errors will occur.
+
 
 7/You can (after this plugin is finished) go back to eg pgadmin or the
 http://127.0.0.1:8000/admin to see that the objects have been
