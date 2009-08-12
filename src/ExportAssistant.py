@@ -445,6 +445,7 @@ class ExportAssistant(gtk.Assistant, ManagedWindow.ManagedWindow) :
             if (self.option_box_instance and 
                 hasattr(self.option_box_instance, "no_fileselect")):
                 # No file selection
+                filename = ''
                 confirm_text = _(
                     'The data will be exported as follows:\n\n'
                     'Format:\t%s\n\n'
@@ -585,8 +586,12 @@ class ExportAssistant(gtk.Assistant, ManagedWindow.ManagedWindow) :
         Depending on the success status, set the text for the final page.
         
         """
-        filename = Utils.get_unicode_path(self.chooser.get_filename())
-        Config.set(Config.RECENT_EXPORT_DIR, os.path.split(filename)[0])
+        if (self.option_box_instance and 
+            hasattr(self.option_box_instance, "no_fileselect")):
+            filename = ""
+        else:
+            filename = Utils.get_unicode_path(self.chooser.get_filename())
+            Config.set(Config.RECENT_EXPORT_DIR, os.path.split(filename)[0])
         ix = self.get_selected_format_index()
         Config.set(Config.RECENT_EXPORT_TYPE, ix)
         export_function = self.__exporters[ix].get_export_function()
