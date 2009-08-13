@@ -9,14 +9,7 @@ def home(request, *args, **kwargs):
         'footer':  'This is the footer!',
         'copyright': 'Copyright (c) 2009, by Me.',
         'person_list': Person.objects.filter(gender=2),
+        'content': 'This is the Homepage Test',
         #'meta': ,
         }
-    add_content(content)
     return render_to_response('gramps-base.html', content)
-                              
-
-def add_content(data):
-    content = {
-        'content': 'People with Unknown Gender:',
-    }
-    return data.update(content)
