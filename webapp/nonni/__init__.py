@@ -12,7 +12,7 @@ def home(request, *args, **kwargs):
         #'meta': ,
         }
     add_content(content)
-    return render_to_response('base.html', content)
+    return render_to_response('gramps-base.html', content)
                               
 
 def add_content(data):
