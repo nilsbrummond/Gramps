@@ -4,11 +4,8 @@ from django.contrib import admin
 admin.autodiscover()
 
 urlpatterns = patterns('',
+    # Specific matches first:
     (r'^admin/(.*)', admin.site.root),
-    (r'^view/(?P<view>(.*))/(?P<handle>(.*))$', 'grampsweb.views.dispatch'),
-    (r'^view/(?P<view>(.*))/$', 'grampsweb.views.dispatch'),
-    (r'^view/$', 'grampsweb.views.index'),
-    (r'^$', 'grampsweb.homepage'),
 )
 
 urlpatterns += patterns('',
@@ -25,4 +22,11 @@ urlpatterns += patterns('',
        'show_indexes': 
           True},
       ),
+)
+
+# The rest will match views:
+urlpatterns += patterns('',
+    (r'^(?P<view>(.*))/(?P<handle>(.*))$', 'grampsweb.view'),
+    (r'^(?P<view>(.*))/$', 'grampsweb.view'),
+    (r'^$', 'grampsweb.homepage'),
 )
