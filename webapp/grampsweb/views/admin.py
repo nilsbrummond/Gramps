@@ -1,4 +1,4 @@
-from gramps.views.models import View
+from grampsweb.views.models import View
 from django.contrib import admin
 
 class ViewAdmin(admin.ModelAdmin):

@@ -11,3 +11,18 @@ urlpatterns = patterns('',
     (r'^$', 'grampsweb.homepage'),
 )
 
+urlpatterns += patterns('',
+    # DANGEROUS in production:
+     (r'^styles/(?P<path>.*)$', 'django.views.static.serve',
+      {'document_root': 
+          '/home/dblank/gramps/gep-013-server/webapp/html/styles', 
+       'show_indexes': 
+          True},
+      ),
+     (r'^images/(?P<path>.*)$', 'django.views.static.serve',
+      {'document_root': 
+          '/home/dblank/gramps/gep-013-server/webapp/html/images', 
+       'show_indexes': 
+          True},
+      ),
+)
