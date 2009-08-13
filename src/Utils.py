@@ -449,7 +449,7 @@ def create_uid(self, handle=None):
     if handle:
         uid = uuid.uuid5(GRAMPS_UUID, handle)
     else:
-        uid = uid.uuid.uuid4()
+        uid = uuid.uuid4()
     return uid.hex.upper()
 
 #-------------------------------------------------------------------------
