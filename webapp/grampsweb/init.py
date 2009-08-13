@@ -1,9 +1,9 @@
 import sys
 sys.path.append("..")
 import os
-os.environ["DJANGO_SETTINGS_MODULE"] = "gramps.settings"
+os.environ["DJANGO_SETTINGS_MODULE"] = "grampsweb.settings"
 
-from gramps.views.models import View
+from grampsweb.views.models import View
 
 for name,constr in [("Person", "Person", ), 
                     ("Event", "Event", ),

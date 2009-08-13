@@ -1,9 +1,6 @@
 from django.http import HttpResponse
-from gramps.views.models import View
-from gramps.views.views import detail, page, get_cursor
-from gramps.databases import gapi
 
-def index(request):
+def homepage(request):
     """
     Index of all views.
     """
@@ -20,14 +17,3 @@ def index(request):
     output += "<hr>"
     output += "<p>[<a href=\"/admin/\">Admin</a>]</p>"
     return HttpResponse(output)
-
-def dispatch(request, view=None, handle=None):
-    """
-    Dispatch page view to either detail or page.
-    """
-    if view and handle:
-        return detail(request, view, handle)
-    elif view:
-        return page(request, view)
-    return HttpResponse("Error")
-

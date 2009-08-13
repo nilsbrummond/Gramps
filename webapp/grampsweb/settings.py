@@ -12,7 +12,7 @@ MANAGERS = ADMINS
 # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
 DATABASE_ENGINE = 'sqlite3'           
 # Or path to database file if using sqlite3.
-DATABASE_NAME = '/home/dblank/gramps/gep-013-server/webapp/gramps/admin.db' 
+DATABASE_NAME = '/home/dblank/gramps/gep-013-server/webapp/grampsweb/gramps.sql' 
 DATABASE_USER = ''             # Not used with sqlite3.
 DATABASE_PASSWORD = ''         # Not used with sqlite3.
 DATABASE_HOST = ''             # Set to empty string for localhost. Not used with sqlite3.
@@ -65,12 +65,13 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
 )
 
-ROOT_URLCONF = 'gramps.urls'
+ROOT_URLCONF = 'grampsweb.urls'
 
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
+    "/home/dblank/gramps/gep-013-server/webapp/html/templates",
 )
 
 INSTALLED_APPS = (
@@ -79,8 +80,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.admin',
-    'gramps.views',
+    'grampsweb.views',
 )
 
 GRAMPS_PATH = "/home/dblank/gramps/gep-013-server/src"
-GRAMPS_DATABASE = "Test Data 50"
