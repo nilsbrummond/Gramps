@@ -1,3 +1,4 @@
+{% load my_tags %}
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE html "-//W3C//DTD XHTML 1.0 Strict//EN"
 	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -11,9 +12,9 @@
     <meta name="author" content="" />
     {{ link }}
     <link href="images/favicon.ico" type="image/x-icon" rel="shortcut icon" />
-    <link media="screen" href="styles/behaviour.css" type="text/css" rel="stylesheet" />
-    <link media="screen" href="styles/narrative-screen.css" type="text/css" rel="stylesheet" />
-    <link media="print" href="styles/narrative-print.css" type="text/css" rel="stylesheet" />
+    <link media="screen" href="/styles/behaviour.css" type="text/css" rel="stylesheet" />
+    <link media="screen" href="/styles/narrative-screen.css" type="text/css" rel="stylesheet" />
+    <link media="print" href="/styles/narrative-print.css" type="text/css" rel="stylesheet" />
 </head>
 <body id= "NarrativeWeb">
    <div id="header">
@@ -22,9 +23,7 @@
    <div id="navigation">
     {{ content }}
 
-{% for p in person_list %}
-    <li>{{ p.handle }} -- Gender: {{ p.gender }}</li>
-{% endfor %}
+    {% view_navigation %}
 
    </div>
    <div id="footer">
