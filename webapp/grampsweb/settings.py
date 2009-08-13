@@ -81,6 +81,7 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.admin',
     'grampsweb.views',
+    'grampsweb.tables',
 )
 
 GRAMPS_PATH = "/home/dblank/gramps/gep-013-server/src"
