@@ -25,9 +25,9 @@ class mGrampsType(models.Model):
     _DEFAULT = 0
     _DATAMAP = []
 
-    custom_name = models.CharField(max_length=40, blank=True)
+    name = models.CharField(max_length=40, blank=True)
     
-    def __unicode__(self): return self.custom_name
+    def __unicode__(self): return self.name
 
 class MarkerType(mGrampsType):
     from gen.lib.markertype import MarkerType
@@ -88,13 +88,9 @@ class MarkupType(mGrampsType):
     _DATAMAP = [] ## What is this type?
     val = models.IntegerField('markup type', choices=_DATAMAP, blank=False)
 
-class FamilyType(mGrampsType):
-    _DATAMAP = [] ## What is this type?
-    val = models.IntegerField('family type', choices=_DATAMAP, blank=False)
-
-class RepoType(mGrampsType):
-    _DATAMAP = [] ## What is this type?
-    val = models.IntegerField('repository type', choices=_DATAMAP, blank=False)
+class GenderType(mGrampsType):
+    _DATAMAP = [(2, 'Unknown'), (1, 'Male'), (0, 'Female')]
+    val = models.IntegerField('gender type', choices=_DATAMAP, blank=False)
 
 ### END GRAMPS TYPES 
 
@@ -170,6 +166,19 @@ class Name(DateObject, models.Model):
     sort_as = models.IntegerField(blank=True)
     display_as = models.IntegerField(blank=True)
 
+class Lds(models.Model):
+    lds_type = models.IntegerField()
+    place = models.ForeignKey('Place')
+    famc = models.ForeignKey('Family')
+    temple = models.TextField()
+    status = models.IntegerField()
+    private = models.BooleanField()
+
+class Markup(models.Model):
+    markup_type = models.ForeignKey('MarkupType')
+    value = models.TextField()
+    start_stop_list = models.TextField()
+
 class Address(models.Model):
     private = models.BooleanField()
 
@@ -192,41 +201,52 @@ class PrimaryObject(models.Model):
 
     handle = models.CharField(max_length=19, primary_key=True, unique=True)
     gramps_id =  models.CharField('gramps id', max_length=25, blank=True)
-    marker = models.ForeignKey(MarkerType, blank=False)
+    marker = models.ForeignKey('MarkerType', blank=False)
     change = models.DateTimeField('last changed')
     private = models.BooleanField('private')
 
     def __unicode__(self): return self.gramps_id 
 
-class Event(PrimaryObject, DateObject):
-    event_type = models.ForeignKey(EventType)
-    description = models.CharField('description', max_length=50, blank=True)
+class Person(PrimaryObject):
+    """
+    The model for the person object
+    """
+    gender_type = models.ForeignKey('GenderType')
 
-class Note(PrimaryObject):
-    note_type = models.ForeignKey(NoteType)
-    text  = models.TextField(blank=True)
-    format = models.IntegerField('format', blank=True)
+class Family(PrimaryObject):
+    father = models.ForeignKey('Person', related_name="father_ref", null=True, blank=True)
+    mother = models.ForeignKey('Person', related_name="mother_ref", null=True, blank=True)
+    family_rel_type = models.ForeignKey('FamilyRelType')
 
 class Source(PrimaryObject):
-    title = models.CharField(max_length=50)
-    author = models.CharField(max_length=50)
-    pubinfo = models.CharField(max_length=50)
-    abbrev = models.CharField(max_length=50)
+    title = models.CharField(max_length=50, blank=True)
+    author = models.CharField(max_length=50, blank=True)
+    pubinfo = models.CharField(max_length=50, blank=True)
+    abbrev = models.CharField(max_length=50, blank=True)
 
-class Place(PrimaryObject):
-    title = models.TextField()
-    main_location = models.CharField(max_length=25)
-    long = models.TextField()
-    lat = models.TextField()
-
-class Media(PrimaryObject):
-    path = models.TextField()
-    mime = models.TextField()
-    desc = models.TextField()
+class Event(PrimaryObject, DateObject):
+    event_type = models.ForeignKey('EventType')
+    description = models.CharField('description', max_length=50, blank=True)
 
 class Repository(PrimaryObject):
-    repo_type = models.ForeignKey(RepoType)
-    name = models.TextField()
+    repository_type = models.ForeignKey('RepositoryType')
+    name = models.TextField(blank=True)
+
+class Place(PrimaryObject):
+    title = models.TextField(blank=True)
+    main_location = models.CharField(max_length=25, blank=True)
+    long = models.TextField(blank=True)
+    lat = models.TextField(blank=True)
+
+class Media(PrimaryObject):
+    path = models.TextField(blank=True)
+    mime = models.TextField(blank=True)
+    desc = models.TextField(blank=True)
+
+class Note(PrimaryObject):
+    note_type = models.ForeignKey('NoteType')
+    text  = models.TextField(blank=True)
+    preformatted = models.BooleanField('preformatted')
 
 #--------------------------------------------------------------------------------
 #
@@ -243,27 +263,27 @@ class BaseRef(models.Model):
     private = models.BooleanField()
   
 class NoteRef(BaseRef):
-    note = models.ForeignKey(Note)
+    note = models.ForeignKey('Note')
 
     def __unicode__(self):
         return "NoteRef to " + str(self.object)
 
 class SourceRef(BaseRef, DateObject):
     page = models.CharField(max_length=50)
-    source = models.ForeignKey(Source)
+    source = models.ForeignKey('Source')
     confidence = models.IntegerField()
 
     def __unicode__(self):
         return "SourceRef to " + str(self.object)
 
 class EventRef(BaseRef):
-    role_type = models.ForeignKey(EventRoleType)
+    role_type = models.ForeignKey('EventRoleType')
 
     def __unicode__(self):
         return "EventRef to " + str(self.object)
 
 class RepositoryRef(BaseRef):
-    source_media_type = models.ForeignKey(SourceMediaType)
+    source_media_type = models.ForeignKey('SourceMediaType')
     call_number = models.CharField(max_length=50)
 
     def __unicode__(self):
@@ -276,8 +296,8 @@ class PersonRef(BaseRef):
         return "PersonRef to " + str(self.object)
 
 class ChildRef(BaseRef):
-    father_rel_type = models.ForeignKey(FamilyRelType, related_name="father_ref")
-    mother_rel_type = models.ForeignKey(FamilyRelType, related_name="mother_ref")
+    father_rel_type = models.ForeignKey('FamilyRelType', related_name="father_rel")
+    mother_rel_type = models.ForeignKey('FamilyRelType', related_name="mother_rel")
 
     def __unicode__(self):
         return "ChildRef to " + str(self.object)
@@ -293,52 +313,68 @@ class MediaRef(BaseRef):
 
 #--------------------------------------------------------------------------------
 #
-# Primary tables that mention other objects
+# Functions
 #
 #--------------------------------------------------------------------------------
 
-class Person(PrimaryObject):
-    """
-    The model for the person object
-    """
-    GENDERMAP = [(2, 'Unknown'), (1, 'Male'), (0, 'Female')]
-    gender = models.IntegerField(blank=False, choices=GENDERMAP)
+def new_Person():
+    m = MarkerType.objects.get(name="")
+    p = Person(handle=create_id(), marker=m, change=Now())
+    p.gender_type = GenderType.objects.get(name="Unknown") 
+    return p
 
-class Family(PrimaryObject):
-    father = models.ForeignKey(Person, related_name="father_ref", blank=True)
-    mother = models.ForeignKey(Person, related_name="mother_ref", blank=True)
-    family_type = models.ForeignKey(FamilyType)
+def new_Family():
+    m = MarkerType.objects.get(name="")
+    frt = FamilyRelType.objects.get(name="Unknown")
+    f = Family(handle=create_id(), marker=m, change=Now(), family_rel_type=frt)
+    return f
 
+def new_Source():
+    m = MarkerType.objects.get(name="")
+    s = Source(handle=create_id(), marker=m, change=Now())
+    return s
+
+def new_Event():
+    m = MarkerType.objects.get(name="")
+    et = EventType.objects.get(name="Unknown")
+    e = Event(handle=create_id(), marker=m, change=Now(), event_type=et)
+    e.set_date_from_gdate( GDate() )
+    return e
+
+def new_Repository():
+    m = MarkerType.objects.get(name="")
+    rt = RepositoryType.objects.get(name="Unknown")
+    r = Repository(handle=create_id(), marker=m, change=Now(), repository_type=rt)
+    return r
+
+def new_Place():
+    m = MarkerType.objects.get(name="")
+    p = Place(handle=create_id(), marker=m, change=Now())
+    return p
+    
+def new_Media():
+    m = MarkerType.objects.get(name="")
+    media = Media(handle=create_id(), marker=m, change=Now())
+    return media
+
+def new_Note():
+    m = MarkerType.objects.get(name="")
+    note_type = NoteType.objects.get(name="Unknown")
+    note = Note(handle=create_id(), marker=m, change=Now(), note_type=note_type, 
+                preformatted=False)
+    return note
 
 #--------------------------------------------------------------------------------
 #
-# Misc tables that mention other objects
+# Testing
 #
 #--------------------------------------------------------------------------------
-
-class Lds(models.Model):
-    lds_type = models.IntegerField()
-    place = models.ForeignKey(Place)
-    famc = models.ForeignKey(Family)
-    temple = models.TextField()
-    status = models.IntegerField()
-    private = models.BooleanField()
-
-class Markup(models.Model):
-    markup_type = models.ForeignKey(MarkupType)
-    value = models.TextField()
-    start_stop_list = models.TextField()
 
 def main():
-    m1 = MarkerType(val=0)
-    m1.save()
-    p1 = Person(handle=create_id(), marker=m1, change=Now())
-    p1.gender = 2
-    p1.save()
-    n1 = Name()
-    e1 = Event(handle=create_id())
-    e1.set_date_from_gdate( GDate("between September 1, 1962 and 1963") )
-    return e1
+    for new_Item in [new_Person, new_Family, new_Source, new_Event, new_Repository,
+                     new_Place, new_Media, new_Note]:
+        obj = new_Item()
+        obj.save()
 
 if __name__ == "__main__":
-    e1 = main()
+    main()

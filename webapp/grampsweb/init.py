@@ -22,6 +22,8 @@ from gen.lib.srcmediatype import SourceMediaType
 from gen.lib.eventroletype import EventRoleType
 from gen.lib.notetype import NoteType
 
+from tables.models import GenderType
+
 def get_datamap(x):
     """
     Returns (code, Name) for a Gramps type tuple.
@@ -56,19 +58,23 @@ for name,constr in [("Person", "Person", ),
 
 type_models = [MarkerType, NameType, AttributeType, UrlType, ChildRefType, 
                RepositoryType, EventType, FamilyRelType, SourceMediaType, 
-               EventRoleType, NoteType]
-# Need defaults for: MarkupType, FamilyType, RepoType?
+               EventRoleType, NoteType, GenderType]
+# Need defaults for: MarkupType
 for type in type_models:
     count = 1
+    # Add each code:
     for tuple in type._DATAMAP:
-        val, name = get_datamap(tuple)
+        if len(tuple) == 3: # GRAMPS BSDDB style
+            val, name = get_datamap(tuple)
+        else: # NEW SQL based
+            val, name = tuple
         print "   {"
         print "      \"model\": \"tables.%s\"," % type.__name__.lower()
         print "      \"pk\": %d," % count
         print "      \"fields\":"
         print "         {"
         print "            \"val\"   : %d," % val
-        print "            \"custom_name\": \"%s\"" % name
+        print "            \"name\": \"%s\"" % name
         print "         }"
         print "   }",
         # if it is the last one of the last one, no comma
