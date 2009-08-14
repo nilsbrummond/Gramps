@@ -129,7 +129,7 @@ class Date(models.Model):
     sortval = models.IntegerField()
     newyear = models.IntegerField()
 
-class address(models.Model):
+class Address(models.Model):
     private = models.BooleanField()
 
 ## location
@@ -208,7 +208,7 @@ class NoteRef(BaseRef):
     note = models.ForeignKey(Note)
 
     def __unicode__(self):
-        return "NoteRef to " + self.object
+        return "NoteRef to " + str(self.object)
 
 class SourceRef(BaseRef):
     page = models.CharField(max_length=50)
@@ -216,33 +216,33 @@ class SourceRef(BaseRef):
     confidence = models.IntegerField()
 
     def __unicode__(self):
-        return "SourceRef to " + self.object
+        return "SourceRef to " + str(self.object)
 
 class EventRef(BaseRef):
     role_type = models.ForeignKey(EventRoleType)
 
     def __unicode__(self):
-        return "EventRef to " + self.object
+        return "EventRef to " + str(self.object)
 
 class RepositoryRef(BaseRef):
     source_media_type = models.ForeignKey(SourceMediaType)
     call_number = models.CharField(max_length=50)
 
     def __unicode__(self):
-        return "RepositoryRef to " + self.object
+        return "RepositoryRef to " + str(self.object)
 
 class PersonRef(BaseRef):
     description = models.CharField(max_length=50)
 
     def __unicode__(self):
-        return "PersonRef to " + self.object
+        return "PersonRef to " + str(self.object)
 
 class ChildRef(BaseRef):
     father_rel_type = models.ForeignKey(FamilyRelType, related_name="father_ref")
     mother_rel_type = models.ForeignKey(FamilyRelType, related_name="mother_ref")
 
     def __unicode__(self):
-        return "ChildRef to " + self.object
+        return "ChildRef to " + str(self.object)
 
 class MediaRef(BaseRef):
     x1 = models.IntegerField()
@@ -251,7 +251,7 @@ class MediaRef(BaseRef):
     y2 = models.IntegerField()
 
     def __unicode__(self):
-        return "MediaRef to " + self.object
+        return "MediaRef to " + str(self.object)
 
 #--------------------------------------------------------------------------------
 #
