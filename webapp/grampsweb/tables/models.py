@@ -2,6 +2,11 @@ from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 
+from gen.lib.date import Date as GDate
+
+## Type tables are initially filled with their core values in init.py
+## which is run by make.
+
 ### START GRAMPS TYPES  
 def get_datamap(grampsclass):
     return [(x[0],x[2]) for x in grampsclass._DATAMAP]
@@ -12,17 +17,15 @@ class mGrampsType(models.Model):
     Types are enumerated integers. One integer corresponds with custom, then 
     custom_type holds the type name
     """
+    class Meta: abstract = True
+
     _CUSTOM = 0
     _DEFAULT = 0
     _DATAMAP = []
 
     custom_name = models.CharField(max_length=40, blank=True)
     
-    class Meta:
-        abstract = True
-
-    def __unicode__(self):
-        return self.custom_name
+    def __unicode__(self): return self.custom_name
 
 class MarkerType(mGrampsType):
     from gen.lib.markertype import MarkerType
@@ -99,7 +102,59 @@ class RepoType(mGrampsType):
 #
 #--------------------------------------------------------------------------------
 
-class Name(models.Model):
+class DateObject(models.Model):
+    class Meta: abstract = True
+
+    calendar = models.IntegerField()
+    modifier = models.IntegerField()
+    quality = models.IntegerField()
+    day1 = models.IntegerField()
+    month1 = models.IntegerField()
+    year1 = models.IntegerField()
+    slash1 = models.BooleanField()
+    day2 = models.IntegerField(blank=True)
+    month2 = models.IntegerField(blank=True)
+    year2 = models.IntegerField(blank=True)
+    slash2 = models.BooleanField(blank=True)
+    text = models.CharField(max_length=80, blank=True)
+    sortval = models.IntegerField()
+    newyear = models.IntegerField()
+
+    def set_date_from_datetime(self, date_time, text=""):
+        """
+        Sets Date fields from an object that has year, month, and day
+        properties.
+        """
+        y, m, d = date_time.year, date_time.month, date_time.day
+        self.set_ymd(self, y, m, d, text=text)
+
+    def set_date_from_ymd(self, y, m, d, text=""):
+        """
+        Sets Date fields from a year, month, and day.
+        """
+        gdate = GDate(y, m, d)
+        gdate.text = text
+        self.set_date_from_gdate(gdate)
+
+    def set_date_from_gdate(self, gdate):
+        """
+        Sets Date fields from a Gramps date object.
+        """
+        (self.calendar, self.modifier, self.quality, dateval, self.text, 
+         self.sortval, self.newyear) = gdate.serialize()
+        if dateval is None:
+            (self.day1, self.month1, self.year1, self.slash1) = 0, 0, 0, False
+            (self.day2, self.month2, self.year2, self.slash2) = 0, 0, 0, False
+        elif len(dateval) == 8:
+            (self.day1, self.month1, self.year1, self.slash1, 
+             self.day2, self.month2, self.year2, self.slash2) = dateval
+        elif len(dateval) == 4:
+            (self.day1, self.month1, self.year1, self.slash1) = dateval
+            (self.day2, self.month2, self.year2, self.slash2) = 0, 0, 0, False
+
+class Name(DateObject, models.Model):
+    person = models.ForeignKey('Person')
+    order = models.PositiveIntegerField()
     primary_name = models.BooleanField('primary')
     private = models.BooleanField('private')
     first_name = models.TextField(blank=True)
@@ -112,22 +167,6 @@ class Name(models.Model):
     group_as = models.TextField(blank=True)
     sort_as = models.IntegerField(blank=True)
     display_as = models.IntegerField(blank=True)
-
-class Date(models.Model):
-    calendar = models.IntegerField()
-    modifier = models.IntegerField()
-    quality = models.IntegerField()
-    day1 = models.IntegerField()
-    month1 = models.IntegerField()
-    year1 = models.IntegerField()
-    slash1 = models.BooleanField()
-    day2 = models.IntegerField()
-    month2 = models.IntegerField()
-    year2 = models.IntegerField()
-    slash2 = models.BooleanField()
-    text = models.CharField(max_length=80)
-    sortval = models.IntegerField()
-    newyear = models.IntegerField()
 
 class Address(models.Model):
     private = models.BooleanField()
@@ -147,19 +186,17 @@ class PrimaryObject(models.Model):
     """
     Common attribute of all primary objects with key on the handle
     """
+    class Meta: abstract = True
+
     handle = models.CharField(max_length=19, primary_key=True, unique=True)
     gramps_id =  models.CharField('gramps id', max_length=25)
     marker = models.ForeignKey(MarkerType, blank=False)
     change = models.DateTimeField('last changed')
     private = models.BooleanField('private')
 
-    class Meta:
-        abstract = True
+    def __unicode__(self): return self.gramps_id 
 
-    def __unicode__(self):
-        return self.gramps_id 
-
-class Event(PrimaryObject):
+class Event(PrimaryObject, DateObject):
     event_type = models.ForeignKey(EventType)
     description = models.CharField('description', max_length=50, blank=True)
 
@@ -196,21 +233,20 @@ class Repository(PrimaryObject):
 #--------------------------------------------------------------------------------
 
 class BaseRef(models.Model):
+    class Meta: abstract = True
+
     object_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
     object = generic.GenericForeignKey("object_type", "object_id")
     private = models.BooleanField()
   
-    class Meta:
-        abstract = True
-
 class NoteRef(BaseRef):
     note = models.ForeignKey(Note)
 
     def __unicode__(self):
         return "NoteRef to " + str(self.object)
 
-class SourceRef(BaseRef):
+class SourceRef(BaseRef, DateObject):
     page = models.CharField(max_length=50)
     source = models.ForeignKey(Source)
     confidence = models.IntegerField()
@@ -265,10 +301,6 @@ class Person(PrimaryObject):
     """
     GENDERMAP = [(2, 'Unknown'), (1, 'Male'), (0, 'Female')]
     gender = models.IntegerField(blank=False, choices=GENDERMAP)
-    death_event = models.ForeignKey(EventRef, related_name="death_ref", blank=True)
-    birth_event = models.ForeignKey(EventRef, related_name="birth_ref", blank=True)
-    primary_name = models.ForeignKey(Name, related_name="primary_name_ref", unique=True, blank=True)
-    alternate_names = models.ForeignKey(Name, related_name="alternative_names_ref", unique=False, blank=True)
 
 class Family(PrimaryObject):
     father = models.ForeignKey(Person, related_name="father_ref", blank=True)
@@ -295,3 +327,10 @@ class Markup(models.Model):
     value = models.TextField()
     start_stop_list = models.TextField()
 
+def main():
+    e1 = Event()
+    e1.set_date_from_gdate( GDate("between September 1, 1962 and 1963") )
+    return e1
+
+if __name__ == "__main__":
+    e1 = main()

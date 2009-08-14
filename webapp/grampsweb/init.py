@@ -1,7 +1,15 @@
-import sys
-import os
+"""
+Creates a JSON representation of data for Django's fixture
+architecture. We could have done this in Python, or SQL, 
+but this makes it useful for all Django-based backends
+but still puts it into their syncdb API.
+"""
 
-sys.path.append("../../src")
+import sys
+
+import settings
+
+sys.path.append(settings.GRAMPS_PATH) # add gramps to path
 from gen.lib.markertype import MarkerType
 from gen.lib.nametype import NameType
 from gen.lib.attrtype import AttributeType
@@ -15,7 +23,12 @@ from gen.lib.eventroletype import EventRoleType
 from gen.lib.notetype import NoteType
 
 def get_datamap(x):
+    """
+    Returns (code, Name) for a Gramps type tuple.
+    """
     return (x[0],x[2])
+
+## Add the data for the Views:
 
 print "["
 count = 1
@@ -39,9 +52,13 @@ for name,constr in [("Person", "Person", ),
     print "   },"
     count += 1
 
-for type in [MarkerType, NameType, AttributeType, UrlType, ChildRefType, 
-             RepositoryType, EventType, FamilyRelType, SourceMediaType, 
-             EventRoleType, NoteType]:
+## Add the data for the type models:
+
+type_models = [MarkerType, NameType, AttributeType, UrlType, ChildRefType, 
+               RepositoryType, EventType, FamilyRelType, SourceMediaType, 
+               EventRoleType, NoteType]
+# Need defaults for: MarkupType, FamilyType, RepoType?
+for type in type_models:
     count = 1
     for tuple in type._DATAMAP:
         val, name = get_datamap(tuple)
@@ -54,7 +71,8 @@ for type in [MarkerType, NameType, AttributeType, UrlType, ChildRefType,
         print "            \"custom_name\": \"%s\"" % name
         print "         }"
         print "   }",
-        if type == NoteType and count == len(type._DATAMAP):
+        # if it is the last one of the last one, no comma
+        if type == type_models[-1] and count == len(type._DATAMAP):
             print
         else:
             print ","
