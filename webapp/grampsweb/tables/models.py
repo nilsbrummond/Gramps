@@ -2,8 +2,7 @@ from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 
-from gen.lib.date import Date as GDate
-from gen.lib.date import Today as Now
+from gen.lib.date import Date as GDate, Today
 from Utils import create_id, create_uid
 
 ## Type tables are initially filled with their core values in init.py
@@ -84,10 +83,6 @@ class NoteType(mGrampsType):
     _DATAMAP = get_datamap(NoteType)
     val = models.IntegerField('note type', choices=_DATAMAP, blank=False)
 
-class MarkupType(mGrampsType):
-    _DATAMAP = [] ## What is this type?
-    val = models.IntegerField('markup type', choices=_DATAMAP, blank=False)
-
 class GenderType(mGrampsType):
     _DATAMAP = [(2, 'Unknown'), (1, 'Male'), (0, 'Female')]
     val = models.IntegerField('gender type', choices=_DATAMAP, blank=False)
@@ -96,7 +91,7 @@ class GenderType(mGrampsType):
 
 #--------------------------------------------------------------------------------
 #
-# Misc Tables
+# Support definitions
 #
 #--------------------------------------------------------------------------------
 
@@ -110,10 +105,10 @@ class DateObject(models.Model):
     month1 = models.IntegerField()
     year1 = models.IntegerField()
     slash1 = models.BooleanField()
-    day2 = models.IntegerField(blank=True)
-    month2 = models.IntegerField(blank=True)
-    year2 = models.IntegerField(blank=True)
-    slash2 = models.BooleanField(blank=True)
+    day2 = models.IntegerField(blank=True, null=True)
+    month2 = models.IntegerField(blank=True, null=True)
+    year2 = models.IntegerField(blank=True, null=True)
+    slash2 = models.BooleanField(blank=True, null=True)
     text = models.CharField(max_length=80, blank=True)
     sortval = models.IntegerField()
     newyear = models.IntegerField()
@@ -150,43 +145,6 @@ class DateObject(models.Model):
             (self.day1, self.month1, self.year1, self.slash1) = dateval
             (self.day2, self.month2, self.year2, self.slash2) = 0, 0, 0, False
 
-class Name(DateObject, models.Model):
-    person = models.ForeignKey('Person')
-    order = models.PositiveIntegerField()
-    primary_name = models.BooleanField('primary')
-    private = models.BooleanField('private')
-    first_name = models.TextField(blank=True)
-    surname = models.TextField(blank=True)
-    suffix = models.TextField(blank=True)
-    title = models.TextField(blank=True)
-    prefix = models.TextField(blank=True)
-    patronymic = models.TextField(blank=True)
-    call = models.TextField(blank=True)
-    group_as = models.TextField(blank=True)
-    sort_as = models.IntegerField(blank=True)
-    display_as = models.IntegerField(blank=True)
-
-class Lds(models.Model):
-    lds_type = models.IntegerField()
-    place = models.ForeignKey('Place')
-    famc = models.ForeignKey('Family')
-    temple = models.TextField()
-    status = models.IntegerField()
-    private = models.BooleanField()
-
-class Markup(models.Model):
-    markup_type = models.ForeignKey('MarkupType')
-    value = models.TextField()
-    start_stop_list = models.TextField()
-
-class Address(models.Model):
-    private = models.BooleanField()
-
-## location
-## attribute
-## url
-## datamap
-
 #--------------------------------------------------------------------------------
 #
 # Primary Tables
@@ -201,8 +159,8 @@ class PrimaryObject(models.Model):
 
     handle = models.CharField(max_length=19, primary_key=True, unique=True)
     gramps_id =  models.CharField('gramps id', max_length=25, blank=True)
-    marker = models.ForeignKey('MarkerType', blank=False)
-    change = models.DateTimeField('last changed')
+    marker_type = models.ForeignKey('MarkerType')
+    last_changed = models.DateTimeField('last changed', auto_now=True)
     private = models.BooleanField('private')
 
     def __unicode__(self): return self.gramps_id 
@@ -250,6 +208,85 @@ class Note(PrimaryObject):
 
 #--------------------------------------------------------------------------------
 #
+# Secondary Tables
+#
+#--------------------------------------------------------------------------------
+
+class SecondaryObject(models.Model):
+    """
+    We use interlinked objects, secondary object is the table for primary 
+    objects to refer to when linking to non primary objects
+    """
+    class Meta: abstract = True
+
+    private = models.BooleanField()
+    last_changed = models.DateTimeField('last changed', auto_now=True)
+
+class Name(DateObject, SecondaryObject):
+    person = models.ForeignKey('Person')
+    order = models.PositiveIntegerField()
+    primary_name = models.BooleanField('primary')
+    first_name = models.TextField(blank=True)
+    surname = models.TextField(blank=True)
+    suffix = models.TextField(blank=True)
+    title = models.TextField(blank=True)
+    prefix = models.TextField(blank=True)
+    patronymic = models.TextField(blank=True)
+    call = models.TextField(blank=True)
+    group_as = models.TextField(blank=True)
+    sort_as = models.IntegerField(blank=True)
+    display_as = models.IntegerField(blank=True)
+
+class Lds(SecondaryObject):
+    """
+    BAPTISM         = 0
+    ENDOWMENT       = 1
+    SEAL_TO_PARENTS = 2
+    SEAL_TO_SPOUSE  = 3
+    CONFIRMATION    = 4
+    
+    DEFAULT_TYPE = BAPTISM
+
+
+    STATUS_NONE      = 0
+    STATUS_BIC       = 1
+    STATUS_CANCELED  = 2
+    STATUS_CHILD     = 3
+    STATUS_CLEARED   = 4
+    STATUS_COMPLETED = 5
+    STATUS_DNS       = 6
+    STATUS_INFANT    = 7
+    STATUS_PRE_1970  = 8
+    STATUS_QUALIFIED = 9
+    STATUS_DNS_CAN   = 10
+    STATUS_STILLBORN = 11
+    STATUS_SUBMITTED = 12
+    STATUS_UNCLEARED = 13
+
+    DEFAULT_STATUS = STATUS_NONE
+    """
+    lds_type = models.IntegerField() # FIXME
+    place = models.ForeignKey('Place')
+    famc = models.ForeignKey('Family')
+    temple = models.TextField(blank=True)
+    status = models.IntegerField() # FIXME
+
+class Markup(models.Model):
+    note = models.ForeignKey('Note')
+    order = models.PositiveIntegerField()
+    string = models.TextField(blank=True)
+    start_stop_list = models.TextField(default="[]")
+
+class Address(SecondaryObject):
+    pass
+
+## location
+## attribute
+## url
+## datamap
+
+#--------------------------------------------------------------------------------
+#
 # Reference Objects
 #
 #--------------------------------------------------------------------------------
@@ -260,6 +297,7 @@ class BaseRef(models.Model):
     object_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
     object = generic.GenericForeignKey("object_type", "object_id")
+    last_changed = models.DateTimeField('last changed', auto_now=True)
     private = models.BooleanField()
   
 class NoteRef(BaseRef):
@@ -317,52 +355,82 @@ class MediaRef(BaseRef):
 #
 #--------------------------------------------------------------------------------
 
+## Primary:
+
 def new_Person():
     m = MarkerType.objects.get(name="")
-    p = Person(handle=create_id(), marker=m, change=Now())
+    p = Person(handle=create_id(), marker_type=m)
     p.gender_type = GenderType.objects.get(name="Unknown") 
     return p
 
 def new_Family():
     m = MarkerType.objects.get(name="")
     frt = FamilyRelType.objects.get(name="Unknown")
-    f = Family(handle=create_id(), marker=m, change=Now(), family_rel_type=frt)
+    f = Family(handle=create_id(), marker_type=m, family_rel_type=frt)
     return f
 
 def new_Source():
     m = MarkerType.objects.get(name="")
-    s = Source(handle=create_id(), marker=m, change=Now())
+    s = Source(handle=create_id(), marker_type=m)
     return s
 
 def new_Event():
     m = MarkerType.objects.get(name="")
     et = EventType.objects.get(name="Unknown")
-    e = Event(handle=create_id(), marker=m, change=Now(), event_type=et)
+    e = Event(handle=create_id(), marker_type=m, event_type=et)
     e.set_date_from_gdate( GDate() )
     return e
 
 def new_Repository():
     m = MarkerType.objects.get(name="")
     rt = RepositoryType.objects.get(name="Unknown")
-    r = Repository(handle=create_id(), marker=m, change=Now(), repository_type=rt)
+    r = Repository(handle=create_id(), marker_type=m, repository_type=rt)
     return r
 
 def new_Place():
     m = MarkerType.objects.get(name="")
-    p = Place(handle=create_id(), marker=m, change=Now())
+    p = Place(handle=create_id(), marker_type=m)
     return p
     
 def new_Media():
     m = MarkerType.objects.get(name="")
-    media = Media(handle=create_id(), marker=m, change=Now())
+    media = Media(handle=create_id(), marker_type=m)
     return media
 
 def new_Note():
     m = MarkerType.objects.get(name="")
     note_type = NoteType.objects.get(name="Unknown")
-    note = Note(handle=create_id(), marker=m, change=Now(), note_type=note_type, 
+    note = Note(handle=create_id(), marker_type=m, note_type=note_type, 
                 preformatted=False)
     return note
+
+## Secondary:
+
+def new_Name(person=None):
+    if not person:
+        person = new_Person()
+    m = MarkerType.objects.get(name="")
+    n = Name(person=person)
+    n.set_date_from_gdate(Today())
+    n.order = 1
+    n.sort_as = 1
+    n.display_as = 1
+    return n
+
+def new_Markup(note=None):
+    if not note:
+        note = new_Note()
+    markup = Markup(note=note)
+    markup.order = 1
+    return markup
+
+def new_Lds(place=None, famc=None):
+    if not place:
+        place = new_Place()
+    if not famc:
+        famc = new_Family()
+    lds = Lds(lds_type=0, status=0, place=place, famc=famc)
+    return lds
 
 #--------------------------------------------------------------------------------
 #
@@ -372,7 +440,7 @@ def new_Note():
 
 def main():
     for new_Item in [new_Person, new_Family, new_Source, new_Event, new_Repository,
-                     new_Place, new_Media, new_Note]:
+                     new_Place, new_Media, new_Note, new_Name, new_Markup, new_Lds]:
         obj = new_Item()
         obj.save()
 

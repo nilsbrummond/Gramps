@@ -59,7 +59,6 @@ for name,constr in [("Person", "Person", ),
 type_models = [MarkerType, NameType, AttributeType, UrlType, ChildRefType, 
                RepositoryType, EventType, FamilyRelType, SourceMediaType, 
                EventRoleType, NoteType, GenderType]
-# Need defaults for: MarkupType
 for type in type_models:
     count = 1
     # Add each code:
