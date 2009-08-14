@@ -3,6 +3,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 
 from gen.lib.date import Date as GDate
+from gen.lib.date import Today as Now
+from Utils import create_id, create_uid
 
 ## Type tables are initially filled with their core values in init.py
 ## which is run by make.
@@ -189,7 +191,7 @@ class PrimaryObject(models.Model):
     class Meta: abstract = True
 
     handle = models.CharField(max_length=19, primary_key=True, unique=True)
-    gramps_id =  models.CharField('gramps id', max_length=25)
+    gramps_id =  models.CharField('gramps id', max_length=25, blank=True)
     marker = models.ForeignKey(MarkerType, blank=False)
     change = models.DateTimeField('last changed')
     private = models.BooleanField('private')
@@ -328,7 +330,13 @@ class Markup(models.Model):
     start_stop_list = models.TextField()
 
 def main():
-    e1 = Event()
+    m1 = MarkerType(val=0)
+    m1.save()
+    p1 = Person(handle=create_id(), marker=m1, change=Now())
+    p1.gender = 2
+    p1.save()
+    n1 = Name()
+    e1 = Event(handle=create_id())
     e1.set_date_from_gdate( GDate("between September 1, 1962 and 1963") )
     return e1
 
