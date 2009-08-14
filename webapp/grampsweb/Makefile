@@ -1,10 +1,10 @@
 # Initialize GRAMPS Django site
 
-init: update
-	python init.py
-
-update:
+update: init
 	python manage.py syncdb
+
+init: 
+	python init.py > tables/fixtures/initial_data.json
 
 clean:
 	rm -f gramps.sql
