@@ -259,6 +259,9 @@ class Name(DateObject, SecondaryObject):
 
     person = models.ForeignKey('Person')
 
+    def __unicode__(self):
+        return self.surname + ", " + self.first_name
+
 class Lds(SecondaryObject):
     """
     BAPTISM         = 0
