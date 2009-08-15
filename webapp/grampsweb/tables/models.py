@@ -172,6 +172,7 @@ class Person(PrimaryObject):
     The model for the person object
     """
     gender_type = models.ForeignKey('GenderType')
+    references = generic.GenericRelation('PersonRef', related_name="refs")
 
 class Family(PrimaryObject):
     father = models.ForeignKey('Person', related_name="father_ref", null=True, blank=True)
@@ -184,14 +185,17 @@ class Source(PrimaryObject):
     author = models.CharField(max_length=50, blank=True)
     pubinfo = models.CharField(max_length=50, blank=True)
     abbrev = models.CharField(max_length=50, blank=True)
+    references = generic.GenericRelation('SourceRef', related_name="refs")
 
 class Event(PrimaryObject, DateObject):
     event_type = models.ForeignKey('EventType')
     description = models.CharField('description', max_length=50, blank=True)
+    references = generic.GenericRelation('EventRef', related_name="refs")
 
 class Repository(PrimaryObject):
     repository_type = models.ForeignKey('RepositoryType')
     name = models.TextField(blank=True)
+    references = generic.GenericRelation('RepositoryRef', related_name="refs")
 
 class Place(PrimaryObject):
     title = models.TextField(blank=True)
@@ -203,11 +207,13 @@ class Media(PrimaryObject):
     path = models.TextField(blank=True)
     mime = models.TextField(blank=True)
     desc = models.TextField(blank=True)
+    references = generic.GenericRelation('MediaRef', related_name="refs")
 
 class Note(PrimaryObject):
     note_type = models.ForeignKey('NoteType')
     text  = models.TextField(blank=True)
     preformatted = models.BooleanField('preformatted')
+    references = generic.GenericRelation('NoteRef', related_name="refs")
 
 #--------------------------------------------------------------------------------
 #
@@ -300,26 +306,27 @@ class BaseRef(models.Model):
 
     object_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
-    object = generic.GenericForeignKey("object_type", "object_id")
+    content = generic.GenericForeignKey("object_type", "object_id")
     last_changed = models.DateTimeField('last changed', auto_now=True)
     private = models.BooleanField()
   
 class NoteRef(BaseRef):
-    note = models.ForeignKey('Note')
+    note = models.OneToOneField('Note')
 
     def __unicode__(self):
         return "NoteRef to " + str(self.object)
 
 class SourceRef(BaseRef, DateObject):
     page = models.CharField(max_length=50)
-    source = models.ForeignKey('Source')
     confidence = models.IntegerField()
+    source = models.OneToOneField('Source')
 
     def __unicode__(self):
         return "SourceRef to " + str(self.object)
 
 class EventRef(BaseRef):
     role_type = models.ForeignKey('EventRoleType')
+    event = models.OneToOneField('Event')
 
     def __unicode__(self):
         return "EventRef to " + str(self.object)
@@ -327,12 +334,14 @@ class EventRef(BaseRef):
 class RepositoryRef(BaseRef):
     source_media_type = models.ForeignKey('SourceMediaType')
     call_number = models.CharField(max_length=50)
+    repository = models.OneToOneField('Repository')
 
     def __unicode__(self):
         return "RepositoryRef to " + str(self.object)
 
 class PersonRef(BaseRef):
     description = models.CharField(max_length=50)
+    person = models.OneToOneField('Person')
 
     def __unicode__(self):
         return "PersonRef to " + str(self.object)
@@ -340,6 +349,7 @@ class PersonRef(BaseRef):
 class ChildRef(BaseRef):
     father_rel_type = models.ForeignKey('FamilyRelType', related_name="father_rel")
     mother_rel_type = models.ForeignKey('FamilyRelType', related_name="mother_rel")
+    child = models.OneToOneField('Person')
 
     def __unicode__(self):
         return "ChildRef to " + str(self.object)
@@ -349,6 +359,7 @@ class MediaRef(BaseRef):
     y1 = models.IntegerField()
     x2 = models.IntegerField()
     y2 = models.IntegerField()
+    media = models.OneToOneField('Media')
 
     def __unicode__(self):
         return "MediaRef to " + str(self.object)
@@ -468,6 +479,23 @@ def new_Lds(place=None, famc=None):
     lds.save()
     return lds
     
+def new_NoteRef():
+    note = new_Note()
+    person = new_Person()
+    family = new_Family()
+    #note_ref = NoteRef(content=person, note=note)
+    #note_ref.save()
+    #note_ref = NoteRef(referenced_by=family, note=note)
+    #note_ref.save()
+    #return note_ref
+
+def new_SourceRef():
+    note = new_Note()
+    source = new_Source()
+    source_ref = SourceRef(content=note, source=source)
+    source_ref.save()
+    return source_ref
+
 #--------------------------------------------------------------------------------
 #
 # Testing
@@ -476,7 +504,8 @@ def new_Lds(place=None, famc=None):
 
 def main():
     for new_Item in [new_Person, new_Family, new_Source, new_Event, new_Repository,
-                     new_Place, new_Media, new_Note, new_Name, new_Markup, new_Lds]:
+                     new_Place, new_Media, new_Note, new_Name, new_Markup, new_Lds,
+                     new_NoteRef]:
         print new_Item.__name__
         obj = new_Item()
 
