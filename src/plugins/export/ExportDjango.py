@@ -59,13 +59,13 @@ import gen.lib
 
 #django initialization
 if "DJANGO_SETTINGS_MODULE" not in os.environ:
-    loc = os.environ["DJANGO_SETTINGS_MODULE"] = 'nonni.settings'
+    loc = os.environ["DJANGO_SETTINGS_MODULE"] = 'settings'
 #make sure django can find the webapp modules
 sys.path += [const.ROOT_DIR + os.sep + '..' + os.sep + 'webapp' ]
-sys.path += [const.ROOT_DIR + os.sep + '..' + os.sep + 'webapp' + os.sep + 'nonni' ]
+sys.path += [const.ROOT_DIR + os.sep + '..' + os.sep + 'webapp' + os.sep + 'grampsweb' ]
 print sys.path
 
-import nonna.models
+import grampsweb.tables.models as django
 
 CUSTOMMARKER = {}
 #-------------------------------------------------------------------------
@@ -96,7 +96,7 @@ def makeDB():
 
     """
     print 'We assume you did   \n' \
-          '  python manage.py sqlclear nonna\n' \
+          '  python manage.py sqlclear tables\n' \
           '  python manage.py syncdb  '
 
 def get_datamap(grampsclass):
@@ -209,29 +209,6 @@ def get_datamap(grampsclass):
 ##             marker1, 
 ##             private)
 ##
-##def export_note(db, data):
-##    (handle, gid, styled_text, format, note_type,
-##     change, marker, private) = data
-##    text, markup_list = styled_text
-##    db.query("""INSERT into note (
-##                  handle,
-##                  gid,
-##                  text,
-##                  format,
-##                  note_type1,
-##                  note_type2,
-##                  change,
-##                  marker0,
-##                  marker1,
-##                  private) values (?, ?, ?, ?, ?,
-##                                   ?, ?, ?, ?, ?);""", 
-##             handle, gid, text, format, note_type[0],
-##             note_type[1], change, marker[0], marker[1], private)
-##    for markup in markup_list:
-##        markup_code, value, start_stop_list = markup
-##        export_markup(db, "note", handle, markup_code[0], markup_code[1], value, 
-##                      str(start_stop_list)) # Not normal form; use eval
-##
 ##def export_markup(db, from_type, from_handle,  markup_code0, markup_code1, value, 
 ##                  start_stop_list):
 ##    markup_handle = create_id()
@@ -319,56 +296,40 @@ def export_person(person):
      person_ref_list,    # 20
      ) = person
     
-    phandle = nonna.models.Handle(handle=handle, object='P')
-    try:
-        phandle.save()
-    except:
-        print "ERROR in handle save..."
-    person = nonna.models.Person(gender=gender, gramps_id=gid, private=private,
-                        change=datetime.datetime.fromtimestamp(change))
-    person.handle = phandle
-    value = marker[0]
-    custom = marker[1]
-    if value == gen.lib.MarkerType.CUSTOM:
-        if custom in CUSTOMMARKER:
-            person.marker=nonna.models.MarkerType.objects.get(
-                                                id=CUSTOMMARKER[custom])
-        else:
-            new = nonna.models.MarkerType(val=value, 
-                                          custom_name=custom)
-            try:
-                new.save()
-            except:
-                print "ERROR in markertype save..."
-            CUSTOMMARKER[custom] = new.id
-            person.marker = new
-    else:
-        person.marker=nonna.models.MarkerType.objects.get(val=value)
-    try:
-        person.save()
-    except:
-        print "ERROR in person save..."
 
-##    db.query("""INSERT INTO person (
-##                  handle, 
-##                  gid, 
-##                  gender, 
-##                  death_ref_handle, 
-##                  birth_ref_handle, 
-##                  change, 
-##                  marker0, 
-##                  marker1, 
-##                  private) values (?, ?, ?, ?, ?, ?, ?, ?, ?);""",
-##             handle, 
-##             gid, 
-##             gender, 
-##             lookup(death_ref_index, event_ref_list),
-##             lookup(birth_ref_index, event_ref_list),
-##             change, 
-##             marker[0], 
-##             marker[1], 
-##             private)
-##    
+    p = django.Person(handle=handle,
+                      gramps_id=gid,
+                      last_changed=change,
+                      private=private,
+                      marker_type = django.MarkerType.objects.get_or_create(val=marker[0], 
+                                                                            name=marker[1])[0],
+                      gender_type = django.GenderType.objects.get(val=gender))
+    p.save()
+
+def export_note(data):
+    (handle, gid, styled_text, format, note_type,
+     change, marker, private) = data
+
+    text, markup_list = styled_text
+
+    n = django.Note(handle=handle,
+                    gramps_id=gid,
+                    last_changed=change,
+                    private=private,
+                    preformatted=format,
+                    text=text,
+                    marker_type = django.MarkerType.objects.get_or_create(val=marker[0], 
+                                                                          name=marker[1])[0],
+                    note_type = django.NoteType.objects.get_or_create(val=note_type[0], 
+                                                                      name=note_type[1])[0])
+    n.save()
+    count = 1
+    for markup in markup_list:
+        markup_code, value, start_stop_list = markup
+        m = django.Markup(note=n, order=count, string=value,
+                          start_stop_list=str(stop_start_list))
+        m.save()
+
 ##    # Event Reference information
 ##    for event_ref in event_ref_list:
 ##        export_event_ref(db, "person", handle, event_ref)
@@ -637,35 +598,16 @@ def exportData(database, filename, option_box=None, callback=None):
 
     makeDB()
 
-    # -----------------------------------
-    # Default values for all grampstypes
-    # -----------------------------------
-    from gen.lib.markertype import MarkerType
-    defaults = get_datamap(MarkerType)
-    for key in defaults:
-        new = nonna.models.MarkerType(val=key)
-        try:
-            new.save()
-        except:
-            print "ERROR in markertype save..."
-    from gen.lib.nametype import NameType
-    defaults = get_datamap(NameType)
-    for key in defaults:
-        new = nonna.models.NameType(val=key)
-        try:
-            new.save()
-        except:
-            print "ERROR in datamap save..."
 ##    
-##    # ---------------------------------
-##    # Notes
-##    # ---------------------------------
-##    for note_handle in database.note_map.keys():
-##        data = database.note_map[note_handle]
-##        export_note(db, data)
-##        count += 1
-##        callback(100 * count/total)
-##
+   # ---------------------------------
+   # Notes
+   # ---------------------------------
+    for note_handle in database.note_map.keys():
+        data = database.note_map[note_handle]
+        export_note(data)
+        count += 1
+        callback(100 * count/total)
+
 ##    # ---------------------------------
 ##    # Event
 ##    # ---------------------------------
