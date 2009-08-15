@@ -24,7 +24,7 @@ class mGrampsType(models.Model):
     _DEFAULT = 0
     _DATAMAP = []
 
-    name = models.CharField(max_length=40, blank=True)
+    name = models.CharField(max_length=40)
     
     def __unicode__(self): return self.name
 
@@ -163,6 +163,7 @@ class PrimaryObject(models.Model):
     gramps_id =  models.CharField('gramps id', max_length=25, blank=True)
     last_changed = models.DateTimeField('last changed', auto_now=True)
     private = models.BooleanField('private')
+
     ## Keys:
     marker_type = models.ForeignKey('MarkerType')
 
@@ -185,17 +186,23 @@ class Source(PrimaryObject):
     author = models.CharField(max_length=50, blank=True)
     pubinfo = models.CharField(max_length=50, blank=True)
     abbrev = models.CharField(max_length=50, blank=True)
-    references = generic.GenericRelation('SourceRef', related_name="refs")
+    references = generic.GenericRelation('SourceRef', related_name="refs",
+                                         content_type_field="object_type",
+                                         object_id_field="object_id")
 
 class Event(DateObject, PrimaryObject):
     event_type = models.ForeignKey('EventType')
     description = models.CharField('description', max_length=50, blank=True)
-    references = generic.GenericRelation('EventRef', related_name="refs")
+    references = generic.GenericRelation('EventRef', related_name="refs",
+                                         content_type_field="object_type",
+                                         object_id_field="object_id")
 
 class Repository(PrimaryObject):
     repository_type = models.ForeignKey('RepositoryType')
     name = models.TextField(blank=True)
-    references = generic.GenericRelation('RepositoryRef', related_name="refs")
+    references = generic.GenericRelation('RepositoryRef', related_name="refs",
+                                         content_type_field="object_type",
+                                         object_id_field="object_id")
 
 class Place(PrimaryObject):
     title = models.TextField(blank=True)
@@ -207,13 +214,17 @@ class Media(PrimaryObject):
     path = models.TextField(blank=True)
     mime = models.TextField(blank=True)
     desc = models.TextField(blank=True)
-    references = generic.GenericRelation('MediaRef', related_name="refs")
+    references = generic.GenericRelation('MediaRef', related_name="refs",
+                                         content_type_field="object_type",
+                                         object_id_field="object_id")
 
 class Note(PrimaryObject):
     note_type = models.ForeignKey('NoteType')
     text  = models.TextField(blank=True)
     preformatted = models.BooleanField('preformatted')
-    #references = generic.GenericRelation('NoteRef', related_name="refs")
+    references = generic.GenericRelation('NoteRef', related_name="refs",
+                                         content_type_field="object_type",
+                                         object_id_field="object_id")
 
 #--------------------------------------------------------------------------------
 #
@@ -233,6 +244,7 @@ class SecondaryObject(models.Model):
 
 class Name(DateObject, SecondaryObject):
     order = models.PositiveIntegerField()
+    name_type = models.ForeignKey('NameType', related_name="name_code")
     primary_name = models.BooleanField('primary')
     first_name = models.TextField(blank=True)
     surname = models.TextField(blank=True)
@@ -318,6 +330,7 @@ class BaseRef(models.Model):
     object_id = models.PositiveIntegerField()
     referenced_by = generic.GenericForeignKey("object_type", "object_id")
 
+    order = models.PositiveIntegerField()
     last_changed = models.DateTimeField('last changed', auto_now=True)
     private = models.BooleanField()
   
@@ -476,6 +489,7 @@ def test_Name(person=None, surname=None, first=None):
     if surname:
         n.surname = surname
     n.set_date_from_gdate(Today())
+    n.name_type = NameType.objects.get(name="Unknown")
     n.order = 1
     n.sort_as = 1
     n.display_as = 1
@@ -504,9 +518,11 @@ def test_NoteRef():
     note = test_Note()
     person = test_Person()
     note_ref = NoteRef(referenced_by=person, note=note)
+    note_ref.order = 1
     note_ref.save()
     family = test_Family()
     note_ref = NoteRef(referenced_by=family, note=note)
+    note_ref.order = 1
     note_ref.save()
     return note_ref
 
@@ -515,6 +531,7 @@ def test_SourceRef():
     source = test_Source()
     source_ref = SourceRef(referenced_by=note, source=source, confidence=4)
     source_ref.set_date_from_gdate(Today())
+    source_ref.order = 1
     source_ref.save()
     return source_ref
 
@@ -532,6 +549,9 @@ def main():
                       test_SourceRef]:
         print "testing:", test_Item.__name__
         obj = test_Item()
+
+    sourceref = test_SourceRef()
+    print sourceref.source.references.all()
 
 if __name__ == "__main__":
     main()

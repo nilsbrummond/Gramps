@@ -63,9 +63,8 @@ if "DJANGO_SETTINGS_MODULE" not in os.environ:
 #make sure django can find the webapp modules
 sys.path += [const.ROOT_DIR + os.sep + '..' + os.sep + 'webapp' ]
 sys.path += [const.ROOT_DIR + os.sep + '..' + os.sep + 'webapp' + os.sep + 'grampsweb' ]
-print sys.path
 
-import grampsweb.tables.models as django
+import grampsweb.grampsdb.models as dj
 
 CUSTOMMARKER = {}
 #-------------------------------------------------------------------------
@@ -96,8 +95,12 @@ def makeDB():
 
     """
     print 'We assume you did   \n' \
-          '  python manage.py sqlclear tables\n' \
+          '  python manage.py sqlclear grampsdb\n' \
           '  python manage.py syncdb  '
+    dj.Person.objects.all().delete()
+    dj.Note.objects.all().delete()
+    dj.Family.objects.all().delete()
+    dj.Markup.objects.all().delete()
 
 def get_datamap(grampsclass):
         return [x[0] for x in grampsclass._DATAMAP if x[0] != grampsclass.CUSTOM]
@@ -272,64 +275,6 @@ def get_datamap(grampsclass):
 ##    # finally, link this to parent
 ##    export_link(db, from_type, from_handle, "event_ref", handle)
 ##
-def export_person(person):
-    (handle,        #  0
-     gid,          #  1
-     gender,             #  2
-     primary_name,       #  3
-     alternate_names,    #  4
-     death_ref_index,    #  5
-     birth_ref_index,    #  6
-     event_ref_list,     #  7
-     family_list,        #  8
-     parent_family_list, #  9
-     media_list,         # 10
-     address_list,       # 11
-     attribute_list,     # 12
-     urls,               # 13
-     lds_ord_list,       # 14
-     psource_list,       # 15
-     pnote_list,         # 16
-     change,             # 17
-     marker,             # 18
-     private,           # 19
-     person_ref_list,    # 20
-     ) = person
-    
-
-    p = django.Person(handle=handle,
-                      gramps_id=gid,
-                      last_changed=change,
-                      private=private,
-                      marker_type = django.MarkerType.objects.get_or_create(val=marker[0], 
-                                                                            name=marker[1])[0],
-                      gender_type = django.GenderType.objects.get(val=gender))
-    p.save()
-
-def export_note(data):
-    (handle, gid, styled_text, format, note_type,
-     change, marker, private) = data
-
-    text, markup_list = styled_text
-
-    n = django.Note(handle=handle,
-                    gramps_id=gid,
-                    last_changed=change,
-                    private=private,
-                    preformatted=format,
-                    text=text,
-                    marker_type = django.MarkerType.objects.get_or_create(val=marker[0], 
-                                                                          name=marker[1])[0],
-                    note_type = django.NoteType.objects.get_or_create(val=note_type[0], 
-                                                                      name=note_type[1])[0])
-    n.save()
-    count = 1
-    for markup in markup_list:
-        markup_code, value, start_stop_list = markup
-        m = django.Markup(note=n, order=count, string=value,
-                          start_stop_list=str(stop_start_list))
-        m.save()
-
 ##    # Event Reference information
 ##    for event_ref in event_ref_list:
 ##        export_event_ref(db, "person", handle, event_ref)
@@ -360,75 +305,6 @@ def export_note(data):
 ##    export_name(db, "person", handle, True, primary_name)
 ##    map(lambda name: export_name(db, "person", handle, False, name), 
 ##        alternate_names)
-##
-##def export_date(db, from_type, from_handle, data):
-##    if data is None: return
-##    (calendar, modifier, quality, dateval, text, sortval, newyear) = data
-##    if len(dateval) == 4:
-##        day1, month1, year1, slash1 = dateval
-##        day2, month2, year2, slash2 = 0, 0, 0, 0
-##    elif len(dateval) == 8:
-##        day1, month1, year1, slash1, day2, month2, year2, slash2 = dateval
-##    else:
-##        raise ("ERROR: date dateval format", dateval)
-##    date_handle = create_id()
-##    db.query("""INSERT INTO date (
-##                  handle,
-##                  calendar, 
-##                  modifier, 
-##                  quality,
-##                  day1, 
-##                  month1, 
-##                  year1, 
-##                  slash1,
-##                  day2, 
-##                  month2, 
-##                  year2, 
-##                  slash2,
-##                  text, 
-##                  sortval, 
-##                  newyear) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 
-##                                   ?, ?, ?, ?, ?, ?);""",
-##             date_handle, calendar, modifier, quality, 
-##             day1, month1, year1, slash1, 
-##             day2, month2, year2, slash2,
-##             text, sortval, newyear)
-##    # And finally, make a link from parent to new object
-##    export_link(db, from_type, from_handle, "date", date_handle)
-##
-##def export_name(db, from_type, from_handle, primary, data):
-##    if data:
-##        (private, source_list, note_list, date,
-##         first_name, surname, suffix, title,
-##         name_type, prefix, patronymic,
-##         group_as, sort_as, display_as, call) = data
-##        handle = create_id()
-##        db.query("""INSERT into name (
-##                  handle,
-##                  primary_name,
-##                  private, 
-##                  first_name, 
-##                  surname, 
-##                  suffix, 
-##                  title, 
-##                  name_type0, 
-##                  name_type1, 
-##                  prefix, 
-##                  patronymic, 
-##                  group_as, 
-##                  sort_as,
-##                  display_as, 
-##                  call
-##                    ) values (?, ?, ?, ?, ?, ?, ?, ?, 
-##                              ?, ?, ?, ?, ?, ?, ?);""",
-##                 handle, primary, private, first_name, surname, suffix, title,
-##                 name_type[0], name_type[1], prefix, patronymic, group_as, 
-##                 sort_as, display_as, call)
-##        export_date(db, "name", handle, date) 
-##        export_list(db, "name", handle, "note", note_list)
-##        export_source_ref_list(db, "name", handle, source_list)
-##        # And finally, make a link from parent to new object
-##        export_link(db, from_type, from_handle, "name", handle)
 ##
 ##def export_attribute(db, from_type, from_handle, attribute):
 ##    (private, source_list, note_list, the_type, value) = attribute
@@ -581,6 +457,179 @@ def export_note(data):
 ##        # finally, link this to parent
 ##        export_link(db, from_type, from_handle, "repository_ref", handle)
 
+def export_date(obj, date):
+    if date is None: 
+        (calendar, modifier, quality, text, sortval, newyear) = \
+            (0, 0, 0, "", 0, 0)
+        day1, month1, year1, slash1 = 0, 0, 0, 0
+        day2, month2, year2, slash2 = 0, 0, 0, 0
+    else:
+        (calendar, modifier, quality, dateval, text, sortval, newyear) = date
+        if len(dateval) == 4:
+            day1, month1, year1, slash1 = dateval
+            day2, month2, year2, slash2 = 0, 0, 0, 0
+        elif len(dateval) == 8:
+            day1, month1, year1, slash1, day2, month2, year2, slash2 = dateval
+        else:
+            raise ("ERROR: date dateval format", dateval)
+    obj.calendar = calendar
+    obj.modifier = modifier
+    obj.quality = quality
+    obj.text = text
+    obj.sortval = sortval
+    obj.newyear = newyear
+    obj.day1 = day1
+    obj.month1 = month1
+    obj.year1 = year1
+    obj.slash1 = slash1
+    obj.day2 = day2
+    obj.month2 = month2
+    obj.year2 = year2
+    obj.slash2 = slash2
+    obj.save()
+
+def export_name(person, data):
+    # A Step #2 function
+    # In order, primary was first:
+    if data:
+        (private, source_list, note_list, date,
+         first_name, surname, suffix, title,
+         name_type, prefix, patronymic,
+         group_as, sort_as, display_as, call) = data
+
+        count = dj.Name.objects.all().count()
+        name = dj.Name()
+        name.private = private
+        name.first_name = first_name
+        name.surname = surname
+        name.suffix = suffix
+        name.title = title
+        name.name_type = dj.NameType.objects.get_or_create(val=name_type[0], 
+                                                           name=name_type[1])[0]
+        name.prefix = prefix
+        name.patronymic = patronymic
+        name.group_as = group_as
+        name.sort_as = sort_as
+        name.display_as = display_as 
+        name.call = call
+
+        export_date(person, date) 
+        for handle in note_list:
+            note = dj.Note.objects.get(handle=handle)
+            export_noteref(person, note)
+        #export_source_ref_list(db, "name", handle, source_list)
+       
+def export_noteref(obj, note):
+    count = note.references.count()
+    note_ref = dj.NoteRef(referenced_by=obj, note=note)
+    note_ref.order = count + 1
+    note_ref.save()
+ 
+def export_person(person, step):
+    # Unpack from the BSDDB:
+    (handle,        #  0
+     gid,          #  1
+     gender,             #  2
+     primary_name,       #  3
+     alternate_names,    #  4
+     death_ref_index,    #  5
+     birth_ref_index,    #  6
+     event_ref_list,     #  7
+     family_list,        #  8
+     parent_family_list, #  9
+     media_list,         # 10
+     address_list,       # 11
+     attribute_list,     # 12
+     urls,               # 13
+     lds_ord_list,       # 14
+     psource_list,       # 15
+     pnote_list,         # 16
+     change,             # 17
+     marker,             # 18
+     private,           # 19
+     person_ref_list,    # 20
+     ) = person
+
+    if step == 1:     # Add the primary data:
+        p = dj.Person(handle=handle,
+                          gramps_id=gid,
+                          last_changed=change,
+                          private=private,
+                          marker_type = dj.MarkerType.objects.get_or_create(val=marker[0], 
+                                                                                name=marker[1])[0],
+                          gender_type = dj.GenderType.objects.get(val=gender))
+        p.save()
+
+    elif step == 2:   # Add the relations:
+        p = dj.Person.objects.get(handle=handle)
+        export_name(p, primary_name)
+        for name in alternate_names:
+            export_name(p, primary_name)
+        ## Add reference items
+
+def export_note(data, step):
+    # Unpack from the BSDDB:
+    (handle, gid, styled_text, format, note_type,
+     change, marker, private) = data
+    text, markup_list = styled_text
+
+    if step == 1:     # Add the primary data:
+        n = dj.Note(handle=handle,
+                        gramps_id=gid,
+                        last_changed=change,
+                        private=private,
+                        preformatted=format,
+                        text=text,
+                        marker_type = dj.MarkerType.objects.get_or_create(val=marker[0], 
+                                                                              name=marker[1])[0],
+                        note_type = dj.NoteType.objects.get_or_create(val=note_type[0], 
+                                                                          name=note_type[1])[0])
+        n.save()
+        count = 1
+        for markup in markup_list:
+            markup_code, value, start_stop_list = markup
+            m = dj.Markup(note=n, order=count, string=value,
+                              start_stop_list=str(stop_start_list))
+            m.save()
+    elif step == 2:   # Add the relations:
+        n = dj.Note.objects.get(handle=handle)
+
+def export_family(family, step):
+    # Unpack from the BSDDB:
+    (handle, gid, father_handle, mother_handle,
+     child_ref_list, the_type, event_ref_list, media_list,
+     attribute_list, lds_seal_list, source_list, note_list,
+     change, marker, private) = family
+
+    if step == 1: # Add primary object
+        f = dj.Family(handle=handle, gramps_id=gid, 
+                          family_rel_type = dj.FamilyRelType.objects.get_or_create(val=the_type[0],
+                                                                                name=the_type[1])[0],
+                          last_changed=change, 
+                          marker_type = dj.MarkerType.objects.get_or_create(val=marker[0], 
+                                                                                name=marker[1])[0],
+                          private=private)
+        f.save()
+    elif step == 2:
+        f = dj.Family.objects.get(handle=handle)
+        # father_handle and/or mother_handle can be None
+        #export_child_ref_list(db, "family", handle, "child_ref", child_ref_list)
+        #export_list(db, "family", handle, "note", note_list)
+        #export_attribute_list(db, "family", handle, attribute_list)
+        #export_source_ref_list(db, "family", handle, source_list)
+        #export_media_ref_list(db, "family", handle, media_list)
+        
+        # Event Reference information
+        #for event_ref in event_ref_list:
+        #    export_event_ref(db, "family", handle, event_ref)
+            
+        # -------------------------------------
+        # LDS 
+        # -------------------------------------
+        #for ldsord in lds_seal_list:
+        #    export_lds(db, "family", handle, ldsord)
+    
+
 def exportData(database, filename, option_box=None, callback=None):
     if not callable(callback): 
         callback = lambda (percent): None # dummy
@@ -593,20 +642,37 @@ def exportData(database, filename, option_box=None, callback=None):
              len(database.repository_map) +
              len(database.place_map) +
              len(database.media_map) +
-             len(database.source_map))
+             len(database.source_map)) * 2 # steps
     count = 0.0
-
     makeDB()
 
-##    
-   # ---------------------------------
-   # Notes
-   # ---------------------------------
-    for note_handle in database.note_map.keys():
-        data = database.note_map[note_handle]
-        export_note(data)
-        count += 1
-        callback(100 * count/total)
+    for step in (1, 2):
+        # ---------------------------------
+        # Person
+        # ---------------------------------
+        for person_handle in database.person_map.keys():
+            person = database.person_map[person_handle]
+            export_person(person, step)
+            count += 1
+            callback(100 * count/total)
+
+        # ---------------------------------
+        # Notes
+        # ---------------------------------
+        for note_handle in database.note_map.keys():
+            data = database.note_map[note_handle]
+            export_note(data, step)
+            count += 1
+            callback(100 * count/total)
+
+        # ---------------------------------
+        # Family
+        # ---------------------------------
+        for family_handle in database.family_map.keys():
+            family = database.family_map[family_handle]
+            export_family(family, step)
+            count += 1
+            callback(100 * count/total)
 
 ##    # ---------------------------------
 ##    # Event
@@ -617,59 +683,7 @@ def exportData(database, filename, option_box=None, callback=None):
 ##        count += 1
 ##        callback(100 * count/total)
 ##
-    # ---------------------------------
-    # Person
-    # ---------------------------------
-    for person_handle in database.person_map.keys():
-        person = database.person_map[person_handle]
-        export_person(person)
-        count += 1
-        callback(100 * count/total)
 
-##    # ---------------------------------
-##    # Family
-##    # ---------------------------------
-##    for family_handle in database.family_map.keys():
-##        family = database.family_map[family_handle]
-##        (handle, gid, father_handle, mother_handle,
-##         child_ref_list, the_type, event_ref_list, media_list,
-##         attribute_list, lds_seal_list, source_list, note_list,
-##         change, marker, private) = family
-##        # father_handle and/or mother_handle can be None
-##        db.query("""INSERT INTO family (
-##                 handle, 
-##                 gid, 
-##                 father_handle, 
-##                 mother_handle,
-##                 the_type0, 
-##                 the_type1, 
-##                 change, 
-##                 marker0, 
-##                 marker1, 
-##                 private) values (?,?,?,?,?,?,?,?,?,?);""",
-##                 handle, gid, father_handle, mother_handle,
-##                 the_type[0], the_type[1], change, marker[0], marker[1], 
-##                 private)
-##
-##        export_child_ref_list(db, "family", handle, "child_ref", child_ref_list)
-##        export_list(db, "family", handle, "note", note_list)
-##        export_attribute_list(db, "family", handle, attribute_list)
-##        export_source_ref_list(db, "family", handle, source_list)
-##        export_media_ref_list(db, "family", handle, media_list)
-##
-##        # Event Reference information
-##        for event_ref in event_ref_list:
-##            export_event_ref(db, "family", handle, event_ref)
-##            
-##        # -------------------------------------
-##        # LDS 
-##        # -------------------------------------
-##        for ldsord in lds_seal_list:
-##            export_lds(db, "family", handle, ldsord)
-##
-##        count += 1
-##        callback(100 * count/total)
-##
 ##    # ---------------------------------
 ##    # Repository
 ##    # ---------------------------------

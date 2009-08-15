@@ -69,264 +69,670 @@ def lookup(index, event_ref_list):
         return None
 
 def makeDB(db):
-    db.query("""drop table note;""")
-    db.query("""drop table person;""")
-    db.query("""drop table event;""")
-    db.query("""drop table family;""")
-    db.query("""drop table repository;""")
-    db.query("""drop table repository_ref;""")
-    db.query("""drop table date;""")
-    db.query("""drop table place;""") 
-    db.query("""drop table source;""") 
-    db.query("""drop table media;""")
-    db.query("""drop table name;""")
-    db.query("""drop table link;""")
-    db.query("""drop table markup;""")
-    db.query("""drop table event_ref;""")
-    db.query("""drop table source_ref;""")
-    db.query("""drop table child_ref;""")
-    db.query("""drop table person_ref;""")
-    db.query("""drop table lds;""")
-    db.query("""drop table media_ref;""")
-    db.query("""drop table address;""")
-    db.query("""drop table location;""")
-    db.query("""drop table attribute;""")
-    db.query("""drop table url;""")
-    db.query("""drop table datamap;""")
+    query = """
+CREATE TABLE "tables_markertype" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "name" varchar(40) NOT NULL,
+    "val" integer NOT NULL
+)
+;
+CREATE TABLE "tables_nametype" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "name" varchar(40) NOT NULL,
+    "val" integer NOT NULL
+)
+;
+CREATE TABLE "tables_attributetype" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "name" varchar(40) NOT NULL,
+    "val" integer NOT NULL
+)
+;
+CREATE TABLE "tables_urltype" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "name" varchar(40) NOT NULL,
+    "val" integer NOT NULL
+)
+;
+CREATE TABLE "tables_childreftype" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "name" varchar(40) NOT NULL,
+    "val" integer NOT NULL
+)
+;
+CREATE TABLE "tables_repositorytype" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "name" varchar(40) NOT NULL,
+    "val" integer NOT NULL
+)
+;
+CREATE TABLE "tables_eventtype" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "name" varchar(40) NOT NULL,
+    "val" integer NOT NULL
+)
+;
+CREATE TABLE "tables_familyreltype" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "name" varchar(40) NOT NULL,
+    "val" integer NOT NULL
+)
+;
+CREATE TABLE "tables_sourcemediatype" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "name" varchar(40) NOT NULL,
+    "val" integer NOT NULL
+)
+;
+CREATE TABLE "tables_eventroletype" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "name" varchar(40) NOT NULL,
+    "val" integer NOT NULL
+)
+;
+CREATE TABLE "tables_notetype" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "name" varchar(40) NOT NULL,
+    "val" integer NOT NULL
+)
+;
+CREATE TABLE "tables_gendertype" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "name" varchar(40) NOT NULL,
+    "val" integer NOT NULL
+)
+;
+CREATE TABLE "tables_person" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "handle" varchar(19) NOT NULL UNIQUE,
+    "gramps_id" varchar(25) NOT NULL,
+    "last_changed" datetime NOT NULL,
+    "private" bool NOT NULL,
+    "marker_type_id" integer NOT NULL REFERENCES "tables_markertype" ("id"),
+    "gender_type_id" integer NOT NULL REFERENCES "tables_gendertype" ("id")
+)
+;
+CREATE TABLE "tables_family" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "handle" varchar(19) NOT NULL UNIQUE,
+    "gramps_id" varchar(25) NOT NULL,
+    "last_changed" datetime NOT NULL,
+    "private" bool NOT NULL,
+    "marker_type_id" integer NOT NULL REFERENCES "tables_markertype" ("id"),
+    "father_id" integer REFERENCES "tables_person" ("id"),
+    "mother_id" integer REFERENCES "tables_person" ("id"),
+    "family_rel_type_id" integer NOT NULL REFERENCES "tables_familyreltype" ("id")
+)
+;
+CREATE TABLE "tables_source" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "handle" varchar(19) NOT NULL UNIQUE,
+    "gramps_id" varchar(25) NOT NULL,
+    "last_changed" datetime NOT NULL,
+    "private" bool NOT NULL,
+    "marker_type_id" integer NOT NULL REFERENCES "tables_markertype" ("id"),
+    "title" varchar(50) NOT NULL,
+    "author" varchar(50) NOT NULL,
+    "pubinfo" varchar(50) NOT NULL,
+    "abbrev" varchar(50) NOT NULL
+)
+;
+CREATE TABLE "tables_event" (
+    "calendar" integer NOT NULL,
+    "modifier" integer NOT NULL,
+    "quality" integer NOT NULL,
+    "day1" integer NOT NULL,
+    "month1" integer NOT NULL,
+    "year1" integer NOT NULL,
+    "slash1" bool NOT NULL,
+    "day2" integer,
+    "month2" integer,
+    "year2" integer,
+    "slash2" bool,
+    "text" varchar(80) NOT NULL,
+    "sortval" integer NOT NULL,
+    "newyear" integer NOT NULL,
+    "id" integer NOT NULL PRIMARY KEY,
+    "handle" varchar(19) NOT NULL UNIQUE,
+    "gramps_id" varchar(25) NOT NULL,
+    "last_changed" datetime NOT NULL,
+    "private" bool NOT NULL,
+    "marker_type_id" integer NOT NULL REFERENCES "tables_markertype" ("id"),
+    "event_type_id" integer NOT NULL REFERENCES "tables_eventtype" ("id"),
+    "description" varchar(50) NOT NULL
+)
+;
+CREATE TABLE "tables_repository" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "handle" varchar(19) NOT NULL UNIQUE,
+    "gramps_id" varchar(25) NOT NULL,
+    "last_changed" datetime NOT NULL,
+    "private" bool NOT NULL,
+    "marker_type_id" integer NOT NULL REFERENCES "tables_markertype" ("id"),
+    "repository_type_id" integer NOT NULL REFERENCES "tables_repositorytype" ("id"),
+    "name" text NOT NULL
+)
+;
+CREATE TABLE "tables_place" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "handle" varchar(19) NOT NULL UNIQUE,
+    "gramps_id" varchar(25) NOT NULL,
+    "last_changed" datetime NOT NULL,
+    "private" bool NOT NULL,
+    "marker_type_id" integer NOT NULL REFERENCES "tables_markertype" ("id"),
+    "title" text NOT NULL,
+    "main_location" varchar(25) NOT NULL,
+    "long" text NOT NULL,
+    "lat" text NOT NULL
+)
+;
+CREATE TABLE "tables_media" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "handle" varchar(19) NOT NULL UNIQUE,
+    "gramps_id" varchar(25) NOT NULL,
+    "last_changed" datetime NOT NULL,
+    "private" bool NOT NULL,
+    "marker_type_id" integer NOT NULL REFERENCES "tables_markertype" ("id"),
+    "path" text NOT NULL,
+    "mime" text NOT NULL,
+    "desc" text NOT NULL
+)
+;
+CREATE TABLE "tables_note" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "handle" varchar(19) NOT NULL UNIQUE,
+    "gramps_id" varchar(25) NOT NULL,
+    "last_changed" datetime NOT NULL,
+    "private" bool NOT NULL,
+    "marker_type_id" integer NOT NULL REFERENCES "tables_markertype" ("id"),
+    "note_type_id" integer NOT NULL REFERENCES "tables_notetype" ("id"),
+    "text" text NOT NULL,
+    "preformatted" bool NOT NULL
+)
+;
+CREATE TABLE "tables_name" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "calendar" integer NOT NULL,
+    "modifier" integer NOT NULL,
+    "quality" integer NOT NULL,
+    "day1" integer NOT NULL,
+    "month1" integer NOT NULL,
+    "year1" integer NOT NULL,
+    "slash1" bool NOT NULL,
+    "day2" integer,
+    "month2" integer,
+    "year2" integer,
+    "slash2" bool,
+    "text" varchar(80) NOT NULL,
+    "sortval" integer NOT NULL,
+    "newyear" integer NOT NULL,
+    "private" bool NOT NULL,
+    "last_changed" datetime NOT NULL,
+    "order" integer unsigned NOT NULL,
+    "primary_name" bool NOT NULL,
+    "first_name" text NOT NULL,
+    "surname" text NOT NULL,
+    "suffix" text NOT NULL,
+    "title" text NOT NULL,
+    "prefix" text NOT NULL,
+    "patronymic" text NOT NULL,
+    "call" text NOT NULL,
+    "group_as" text NOT NULL,
+    "sort_as" integer NOT NULL,
+    "display_as" integer NOT NULL,
+    "person_id" integer NOT NULL REFERENCES "tables_person" ("id")
+)
+;
+CREATE TABLE "tables_lds" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "private" bool NOT NULL,
+    "last_changed" datetime NOT NULL,
+    "lds_type" integer NOT NULL,
+    "place_id" integer NOT NULL REFERENCES "tables_place" ("id"),
+    "famc_id" integer NOT NULL REFERENCES "tables_family" ("id"),
+    "temple" text NOT NULL,
+    "status" integer NOT NULL
+)
+;
+CREATE TABLE "tables_markup" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "note_id" integer NOT NULL REFERENCES "tables_note" ("id"),
+    "order" integer unsigned NOT NULL,
+    "string" text NOT NULL,
+    "start_stop_list" text NOT NULL
+)
+;
+CREATE TABLE "tables_address" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "calendar" integer NOT NULL,
+    "modifier" integer NOT NULL,
+    "quality" integer NOT NULL,
+    "day1" integer NOT NULL,
+    "month1" integer NOT NULL,
+    "year1" integer NOT NULL,
+    "slash1" bool NOT NULL,
+    "day2" integer,
+    "month2" integer,
+    "year2" integer,
+    "slash2" bool,
+    "text" varchar(80) NOT NULL,
+    "sortval" integer NOT NULL,
+    "newyear" integer NOT NULL,
+    "private" bool NOT NULL,
+    "last_changed" datetime NOT NULL,
+    "location_id" integer NOT NULL UNIQUE
+)
+;
+CREATE TABLE "tables_location" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "street" text NOT NULL,
+    "city" text NOT NULL,
+    "county" text NOT NULL,
+    "state" text NOT NULL,
+    "country" text NOT NULL,
+    "postal" text NOT NULL,
+    "phone" text NOT NULL,
+    "parish" text NOT NULL
+)
+;
+CREATE TABLE "tables_noteref" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "object_type_id" integer NOT NULL REFERENCES "django_content_type" ("id"),
+    "object_id" integer unsigned NOT NULL,
+    "last_changed" datetime NOT NULL,
+    "private" bool NOT NULL,
+    "note_id" integer NOT NULL REFERENCES "tables_note" ("id")
+)
+;
+CREATE TABLE "tables_sourceref" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "calendar" integer NOT NULL,
+    "modifier" integer NOT NULL,
+    "quality" integer NOT NULL,
+    "day1" integer NOT NULL,
+    "month1" integer NOT NULL,
+    "year1" integer NOT NULL,
+    "slash1" bool NOT NULL,
+    "day2" integer,
+    "month2" integer,
+    "year2" integer,
+    "slash2" bool,
+    "text" varchar(80) NOT NULL,
+    "sortval" integer NOT NULL,
+    "newyear" integer NOT NULL,
+    "object_type_id" integer NOT NULL REFERENCES "django_content_type" ("id"),
+    "object_id" integer unsigned NOT NULL,
+    "last_changed" datetime NOT NULL,
+    "private" bool NOT NULL,
+    "page" varchar(50) NOT NULL,
+    "confidence" integer NOT NULL,
+    "source_id" integer NOT NULL REFERENCES "tables_source" ("id")
+)
+;
+CREATE TABLE "tables_eventref" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "object_type_id" integer NOT NULL REFERENCES "django_content_type" ("id"),
+    "object_id" integer unsigned NOT NULL,
+    "last_changed" datetime NOT NULL,
+    "private" bool NOT NULL,
+    "role_type_id" integer NOT NULL REFERENCES "tables_eventroletype" ("id"),
+    "event_id" integer NOT NULL REFERENCES "tables_event" ("id")
+)
+;
+CREATE TABLE "tables_repositoryref" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "object_type_id" integer NOT NULL REFERENCES "django_content_type" ("id"),
+    "object_id" integer unsigned NOT NULL,
+    "last_changed" datetime NOT NULL,
+    "private" bool NOT NULL,
+    "source_media_type_id" integer NOT NULL REFERENCES "tables_sourcemediatype" ("id"),
+    "call_number" varchar(50) NOT NULL,
+    "repository_id" integer NOT NULL REFERENCES "tables_repository" ("id")
+)
+;
+CREATE TABLE "tables_personref" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "object_type_id" integer NOT NULL REFERENCES "django_content_type" ("id"),
+    "object_id" integer unsigned NOT NULL,
+    "last_changed" datetime NOT NULL,
+    "private" bool NOT NULL,
+    "description" varchar(50) NOT NULL,
+    "person_id" integer NOT NULL REFERENCES "tables_person" ("id")
+)
+;
+CREATE TABLE "tables_childref" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "object_type_id" integer NOT NULL REFERENCES "django_content_type" ("id"),
+    "object_id" integer unsigned NOT NULL,
+    "last_changed" datetime NOT NULL,
+    "private" bool NOT NULL,
+    "father_rel_type_id" integer NOT NULL REFERENCES "tables_familyreltype" ("id"),
+    "mother_rel_type_id" integer NOT NULL REFERENCES "tables_familyreltype" ("id"),
+    "child_id" integer NOT NULL REFERENCES "tables_person" ("id")
+)
+;
+CREATE TABLE "tables_mediaref" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "object_type_id" integer NOT NULL REFERENCES "django_content_type" ("id"),
+    "object_id" integer unsigned NOT NULL,
+    "last_changed" datetime NOT NULL,
+    "private" bool NOT NULL,
+    "x1" integer NOT NULL,
+    "y1" integer NOT NULL,
+    "x2" integer NOT NULL,
+    "y2" integer NOT NULL,
+    "media_id" integer NOT NULL REFERENCES "tables_media" ("id")
+)
+;
+CREATE TABLE "tables_family_children" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "family_id" integer NOT NULL REFERENCES "tables_family" ("id"),
+    "person_id" integer NOT NULL REFERENCES "tables_person" ("id"),
+    UNIQUE ("family_id", "person_id")
+)
+;
+"""
+    queries = query.split(";")
+    for q in queries:
+        db.query(q + ";")
+#     db.query("""drop table note;""")
+#     db.query("""drop table person;""")
+#     db.query("""drop table event;""")
+#     db.query("""drop table family;""")
+#     db.query("""drop table repository;""")
+#     db.query("""drop table repository_ref;""")
+#     db.query("""drop table date;""")
+#     db.query("""drop table place;""") 
+#     db.query("""drop table source;""") 
+#     db.query("""drop table media;""")
+#     db.query("""drop table name;""")
+#     db.query("""drop table link;""")
+#     db.query("""drop table markup;""")
+#     db.query("""drop table event_ref;""")
+#     db.query("""drop table source_ref;""")
+#     db.query("""drop table child_ref;""")
+#     db.query("""drop table person_ref;""")
+#     db.query("""drop table lds;""")
+#     db.query("""drop table media_ref;""")
+#     db.query("""drop table address;""")
+#     db.query("""drop table location;""")
+#     db.query("""drop table attribute;""")
+#     db.query("""drop table url;""")
+#     db.query("""drop table datamap;""")
 
-    db.query("""CREATE TABLE note (
-                  handle CHARACTER(25) PRIMARY KEY,
-                  gid    CHARACTER(25),
-                  text   TEXT,
-                  format INTEGER,
-                  note_type1   INTEGER,
-                  note_type2   TEXT,
-                  change INTEGER,
-                  marker0 INTEGER,
-                  marker1 TEXT,
-                  private BOOLEAN);""")
+#     db.query("""CREATE TABLE note (
+#                   handle CHARACTER(25) PRIMARY KEY,
+#                   gid    CHARACTER(25),
+#                   text   TEXT,
+#                   format INTEGER,
+#                   note_type1   INTEGER,
+#                   note_type2   TEXT,
+#                   change INTEGER,
+#                   marker0 INTEGER,
+#                   marker1 TEXT,
+#                   private BOOLEAN);""")
 
-    db.query("""CREATE TABLE name (
-                  handle CHARACTER(25) PRIMARY KEY,
-                  primary_name BOOLEAN,
-                  private BOOLEAN, 
-                  first_name TEXT, 
-                  surname TEXT, 
-                  suffix TEXT, 
-                  title TEXT, 
-                  name_type0 INTEGER, 
-                  name_type1 TEXT, 
-                  prefix TEXT, 
-                  patronymic TEXT, 
-                  group_as TEXT, 
-                  sort_as INTEGER,
-                  display_as INTEGER, 
-                  call TEXT);""")
+#     db.query("""CREATE TABLE name (
+#                   handle CHARACTER(25) PRIMARY KEY,
+#                   primary_name BOOLEAN,
+#                   private BOOLEAN, 
+#                   first_name TEXT, 
+#                   surname TEXT, 
+#                   suffix TEXT, 
+#                   title TEXT, 
+#                   name_type0 INTEGER, 
+#                   name_type1 TEXT, 
+#                   prefix TEXT, 
+#                   patronymic TEXT, 
+#                   group_as TEXT, 
+#                   sort_as INTEGER,
+#                   display_as INTEGER, 
+#                   call TEXT);""")
 
-    db.query("""CREATE TABLE date (
-                  handle CHARACTER(25) PRIMARY KEY,
-                  calendar INTEGER, 
-                  modifier INTEGER, 
-                  quality INTEGER,
-                  day1 INTEGER, 
-                  month1 INTEGER, 
-                  year1 INTEGER, 
-                  slash1 BOOLEAN,
-                  day2 INTEGER, 
-                  month2 INTEGER, 
-                  year2 INTEGER, 
-                  slash2 BOOLEAN,
-                  text TEXT, 
-                  sortval INTEGER, 
-                  newyear INTEGER);""")
+#     db.query("""CREATE TABLE date (
+#                   handle CHARACTER(25) PRIMARY KEY,
+#                   calendar INTEGER, 
+#                   modifier INTEGER, 
+#                   quality INTEGER,
+#                   day1 INTEGER, 
+#                   month1 INTEGER, 
+#                   year1 INTEGER, 
+#                   slash1 BOOLEAN,
+#                   day2 INTEGER, 
+#                   month2 INTEGER, 
+#                   year2 INTEGER, 
+#                   slash2 BOOLEAN,
+#                   text TEXT, 
+#                   sortval INTEGER, 
+#                   newyear INTEGER);""")
 
-    db.query("""CREATE TABLE person (
-                  handle CHARACTER(25) PRIMARY KEY,
-                  gid CHARACTER(25), 
-                  gender INTEGER, 
-                  death_ref_handle TEXT, 
-                  birth_ref_handle TEXT, 
-                  change INTEGER, 
-                  marker0 INTEGER, 
-                  marker1 TEXT, 
-                  private BOOLEAN);""")
+#     db.query("""CREATE TABLE person (
+#                   handle CHARACTER(25) PRIMARY KEY,
+#                   gid CHARACTER(25), 
+#                   gender INTEGER, 
+#                   death_ref_handle TEXT, 
+#                   birth_ref_handle TEXT, 
+#                   change INTEGER, 
+#                   marker0 INTEGER, 
+#                   marker1 TEXT, 
+#                   private BOOLEAN);""")
 
-    db.query("""CREATE TABLE family (
-                 handle CHARACTER(25) PRIMARY KEY,
-                 gid CHARACTER(25), 
-                 father_handle CHARACTER(25), 
-                 mother_handle CHARACTER(25), 
-                 the_type0 INTEGER, 
-                 the_type1 TEXT, 
-                 change INTEGER, 
-                 marker0 INTEGER, 
-                 marker1 TEXT, 
-                 private BOOLEAN);""")
+#     db.query("""CREATE TABLE family (
+#                  handle CHARACTER(25) PRIMARY KEY,
+#                  gid CHARACTER(25), 
+#                  father_handle CHARACTER(25), 
+#                  mother_handle CHARACTER(25), 
+#                  the_type0 INTEGER, 
+#                  the_type1 TEXT, 
+#                  change INTEGER, 
+#                  marker0 INTEGER, 
+#                  marker1 TEXT, 
+#                  private BOOLEAN);""")
 
-    db.query("""CREATE TABLE place (
-                 handle CHARACTER(25) PRIMARY KEY,
-                 gid CHARACTER(25), 
-                 title TEXT, 
-                 main_location CHARACTER(25),
-                 long TEXT, 
-                 lat TEXT, 
-                 change INTEGER, 
-                 marker0 INTEGER, 
-                 marker1 TEXT, 
-                 private BOOLEAN);""")
+#     db.query("""CREATE TABLE place (
+#                  handle CHARACTER(25) PRIMARY KEY,
+#                  gid CHARACTER(25), 
+#                  title TEXT, 
+#                  main_location CHARACTER(25),
+#                  long TEXT, 
+#                  lat TEXT, 
+#                  change INTEGER, 
+#                  marker0 INTEGER, 
+#                  marker1 TEXT, 
+#                  private BOOLEAN);""")
 
-    db.query("""CREATE TABLE event (
-                 handle CHARACTER(25) PRIMARY KEY,
-                 gid CHARACTER(25), 
-                 the_type0 INTEGER, 
-                 the_type1 TEXT, 
-                 description TEXT, 
-                 change INTEGER, 
-                 marker0 INTEGER, 
-                 marker1 TEXT, 
-                 private BOOLEAN);""")
+#     db.query("""CREATE TABLE event (
+#                  handle CHARACTER(25) PRIMARY KEY,
+#                  gid CHARACTER(25), 
+#                  the_type0 INTEGER, 
+#                  the_type1 TEXT, 
+#                  description TEXT, 
+#                  change INTEGER, 
+#                  marker0 INTEGER, 
+#                  marker1 TEXT, 
+#                  private BOOLEAN);""")
 
-    db.query("""CREATE TABLE source (
-                 handle CHARACTER(25) PRIMARY KEY,
-                 gid CHARACTER(25), 
-                 title TEXT, 
-                 author TEXT, 
-                 pubinfo TEXT, 
-                 abbrev TEXT, 
-                 change INTEGER,
-                 marker0 INTEGER, 
-                 marker1 TEXT, 
-                 private BOOLEAN);""")
+#     db.query("""CREATE TABLE source (
+#                  handle CHARACTER(25) PRIMARY KEY,
+#                  gid CHARACTER(25), 
+#                  title TEXT, 
+#                  author TEXT, 
+#                  pubinfo TEXT, 
+#                  abbrev TEXT, 
+#                  change INTEGER,
+#                  marker0 INTEGER, 
+#                  marker1 TEXT, 
+#                  private BOOLEAN);""")
 
-    db.query("""CREATE TABLE media (
-                 handle CHARACTER(25) PRIMARY KEY,
-                 gid CHARACTER(25), 
-                 path TEXT, 
-                 mime TEXT, 
-                 desc TEXT,
-                 change INTEGER, 
-                 marker0 INTEGER, 
-                 marker1 TEXT, 
-                 private BOOLEAN);""")
+#     db.query("""CREATE TABLE media (
+#                  handle CHARACTER(25) PRIMARY KEY,
+#                  gid CHARACTER(25), 
+#                  path TEXT, 
+#                  mime TEXT, 
+#                  desc TEXT,
+#                  change INTEGER, 
+#                  marker0 INTEGER, 
+#                  marker1 TEXT, 
+#                  private BOOLEAN);""")
 
-    db.query("""CREATE TABLE repository_ref (
-                 handle CHARACTER(25) PRIMARY KEY,
-                 ref CHARACTER(25), 
-                 call_number TEXT, 
-                 source_media_type0 INTEGER,
-                 source_media_type1 TEXT,
-                 private BOOLEAN);""")
+#     db.query("""CREATE TABLE repository_ref (
+#                  handle CHARACTER(25) PRIMARY KEY,
+#                  ref CHARACTER(25), 
+#                  call_number TEXT, 
+#                  source_media_type0 INTEGER,
+#                  source_media_type1 TEXT,
+#                  private BOOLEAN);""")
 
-    db.query("""CREATE TABLE repository (
-                 handle CHARACTER(25) PRIMARY KEY,
-                 gid CHARACTER(25), 
-                 the_type0 INTEGER, 
-                 the_type1 TEXT,
-                 name TEXT, 
-                 change INTEGER, 
-                 marker0 INTEGER, 
-                 marker1 TEXT, 
-                 private BOOLEAN);""")
+#     db.query("""CREATE TABLE repository (
+#                  handle CHARACTER(25) PRIMARY KEY,
+#                  gid CHARACTER(25), 
+#                  the_type0 INTEGER, 
+#                  the_type1 TEXT,
+#                  name TEXT, 
+#                  change INTEGER, 
+#                  marker0 INTEGER, 
+#                  marker1 TEXT, 
+#                  private BOOLEAN);""")
 
-    # One link to link them all
-    db.query("""CREATE TABLE link (
-                 from_type CHARACTER(25), 
-                 from_handle CHARACTER(25), 
-                 to_type CHARACTER(25), 
-                 to_handle CHARACTER(25));""")
+#     # One link to link them all
+#     db.query("""CREATE TABLE link (
+#                  from_type CHARACTER(25), 
+#                  from_handle CHARACTER(25), 
+#                  to_type CHARACTER(25), 
+#                  to_handle CHARACTER(25));""")
 
-    db.query("""CREATE INDEX idx_link_to ON 
-                  link(from_type, from_handle, to_type);""")
+#     db.query("""CREATE INDEX idx_link_to ON 
+#                   link(from_type, from_handle, to_type);""")
 
-    db.query("""CREATE TABLE markup (
-                 handle CHARACTER(25) PRIMARY KEY,
-                 markup0 INTEGER, 
-                 markup1 TEXT, 
-                 value TEXT, 
-                 start_stop_list TEXT);""")
+#     db.query("""CREATE TABLE markup (
+#                  handle CHARACTER(25) PRIMARY KEY,
+#                  markup0 INTEGER, 
+#                  markup1 TEXT, 
+#                  value TEXT, 
+#                  start_stop_list TEXT);""")
 
-    db.query("""CREATE TABLE event_ref (
-                 handle CHARACTER(25) PRIMARY KEY,
-                 ref CHARACTER(25), 
-                 role0 INTEGER, 
-                 role1 TEXT, 
-                 private BOOLEAN);""")
+#     db.query("""CREATE TABLE event_ref (
+#                  handle CHARACTER(25) PRIMARY KEY,
+#                  ref CHARACTER(25), 
+#                  role0 INTEGER, 
+#                  role1 TEXT, 
+#                  private BOOLEAN);""")
 
-    db.query("""CREATE TABLE person_ref (
-                 handle CHARACTER(25) PRIMARY KEY,
-                 description TEXT,
-                 private BOOLEAN);""")
+#     db.query("""CREATE TABLE person_ref (
+#                  handle CHARACTER(25) PRIMARY KEY,
+#                  description TEXT,
+#                  private BOOLEAN);""")
 
-    db.query("""CREATE TABLE source_ref (
-                 handle CHARACTER(25) PRIMARY KEY,
-                 ref CHARACTER(25), 
-                 confidence INTEGER,
-                 page CHARACTER(25),
-                 private BOOLEAN);""")
+#     db.query("""CREATE TABLE source_ref (
+#                  handle CHARACTER(25) PRIMARY KEY,
+#                  ref CHARACTER(25), 
+#                  confidence INTEGER,
+#                  page CHARACTER(25),
+#                  private BOOLEAN);""")
 
-    db.query("""CREATE TABLE child_ref (
-                 handle CHARACTER(25) PRIMARY KEY,
-                 ref CHARACTER(25), 
-                 frel0 INTEGER,
-                 frel1 CHARACTER(25),
-                 mrel0 INTEGER,
-                 mrel1 CHARACTER(25),
-                 private BOOLEAN);""")
+#     db.query("""CREATE TABLE child_ref (
+#                  handle CHARACTER(25) PRIMARY KEY,
+#                  ref CHARACTER(25), 
+#                  frel0 INTEGER,
+#                  frel1 CHARACTER(25),
+#                  mrel0 INTEGER,
+#                  mrel1 CHARACTER(25),
+#                  private BOOLEAN);""")
 
-    db.query("""CREATE TABLE lds (
-                 handle CHARACTER(25) PRIMARY KEY,
-                 type INTEGER, 
-                 place CHARACTER(25), 
-                 famc CHARACTER(25), 
-                 temple TEXT, 
-                 status INTEGER, 
-                 private BOOLEAN);""")
+#     db.query("""CREATE TABLE lds (
+#                  handle CHARACTER(25) PRIMARY KEY,
+#                  type INTEGER, 
+#                  place CHARACTER(25), 
+#                  famc CHARACTER(25), 
+#                  temple TEXT, 
+#                  status INTEGER, 
+#                  private BOOLEAN);""")
 
-    db.query("""CREATE TABLE media_ref (
-                 handle CHARACTER(25) PRIMARY KEY,
-                 ref CHARACTER(25),
-                 role0 INTEGER,
-                 role1 INTEGER,
-                 role2 INTEGER,
-                 role3 INTEGER,
-                 private BOOLEAN);""")
+#     db.query("""CREATE TABLE media_ref (
+#                  handle CHARACTER(25) PRIMARY KEY,
+#                  ref CHARACTER(25),
+#                  role0 INTEGER,
+#                  role1 INTEGER,
+#                  role2 INTEGER,
+#                  role3 INTEGER,
+#                  private BOOLEAN);""")
 
-    db.query("""CREATE TABLE address (
-                handle CHARACTER(25) PRIMARY KEY,
-                private BOOLEAN);""")
+#     db.query("""CREATE TABLE address (
+#                 handle CHARACTER(25) PRIMARY KEY,
+#                 private BOOLEAN);""")
 
-    db.query("""CREATE TABLE location (
-                 handle CHARACTER(25) PRIMARY KEY,
-                 street TEXT, 
-                 city TEXT, 
-                 county TEXT, 
-                 state TEXT, 
-                 country TEXT, 
-                 postal TEXT, 
-                 phone TEXT,
-                 parish TEXT);""")
+#     db.query("""CREATE TABLE location (
+#                  handle CHARACTER(25) PRIMARY KEY,
+#                  street TEXT, 
+#                  city TEXT, 
+#                  county TEXT, 
+#                  state TEXT, 
+#                  country TEXT, 
+#                  postal TEXT, 
+#                  phone TEXT,
+#                  parish TEXT);""")
 
-    db.query("""CREATE TABLE attribute (
-                 handle CHARACTER(25) PRIMARY KEY,
-                 the_type0 INTEGER, 
-                 the_type1 TEXT, 
-                 value TEXT, 
-                 private BOOLEAN);""")
+#     db.query("""CREATE TABLE attribute (
+#                  handle CHARACTER(25) PRIMARY KEY,
+#                  the_type0 INTEGER, 
+#                  the_type1 TEXT, 
+#                  value TEXT, 
+#                  private BOOLEAN);""")
 
-    db.query("""CREATE TABLE url (
-                 handle CHARACTER(25) PRIMARY KEY,
-                 path TEXT, 
-                 desc TXT, 
-                 type0 INTEGER,
-                 type1 TEXT,                  
-                 private BOOLEAN);
-                 """)
+#     db.query("""CREATE TABLE url (
+#                  handle CHARACTER(25) PRIMARY KEY,
+#                  path TEXT, 
+#                  desc TXT, 
+#                  type0 INTEGER,
+#                  type1 TEXT,                  
+#                  private BOOLEAN);
+#                  """)
 
-    db.query("""CREATE TABLE datamap (
-                 handle CHARACTER(25) PRIMARY KEY,
-                 key_field   TEXT, 
-                 value_field TXT);
-                 """)
+#     db.query("""CREATE TABLE datamap (
+#                  handle CHARACTER(25) PRIMARY KEY,
+#                  key_field   TEXT, 
+#                  value_field TXT);
+#                  """)
+
+"""
+CREATE INDEX "tables_person_marker_type_id" ON "tables_person" ("marker_type_id");
+CREATE INDEX "tables_person_gender_type_id" ON "tables_person" ("gender_type_id");
+CREATE INDEX "tables_family_marker_type_id" ON "tables_family" ("marker_type_id");
+CREATE INDEX "tables_family_father_id" ON "tables_family" ("father_id");
+CREATE INDEX "tables_family_mother_id" ON "tables_family" ("mother_id");
+CREATE INDEX "tables_family_family_rel_type_id" ON "tables_family" ("family_rel_type_id");
+CREATE INDEX "tables_source_marker_type_id" ON "tables_source" ("marker_type_id");
+CREATE INDEX "tables_event_marker_type_id" ON "tables_event" ("marker_type_id");
+CREATE INDEX "tables_event_event_type_id" ON "tables_event" ("event_type_id");
+CREATE INDEX "tables_repository_marker_type_id" ON "tables_repository" ("marker_type_id");
+CREATE INDEX "tables_repository_repository_type_id" ON "tables_repository" ("repository_type_id");
+CREATE INDEX "tables_place_marker_type_id" ON "tables_place" ("marker_type_id");
+CREATE INDEX "tables_media_marker_type_id" ON "tables_media" ("marker_type_id");
+CREATE INDEX "tables_note_marker_type_id" ON "tables_note" ("marker_type_id");
+CREATE INDEX "tables_note_note_type_id" ON "tables_note" ("note_type_id");
+CREATE INDEX "tables_name_person_id" ON "tables_name" ("person_id");
+CREATE INDEX "tables_lds_place_id" ON "tables_lds" ("place_id");
+CREATE INDEX "tables_lds_famc_id" ON "tables_lds" ("famc_id");
+CREATE INDEX "tables_markup_note_id" ON "tables_markup" ("note_id");
+CREATE INDEX "tables_noteref_object_type_id" ON "tables_noteref" ("object_type_id");
+CREATE INDEX "tables_noteref_note_id" ON "tables_noteref" ("note_id");
+CREATE INDEX "tables_sourceref_object_type_id" ON "tables_sourceref" ("object_type_id");
+CREATE INDEX "tables_sourceref_source_id" ON "tables_sourceref" ("source_id");
+CREATE INDEX "tables_eventref_object_type_id" ON "tables_eventref" ("object_type_id");
+CREATE INDEX "tables_eventref_role_type_id" ON "tables_eventref" ("role_type_id");
+CREATE INDEX "tables_eventref_event_id" ON "tables_eventref" ("event_id");
+CREATE INDEX "tables_repositoryref_object_type_id" ON "tables_repositoryref" ("object_type_id");
+CREATE INDEX "tables_repositoryref_source_media_type_id" ON "tables_repositoryref" ("source_media_type_id");
+CREATE INDEX "tables_repositoryref_repository_id" ON "tables_repositoryref" ("repository_id");
+CREATE INDEX "tables_personref_object_type_id" ON "tables_personref" ("object_type_id");
+CREATE INDEX "tables_personref_person_id" ON "tables_personref" ("person_id");
+CREATE INDEX "tables_childref_object_type_id" ON "tables_childref" ("object_type_id");
+CREATE INDEX "tables_childref_father_rel_type_id" ON "tables_childref" ("father_rel_type_id");
+CREATE INDEX "tables_childref_mother_rel_type_id" ON "tables_childref" ("mother_rel_type_id");
+CREATE INDEX "tables_childref_child_id" ON "tables_childref" ("child_id");
+CREATE INDEX "tables_mediaref_object_type_id" ON "tables_mediaref" ("object_type_id");
+CREATE INDEX "tables_mediaref_media_id" ON "tables_mediaref" ("media_id");
+"""
 
 class Database(object):
     """
@@ -863,7 +1269,7 @@ def exportData(database, filename, option_box=None, callback=None):
 
     db = Database(filename)
     makeDB(db)
-
+    return
     # ---------------------------------
     # Notes
     # ---------------------------------
