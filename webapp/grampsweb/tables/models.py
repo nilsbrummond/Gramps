@@ -158,7 +158,8 @@ class PrimaryObject(models.Model):
     class Meta: abstract = True
 
     ## Fields:
-    handle = models.CharField(max_length=19, primary_key=True, unique=True)
+    id = models.AutoField(primary_key=True)
+    handle = models.CharField(max_length=19, unique=True)
     gramps_id =  models.CharField('gramps id', max_length=25, blank=True)
     last_changed = models.DateTimeField('last changed', auto_now=True)
     private = models.BooleanField('private')
@@ -172,7 +173,6 @@ class Person(PrimaryObject):
     The model for the person object
     """
     gender_type = models.ForeignKey('GenderType')
-    references = generic.GenericRelation('PersonRef', related_name="refs")
 
 class Family(PrimaryObject):
     father = models.ForeignKey('Person', related_name="father_ref", null=True, blank=True)
@@ -187,7 +187,7 @@ class Source(PrimaryObject):
     abbrev = models.CharField(max_length=50, blank=True)
     references = generic.GenericRelation('SourceRef', related_name="refs")
 
-class Event(PrimaryObject, DateObject):
+class Event(DateObject, PrimaryObject):
     event_type = models.ForeignKey('EventType')
     description = models.CharField('description', max_length=50, blank=True)
     references = generic.GenericRelation('EventRef', related_name="refs")
@@ -213,7 +213,7 @@ class Note(PrimaryObject):
     note_type = models.ForeignKey('NoteType')
     text  = models.TextField(blank=True)
     preformatted = models.BooleanField('preformatted')
-    references = generic.GenericRelation('NoteRef', related_name="refs")
+    #references = generic.GenericRelation('NoteRef', related_name="refs")
 
 #--------------------------------------------------------------------------------
 #
@@ -287,8 +287,18 @@ class Markup(models.Model):
     string = models.TextField(blank=True)
     start_stop_list = models.TextField(default="[]")
 
-class Address(SecondaryObject):
-    pass
+class Address(DateObject, SecondaryObject):
+    location = models.OneToOneField('Location')
+
+class Location(models.Model):
+    street = models.TextField(blank=True)
+    city = models.TextField(blank=True)
+    county = models.TextField(blank=True)
+    state = models.TextField(blank=True)
+    country = models.TextField(blank=True)
+    postal = models.TextField(blank=True)
+    phone = models.TextField(blank=True)
+    parish = models.TextField(blank=True)
 
 ## location
 ## attribute
@@ -306,63 +316,64 @@ class BaseRef(models.Model):
 
     object_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
-    content = generic.GenericForeignKey("object_type", "object_id")
+    referenced_by = generic.GenericForeignKey("object_type", "object_id")
+
     last_changed = models.DateTimeField('last changed', auto_now=True)
     private = models.BooleanField()
   
 class NoteRef(BaseRef):
-    note = models.OneToOneField('Note')
+    note = models.ForeignKey('Note') 
 
     def __unicode__(self):
-        return "NoteRef to " + str(self.object)
+        return "NoteRef from " + str(self.referenced_by)
 
-class SourceRef(BaseRef, DateObject):
+class SourceRef(DateObject, BaseRef):
     page = models.CharField(max_length=50)
     confidence = models.IntegerField()
-    source = models.OneToOneField('Source')
+    source = models.ForeignKey('Source')
 
     def __unicode__(self):
-        return "SourceRef to " + str(self.object)
+        return "SourceRef to " + str(self.source)
 
 class EventRef(BaseRef):
     role_type = models.ForeignKey('EventRoleType')
-    event = models.OneToOneField('Event')
+    event = models.ForeignKey('Event')
 
     def __unicode__(self):
-        return "EventRef to " + str(self.object)
+        return "EventRef to " + str(self.event)
 
 class RepositoryRef(BaseRef):
     source_media_type = models.ForeignKey('SourceMediaType')
     call_number = models.CharField(max_length=50)
-    repository = models.OneToOneField('Repository')
+    repository = models.ForeignKey('Repository')
 
     def __unicode__(self):
-        return "RepositoryRef to " + str(self.object)
+        return "RepositoryRef to " + str(self.repository)
 
 class PersonRef(BaseRef):
     description = models.CharField(max_length=50)
-    person = models.OneToOneField('Person')
+    person = models.ForeignKey('Person')
 
     def __unicode__(self):
-        return "PersonRef to " + str(self.object)
+        return "PersonRef to " + str(self.person)
 
 class ChildRef(BaseRef):
     father_rel_type = models.ForeignKey('FamilyRelType', related_name="father_rel")
     mother_rel_type = models.ForeignKey('FamilyRelType', related_name="mother_rel")
-    child = models.OneToOneField('Person')
+    child = models.ForeignKey('Person')
 
     def __unicode__(self):
-        return "ChildRef to " + str(self.object)
+        return "ChildRef to " + str(self.child)
 
 class MediaRef(BaseRef):
     x1 = models.IntegerField()
     y1 = models.IntegerField()
     x2 = models.IntegerField()
     y2 = models.IntegerField()
-    media = models.OneToOneField('Media')
+    media = models.ForeignKey('Media')
 
     def __unicode__(self):
-        return "MediaRef to " + str(self.object)
+        return "MediaRef to " + str(self.media)
 
 #--------------------------------------------------------------------------------
 #
@@ -372,27 +383,29 @@ class MediaRef(BaseRef):
 
 ## Primary:
 
-def new_Person():
+def test_Person():
     m = MarkerType.objects.get(name="")
     p = Person(handle=create_id(), marker_type=m)
     p.gender_type = GenderType.objects.get(name="Unknown") 
     p.save()
     return p
 
-def new_Family():
+def test_Family():
     m = MarkerType.objects.get(name="")
     frt = FamilyRelType.objects.get(name="Unknown")
     f = Family(handle=create_id(), marker_type=m, family_rel_type=frt)
     f.save()
     return f
 
-def new_Source():
+def test_Source():
     m = MarkerType.objects.get(name="")
     s = Source(handle=create_id(), marker_type=m)
     s.save()
+    s.gramps_id = "S%04d" % s.id
+    s.save()
     return s
 
-def new_Event():
+def test_Event():
     m = MarkerType.objects.get(name="")
     et = EventType.objects.get(name="Unknown")
     e = Event(handle=create_id(), marker_type=m, event_type=et)
@@ -400,26 +413,26 @@ def new_Event():
     e.save()
     return e
 
-def new_Repository():
+def test_Repository():
     m = MarkerType.objects.get(name="")
     rt = RepositoryType.objects.get(name="Unknown")
     r = Repository(handle=create_id(), marker_type=m, repository_type=rt)
     r.save()
     return r
 
-def new_Place():
+def test_Place():
     m = MarkerType.objects.get(name="")
     p = Place(handle=create_id(), marker_type=m)
     p.save()
     return p
     
-def new_Media():
+def test_Media():
     m = MarkerType.objects.get(name="")
     media = Media(handle=create_id(), marker_type=m)
     media.save()
     return media
 
-def new_Note():
+def test_Note():
     m = MarkerType.objects.get(name="")
     note_type = NoteType.objects.get(name="Unknown")
     note = Note(handle=create_id(), marker_type=m, note_type=note_type, 
@@ -427,27 +440,28 @@ def new_Note():
     note.save()
     return note
 
-def new_Family():
-    father = new_Person()
-    fname = new_Name(father, "Blank", "Lowell")
-    mother = new_Person()
-    mname = new_Name(mother, "Bamford", "Norma")
+def test_Family_with_children():
+    father = test_Person()
+    fname = test_Name(father, "Blank", "Lowell")
+    mother = test_Person()
+    mname = test_Name(mother, "Bamford", "Norma")
     family_rel_type = FamilyRelType.objects.get(name="Married")
     m = MarkerType.objects.get(name="")
     f = Family(handle=create_id(), father=father, mother=mother, 
                family_rel_type=family_rel_type, marker_type=m)
+    f.save()
     for names in [("Blank", "Doug"), ("Blank", "Laura"), ("Blank", "David")]:
-        p = new_Person()
-        n = new_Name(p, names[0], names[1])
+        p = test_Person()
+        n = test_Name(p, names[0], names[1])
         f.children.add(p)
     f.save()
     return f
 
 ## Secondary:
 
-def new_Name(person=None, surname=None, first=None):
+def test_Name(person=None, surname=None, first=None):
     if not person: # Testing
-        person = new_Person()
+        person = test_Person()
     m = MarkerType.objects.get(name="")
     n = Name(person=person)
     if first:
@@ -462,37 +476,38 @@ def new_Name(person=None, surname=None, first=None):
     person.save()
     return n
 
-def new_Markup(note=None):
+def test_Markup(note=None):
     if not note:
-        note = new_Note()
+        note = test_Note()
     markup = Markup(note=note)
     markup.order = 1
     markup.save()
     return markup
 
-def new_Lds(place=None, famc=None):
+def test_Lds(place=None, famc=None):
     if not place:
-        place = new_Place()
+        place = test_Place()
     if not famc:
-        famc = new_Family()
+        famc = test_Family()
     lds = Lds(lds_type=0, status=0, place=place, famc=famc)
     lds.save()
     return lds
     
-def new_NoteRef():
-    note = new_Note()
-    person = new_Person()
-    family = new_Family()
-    #note_ref = NoteRef(content=person, note=note)
-    #note_ref.save()
-    #note_ref = NoteRef(referenced_by=family, note=note)
-    #note_ref.save()
-    #return note_ref
+def test_NoteRef():
+    note = test_Note()
+    person = test_Person()
+    note_ref = NoteRef(referenced_by=person, note=note)
+    note_ref.save()
+    family = test_Family()
+    note_ref = NoteRef(referenced_by=family, note=note)
+    note_ref.save()
+    return note_ref
 
-def new_SourceRef():
-    note = new_Note()
-    source = new_Source()
-    source_ref = SourceRef(content=note, source=source)
+def test_SourceRef():
+    note = test_Note()
+    source = test_Source()
+    source_ref = SourceRef(referenced_by=note, source=source, confidence=4)
+    source_ref.set_date_from_gdate(Today())
     source_ref.save()
     return source_ref
 
@@ -503,11 +518,13 @@ def new_SourceRef():
 #--------------------------------------------------------------------------------
 
 def main():
-    for new_Item in [new_Person, new_Family, new_Source, new_Event, new_Repository,
-                     new_Place, new_Media, new_Note, new_Name, new_Markup, new_Lds,
-                     new_NoteRef]:
-        print new_Item.__name__
-        obj = new_Item()
+    for test_Item in [test_Person, test_Family, test_Family_with_children, 
+                      test_Source, test_Event, 
+                      test_Repository, test_Place, test_Media, test_Note, 
+                      test_Name, test_Markup, test_Lds, test_NoteRef,
+                      test_SourceRef]:
+        print "testing:", test_Item.__name__
+        obj = test_Item()
 
 if __name__ == "__main__":
     main()

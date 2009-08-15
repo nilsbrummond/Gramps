@@ -14,3 +14,6 @@ clean:
 
 run:
 	python manage.py runserver
+
+sql:
+	python manage.py sqlall > gramps_sql.txt
