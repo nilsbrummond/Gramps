@@ -19,7 +19,7 @@ class mGrampsType(models.Model):
     custom_type holds the type name
     """
     class Meta: abstract = True
-
+    
     _CUSTOM = 0
     _DEFAULT = 0
     _DATAMAP = []
@@ -157,11 +157,13 @@ class PrimaryObject(models.Model):
     """
     class Meta: abstract = True
 
+    ## Fields:
     handle = models.CharField(max_length=19, primary_key=True, unique=True)
     gramps_id =  models.CharField('gramps id', max_length=25, blank=True)
-    marker_type = models.ForeignKey('MarkerType')
     last_changed = models.DateTimeField('last changed', auto_now=True)
     private = models.BooleanField('private')
+    ## Keys:
+    marker_type = models.ForeignKey('MarkerType')
 
     def __unicode__(self): return self.gramps_id 
 
@@ -175,6 +177,7 @@ class Family(PrimaryObject):
     father = models.ForeignKey('Person', related_name="father_ref", null=True, blank=True)
     mother = models.ForeignKey('Person', related_name="mother_ref", null=True, blank=True)
     family_rel_type = models.ForeignKey('FamilyRelType')
+    children = models.ManyToManyField('Person')
 
 class Source(PrimaryObject):
     title = models.CharField(max_length=50, blank=True)
@@ -223,7 +226,6 @@ class SecondaryObject(models.Model):
     last_changed = models.DateTimeField('last changed', auto_now=True)
 
 class Name(DateObject, SecondaryObject):
-    person = models.ForeignKey('Person')
     order = models.PositiveIntegerField()
     primary_name = models.BooleanField('primary')
     first_name = models.TextField(blank=True)
@@ -236,6 +238,8 @@ class Name(DateObject, SecondaryObject):
     group_as = models.TextField(blank=True)
     sort_as = models.IntegerField(blank=True)
     display_as = models.IntegerField(blank=True)
+
+    person = models.ForeignKey('Person')
 
 class Lds(SecondaryObject):
     """
@@ -282,7 +286,7 @@ class Address(SecondaryObject):
 
 ## location
 ## attribute
-## url
+## url models.URLField
 ## datamap
 
 #--------------------------------------------------------------------------------
@@ -351,7 +355,7 @@ class MediaRef(BaseRef):
 
 #--------------------------------------------------------------------------------
 #
-# Functions
+# Testing Functions
 #
 #--------------------------------------------------------------------------------
 
@@ -361,17 +365,20 @@ def new_Person():
     m = MarkerType.objects.get(name="")
     p = Person(handle=create_id(), marker_type=m)
     p.gender_type = GenderType.objects.get(name="Unknown") 
+    p.save()
     return p
 
 def new_Family():
     m = MarkerType.objects.get(name="")
     frt = FamilyRelType.objects.get(name="Unknown")
     f = Family(handle=create_id(), marker_type=m, family_rel_type=frt)
+    f.save()
     return f
 
 def new_Source():
     m = MarkerType.objects.get(name="")
     s = Source(handle=create_id(), marker_type=m)
+    s.save()
     return s
 
 def new_Event():
@@ -379,22 +386,26 @@ def new_Event():
     et = EventType.objects.get(name="Unknown")
     e = Event(handle=create_id(), marker_type=m, event_type=et)
     e.set_date_from_gdate( GDate() )
+    e.save()
     return e
 
 def new_Repository():
     m = MarkerType.objects.get(name="")
     rt = RepositoryType.objects.get(name="Unknown")
     r = Repository(handle=create_id(), marker_type=m, repository_type=rt)
+    r.save()
     return r
 
 def new_Place():
     m = MarkerType.objects.get(name="")
     p = Place(handle=create_id(), marker_type=m)
+    p.save()
     return p
     
 def new_Media():
     m = MarkerType.objects.get(name="")
     media = Media(handle=create_id(), marker_type=m)
+    media.save()
     return media
 
 def new_Note():
@@ -402,19 +413,42 @@ def new_Note():
     note_type = NoteType.objects.get(name="Unknown")
     note = Note(handle=create_id(), marker_type=m, note_type=note_type, 
                 preformatted=False)
+    note.save()
     return note
+
+def new_Family():
+    father = new_Person()
+    fname = new_Name(father, "Blank", "Lowell")
+    mother = new_Person()
+    mname = new_Name(mother, "Bamford", "Norma")
+    family_rel_type = FamilyRelType.objects.get(name="Married")
+    m = MarkerType.objects.get(name="")
+    f = Family(handle=create_id(), father=father, mother=mother, 
+               family_rel_type=family_rel_type, marker_type=m)
+    for names in [("Blank", "Doug"), ("Blank", "Laura"), ("Blank", "David")]:
+        p = new_Person()
+        n = new_Name(p, names[0], names[1])
+        f.children.add(p)
+    f.save()
+    return f
 
 ## Secondary:
 
-def new_Name(person=None):
-    if not person:
+def new_Name(person=None, surname=None, first=None):
+    if not person: # Testing
         person = new_Person()
     m = MarkerType.objects.get(name="")
     n = Name(person=person)
+    if first:
+        n.first_name = first
+    if surname:
+        n.surname = surname
     n.set_date_from_gdate(Today())
     n.order = 1
     n.sort_as = 1
     n.display_as = 1
+    n.save()
+    person.save()
     return n
 
 def new_Markup(note=None):
@@ -422,6 +456,7 @@ def new_Markup(note=None):
         note = new_Note()
     markup = Markup(note=note)
     markup.order = 1
+    markup.save()
     return markup
 
 def new_Lds(place=None, famc=None):
@@ -430,8 +465,9 @@ def new_Lds(place=None, famc=None):
     if not famc:
         famc = new_Family()
     lds = Lds(lds_type=0, status=0, place=place, famc=famc)
+    lds.save()
     return lds
-
+    
 #--------------------------------------------------------------------------------
 #
 # Testing
@@ -441,8 +477,8 @@ def new_Lds(place=None, famc=None):
 def main():
     for new_Item in [new_Person, new_Family, new_Source, new_Event, new_Repository,
                      new_Place, new_Media, new_Note, new_Name, new_Markup, new_Lds]:
+        print new_Item.__name__
         obj = new_Item()
-        obj.save()
 
 if __name__ == "__main__":
     main()

@@ -10,6 +10,7 @@ clean:
 	rm -f gramps.sql
 	rm -f *~ *.pyc *.pyo
 	rm -f views/*~ views/*.pyc views/*.pyo
+	rm -rf tables/fixtures/initial_data.json
 
 run:
 	python manage.py runserver
