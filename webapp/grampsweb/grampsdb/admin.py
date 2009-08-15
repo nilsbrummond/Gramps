@@ -1,4 +1,4 @@
-from grampsweb.tables.models import *
+from grampsweb.grampsdb.models import *
 from django.contrib import admin
 
 

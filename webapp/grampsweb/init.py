@@ -5,11 +5,10 @@ but this makes it useful for all Django-based backends
 but still puts it into their syncdb API.
 """
 
-import sys
-
+import os
+os.environ["DJANGO_SETTINGS_MODULE"] = "settings"
 import settings
 
-sys.path.append(settings.GRAMPS_PATH) # add gramps to path
 from gen.lib.markertype import MarkerType
 from gen.lib.nametype import NameType
 from gen.lib.attrtype import AttributeType
@@ -22,7 +21,7 @@ from gen.lib.srcmediatype import SourceMediaType
 from gen.lib.eventroletype import EventRoleType
 from gen.lib.notetype import NoteType
 
-from tables.models import GenderType
+from grampsdb.models import GenderType
 
 def get_datamap(x):
     """
@@ -68,7 +67,7 @@ for type in type_models:
         else: # NEW SQL based
             val, name = tuple
         print "   {"
-        print "      \"model\": \"tables.%s\"," % type.__name__.lower()
+        print "      \"model\": \"grampsdb.%s\"," % type.__name__.lower()
         print "      \"pk\": %d," % count
         print "      \"fields\":"
         print "         {"

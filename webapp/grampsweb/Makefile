@@ -4,13 +4,13 @@ update: init
 	python manage.py syncdb
 
 init: 
-	python init.py > tables/fixtures/initial_data.json
+	python init.py > grampsdb/fixtures/initial_data.json
 
 clean:
 	rm -f gramps.sql
 	rm -f *~ *.pyc *.pyo
 	rm -f views/*~ views/*.pyc views/*.pyo
-	rm -rf tables/fixtures/initial_data.json
+	rm -rf grampsdb/fixtures/initial_data.json
 
 run:
 	python manage.py runserver

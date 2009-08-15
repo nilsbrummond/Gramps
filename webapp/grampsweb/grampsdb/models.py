@@ -387,6 +387,7 @@ def test_Person():
     m = MarkerType.objects.get(name="")
     p = Person(handle=create_id(), marker_type=m)
     p.gender_type = GenderType.objects.get(name="Unknown") 
+    p.gramps_id = "P%05d" % (Person.objects.count() + 1)
     p.save()
     return p
 
@@ -394,6 +395,7 @@ def test_Family():
     m = MarkerType.objects.get(name="")
     frt = FamilyRelType.objects.get(name="Unknown")
     f = Family(handle=create_id(), marker_type=m, family_rel_type=frt)
+    f.gramps_id = "F%05d" % (Family.objects.count() + 1)
     f.save()
     return f
 
@@ -401,7 +403,7 @@ def test_Source():
     m = MarkerType.objects.get(name="")
     s = Source(handle=create_id(), marker_type=m)
     s.save()
-    s.gramps_id = "S%04d" % s.id
+    s.gramps_id = "S%05d" % (Source.objects.count() + 1)
     s.save()
     return s
 
@@ -410,6 +412,7 @@ def test_Event():
     et = EventType.objects.get(name="Unknown")
     e = Event(handle=create_id(), marker_type=m, event_type=et)
     e.set_date_from_gdate( GDate() )
+    e.gramps_id = "E%05d" % (Event.objects.count() + 1)
     e.save()
     return e
 
@@ -417,12 +420,14 @@ def test_Repository():
     m = MarkerType.objects.get(name="")
     rt = RepositoryType.objects.get(name="Unknown")
     r = Repository(handle=create_id(), marker_type=m, repository_type=rt)
+    r.gramps_id = "R%05d" % (Repository.objects.count() + 1)
     r.save()
     return r
 
 def test_Place():
     m = MarkerType.objects.get(name="")
     p = Place(handle=create_id(), marker_type=m)
+    p.gramps_id = "L%05d" % (Place.objects.count() + 1)
     p.save()
     return p
     
@@ -430,6 +435,7 @@ def test_Media():
     m = MarkerType.objects.get(name="")
     media = Media(handle=create_id(), marker_type=m)
     media.save()
+    media.gramps_id = "M%05d" % (Media.objects.count() + 1)
     return media
 
 def test_Note():
@@ -437,6 +443,7 @@ def test_Note():
     note_type = NoteType.objects.get(name="Unknown")
     note = Note(handle=create_id(), marker_type=m, note_type=note_type, 
                 preformatted=False)
+    note.gramps_id = "N%05d" % (Note.objects.count() + 1)
     note.save()
     return note
 
