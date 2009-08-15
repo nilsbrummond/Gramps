@@ -28,6 +28,9 @@ class mGrampsType(models.Model):
     
     def __unicode__(self): return self.name
 
+    def get_default(self):
+        return self._DATAMAP[self._DEFAULT]
+
 class MarkerType(mGrampsType):
     from gen.lib.markertype import MarkerType
     _DATAMAP = get_datamap(MarkerType)
@@ -174,6 +177,7 @@ class Person(PrimaryObject):
     The model for the person object
     """
     gender_type = models.ForeignKey('GenderType')
+    names = models.ManyToManyField('Name')
 
 class Family(PrimaryObject):
     father = models.ForeignKey('Person', related_name="father_ref", null=True, blank=True)
@@ -256,8 +260,6 @@ class Name(DateObject, SecondaryObject):
     group_as = models.TextField(blank=True)
     sort_as = models.IntegerField(blank=True)
     display_as = models.IntegerField(blank=True)
-
-    person = models.ForeignKey('Person')
 
     def __unicode__(self):
         return self.surname + ", " + self.first_name
@@ -400,23 +402,24 @@ class MediaRef(BaseRef):
 ## Primary:
 
 def test_Person():
-    m = MarkerType.objects.get(name="")
+    (val, name) = MarkerType.get_default()
+    m = MarkerType.objects.get(val=val, name=name)
     p = Person(handle=create_id(), marker_type=m)
-    p.gender_type = GenderType.objects.get(name="Unknown") 
+    p.gender_type = GenderType.objects.get(id=1) 
     p.gramps_id = "P%05d" % (Person.objects.count() + 1)
     p.save()
     return p
 
 def test_Family():
-    m = MarkerType.objects.get(name="")
-    frt = FamilyRelType.objects.get(name="Unknown")
+    m = MarkerType.objects.get(id=1)
+    frt = FamilyRelType.objects.get(id=1)
     f = Family(handle=create_id(), marker_type=m, family_rel_type=frt)
     f.gramps_id = "F%05d" % (Family.objects.count() + 1)
     f.save()
     return f
 
 def test_Source():
-    m = MarkerType.objects.get(name="")
+    m = MarkerType.objects.get(id=1)
     s = Source(handle=create_id(), marker_type=m)
     s.save()
     s.gramps_id = "S%05d" % (Source.objects.count() + 1)
@@ -424,8 +427,8 @@ def test_Source():
     return s
 
 def test_Event():
-    m = MarkerType.objects.get(name="")
-    et = EventType.objects.get(name="Unknown")
+    m = MarkerType.objects.get(id=1)
+    et = EventType.objects.get(id=1)
     e = Event(handle=create_id(), marker_type=m, event_type=et)
     e.set_date_from_gdate( GDate() )
     e.gramps_id = "E%05d" % (Event.objects.count() + 1)
@@ -433,30 +436,30 @@ def test_Event():
     return e
 
 def test_Repository():
-    m = MarkerType.objects.get(name="")
-    rt = RepositoryType.objects.get(name="Unknown")
+    m = MarkerType.objects.get(id=1)
+    rt = RepositoryType.objects.get(id=1)
     r = Repository(handle=create_id(), marker_type=m, repository_type=rt)
     r.gramps_id = "R%05d" % (Repository.objects.count() + 1)
     r.save()
     return r
 
 def test_Place():
-    m = MarkerType.objects.get(name="")
+    m = MarkerType.objects.get(id=1)
     p = Place(handle=create_id(), marker_type=m)
     p.gramps_id = "L%05d" % (Place.objects.count() + 1)
     p.save()
     return p
     
 def test_Media():
-    m = MarkerType.objects.get(name="")
+    m = MarkerType.objects.get(id=1)
     media = Media(handle=create_id(), marker_type=m)
     media.save()
     media.gramps_id = "M%05d" % (Media.objects.count() + 1)
     return media
 
 def test_Note():
-    m = MarkerType.objects.get(name="")
-    note_type = NoteType.objects.get(name="Unknown")
+    m = MarkerType.objects.get(id=1)
+    note_type = NoteType.objects.get(id=1)
     note = Note(handle=create_id(), marker_type=m, note_type=note_type, 
                 preformatted=False)
     note.gramps_id = "N%05d" % (Note.objects.count() + 1)
@@ -468,8 +471,8 @@ def test_Family_with_children():
     fname = test_Name(father, "Blank", "Lowell")
     mother = test_Person()
     mname = test_Name(mother, "Bamford", "Norma")
-    family_rel_type = FamilyRelType.objects.get(name="Married")
-    m = MarkerType.objects.get(name="")
+    family_rel_type = FamilyRelType.objects.get(id=1)
+    m = MarkerType.objects.get(id=1)
     f = Family(handle=create_id(), father=father, mother=mother, 
                family_rel_type=family_rel_type, marker_type=m)
     f.save()
@@ -485,18 +488,19 @@ def test_Family_with_children():
 def test_Name(person=None, surname=None, first=None):
     if not person: # Testing
         person = test_Person()
-    m = MarkerType.objects.get(name="")
-    n = Name(person=person)
+    m = MarkerType.objects.get(id=1)
+    n = Name()
     if first:
         n.first_name = first
     if surname:
         n.surname = surname
     n.set_date_from_gdate(Today())
-    n.name_type = NameType.objects.get(name="Unknown")
+    n.name_type = NameType.objects.get(id=1)
     n.order = 1
     n.sort_as = 1
     n.display_as = 1
     n.save()
+    person.names.add(n)
     person.save()
     return n
 
