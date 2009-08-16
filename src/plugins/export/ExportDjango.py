@@ -503,7 +503,7 @@ def export_note(data, step):
         for markup in markup_list:
             markup_code, value, start_stop_list = markup
             m = dj.Markup(note=n, order=count, string=value,
-                              start_stop_list=str(stop_start_list))
+                              start_stop_list=str(start_stop_list))
             m.save()
     elif step == 1:   
         # Nothing for notes to do

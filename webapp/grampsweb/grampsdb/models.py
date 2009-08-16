@@ -95,6 +95,20 @@ class mGrampsType(models.Model):
         """ return a tuple default (val,name) """
         return self._DATAMAP[self._DEFAULT]
 
+    def __iter__(self):
+        """ for use with tuple(Type) """
+        yield self.val
+        yield self.name
+
+    def __getitem__(self, pos):
+        """ for getting the parts as if they were the original tuples."""
+        if pos == 0:
+            return self.val
+        elif pos == 1:
+            return self.name
+        else:
+            raise IndexError("type index is out of range (use 0 or 1)")
+
 class MarkerType(mGrampsType):
     from gen.lib.markertype import MarkerType
     _DATAMAP = get_datamap(MarkerType)
@@ -435,7 +449,7 @@ class Lds(SecondaryObject):
 class Markup(models.Model):
     note = models.ForeignKey('Note')
     order = models.PositiveIntegerField()
-    string = models.TextField(blank=True)
+    string = models.TextField(blank=True, null=True)
     start_stop_list = models.TextField(default="[]")
 
 class Address(DateObject, SecondaryObject):
