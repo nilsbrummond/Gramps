@@ -90,7 +90,7 @@ def lookup(index, event_ref_list):
 def get_datamap(grampsclass):
     return [x[0] for x in grampsclass._DATAMAP if x[0] != grampsclass.CUSTOM]
 
-def makeDB():
+def make_db():
     """
     Prepares the database.
     """
@@ -151,7 +151,7 @@ def export_note_list(obj, note_list):
 def export_alternate_name_list(person, alternate_names):
     for name in alternate_names:
         if name:
-            export_name(person, name)
+            export_name(person, name, False)
 
 def export_parent_family_list(person, parent_family_list):
     for parent_family_data in parent_family_list:
@@ -398,7 +398,7 @@ def export_date(obj, date):
     obj.year2 = year2
     obj.slash2 = slash2
 
-def export_name(person, data):
+def export_name(person, data, preferred):
     # A Step #2 function
     # In order, primary was first:
     if data:
@@ -410,6 +410,7 @@ def export_name(person, data):
         count = person.names.count()
         name = dj.Name()
         name.order = count + 1
+        name.preferred = preferred
         name.private = private
         name.first_name = first_name
         name.surname = surname
@@ -469,7 +470,7 @@ def export_person(data, step):
     elif step == 1:   # Add the relations:
         person = dj.Person.objects.get(handle=handle)
         if primary_name:
-            export_name(person, primary_name)
+            export_name(person, primary_name, True)
         export_alternate_name_list(person, alternate_names)
         export_event_ref_list(person, event_ref_list)
         export_family_ref_list(person, family_list) 
@@ -689,7 +690,7 @@ def export_all(database, filename, option_box=None, callback=None):
              len(database.media_map) +
              len(database.source_map)) * 2 # steps
     count = 0.0
-    makeDB()
+    make_db()
 
     for step in (0, 1):
         print "Exporting Step %d..." % (step + 1)
