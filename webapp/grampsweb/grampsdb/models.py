@@ -29,66 +29,118 @@ class mGrampsType(models.Model):
     def __unicode__(self): return self.name
 
     def get_default(self):
+        """ return a tuple default (val,name) """
         return self._DATAMAP[self._DEFAULT]
 
 class MarkerType(mGrampsType):
     from gen.lib.markertype import MarkerType
     _DATAMAP = get_datamap(MarkerType)
+    _CUSTOM = MarkerType._CUSTOM
+    _DEFAULT = _DATAMAP[MarkerType._DEFAULT]
     val = models.IntegerField('marker', choices=_DATAMAP, blank=False)
 
 class NameType(mGrampsType):
     from gen.lib.nametype import NameType
     _DATAMAP = get_datamap(NameType)
+    _CUSTOM = NameType._CUSTOM
+    _DEFAULT = _DATAMAP[NameType._DEFAULT]
     val = models.IntegerField('name type', choices=_DATAMAP, blank=False)
 
 class AttributeType(mGrampsType):
     from gen.lib.attrtype import AttributeType
     _DATAMAP = get_datamap(AttributeType)
+    _CUSTOM = AttributeType._CUSTOM
+    _DEFAULT = _DATAMAP[AttributeType._DEFAULT]
     val = models.IntegerField('attribute type', choices=_DATAMAP, blank=False)
 
 class UrlType(mGrampsType):
     from gen.lib.urltype import UrlType
     _DATAMAP = get_datamap(UrlType)
+    _CUSTOM = UrlType._CUSTOM
+    _DEFAULT = _DATAMAP[UrlType._DEFAULT]
     val = models.IntegerField('url type', choices=_DATAMAP, blank=False)
 
 class ChildRefType(mGrampsType):
     from gen.lib.childreftype import ChildRefType
     _DATAMAP = get_datamap(ChildRefType)
+    _CUSTOM = ChildRefType._CUSTOM
+    _DEFAULT = _DATAMAP[ChildRefType._DEFAULT]
     val = models.IntegerField('child reference type', choices=_DATAMAP, blank=False)
 
 class RepositoryType(mGrampsType):
     from gen.lib.repotype import RepositoryType
     _DATAMAP = get_datamap(RepositoryType)
+    _CUSTOM = RepositoryType._CUSTOM
+    _DEFAULT = _DATAMAP[RepositoryType._DEFAULT]
     val = models.IntegerField('repository type', choices=_DATAMAP, blank=False)
 
 class EventType(mGrampsType):
     from gen.lib.eventtype import EventType
     _DATAMAP = get_datamap(EventType)
+    _CUSTOM = EventType._CUSTOM
+    _DEFAULT = _DATAMAP[EventType._DEFAULT]
     val = models.IntegerField('event type', choices=_DATAMAP, blank=False)
 
 class FamilyRelType(mGrampsType):
     from gen.lib.familyreltype import FamilyRelType
     _DATAMAP = get_datamap(FamilyRelType)
+    _CUSTOM = FamilyRelType._CUSTOM
+    _DEFAULT = _DATAMAP[FamilyRelType._DEFAULT]
     val = models.IntegerField('family relation type', choices=_DATAMAP, blank=False)
 
 class SourceMediaType(mGrampsType):
     from gen.lib.srcmediatype import SourceMediaType
     _DATAMAP = get_datamap(SourceMediaType)
+    _CUSTOM = SourceMediaType._CUSTOM
+    _DEFAULT = _DATAMAP[SourceMediaType._DEFAULT]
     val = models.IntegerField('source medium type', choices=_DATAMAP, blank=False)
 
 class EventRoleType(mGrampsType):
     from gen.lib.eventroletype import EventRoleType
     _DATAMAP = get_datamap(EventRoleType)
+    _CUSTOM = EventRoleType._CUSTOM
+    _DEFAULT = _DATAMAP[EventRoleType._DEFAULT]
     val = models.IntegerField('event role type', choices=_DATAMAP, blank=False)
 
 class NoteType(mGrampsType):
     from gen.lib.notetype import NoteType
     _DATAMAP = get_datamap(NoteType)
+    _CUSTOM = NoteType._CUSTOM
+    _DEFAULT = _DATAMAP[NoteType._DEFAULT]
     val = models.IntegerField('note type', choices=_DATAMAP, blank=False)
 
 class GenderType(mGrampsType):
     _DATAMAP = [(2, 'Unknown'), (1, 'Male'), (0, 'Female')]
+    _DEFAULT = _DATAMAP[0]
     val = models.IntegerField('gender type', choices=_DATAMAP, blank=False)
+
+class LdsType(mGrampsType):
+    _DATAMAP = [(0, "Baptism"        ),
+                (1, "Endowment"      ),
+                (2, "Seal to Parents"),
+                (3, "Seal to Spouse"),
+                (4, "Confirmation")]
+    _DEFAULT = _DATAMAP[0]
+    val = models.IntegerField('lds type', choices=_DATAMAP, blank=False)
+
+class LdsStatus(mGrampsType):
+    _DATAMAP = [(0, "None"),
+                (1, "BIC"), 
+                (2, "Canceled"),
+                (3, "Child"),
+                (4, "Cleared"),
+                (5, "Completed"),
+                (6, "Dns"),
+                (7, "Infant"),
+                (8, "Pre 1970"),
+                (9, "Qualified"),
+                (10, "DNSCAN"),
+                (11, "Stillborn"),
+                (12, "Submitted"),
+                (13, "Uncleared")]
+    _DEFAULT = _DATAMAP[0]
+    val = models.IntegerField('lds status', choices=_DATAMAP, blank=False)
+
 
 ### END GRAMPS TYPES 
 
@@ -154,6 +206,10 @@ class DateObject(models.Model):
 #
 #--------------------------------------------------------------------------------
 
+class Config(models.Model):
+    db_version = models.CharField(max_length=25)
+    created = models.DateTimeField('date/time created')
+
 class PrimaryObject(models.Model):
     """
     Common attribute of all primary objects with key on the handle
@@ -177,13 +233,20 @@ class Person(PrimaryObject):
     The model for the person object
     """
     gender_type = models.ForeignKey('GenderType')
-    names = models.ManyToManyField('Name')
+    names = models.ManyToManyField('Name', null=True)
+    families = models.ManyToManyField('Family', null=True)
+    parent_families = models.ManyToManyField('Family', related_name="parent_families")
+    addresses = models.ManyToManyField('Address', null=True)
+    references = generic.GenericRelation('PersonRef', related_name="refs",
+                                         content_type_field="object_type",
+                                         object_id_field="object_id")
 
 class Family(PrimaryObject):
-    father = models.ForeignKey('Person', related_name="father_ref", null=True, blank=True)
-    mother = models.ForeignKey('Person', related_name="mother_ref", null=True, blank=True)
+    father = models.ForeignKey('Person', related_name="father_ref", 
+                               null=True, blank=True)
+    mother = models.ForeignKey('Person', related_name="mother_ref", 
+                               null=True, blank=True)
     family_rel_type = models.ForeignKey('FamilyRelType')
-    children = models.ManyToManyField('Person')
 
 class Source(PrimaryObject):
     title = models.CharField(max_length=50, blank=True)
@@ -197,6 +260,7 @@ class Source(PrimaryObject):
 class Event(DateObject, PrimaryObject):
     event_type = models.ForeignKey('EventType')
     description = models.CharField('description', max_length=50, blank=True)
+    place = models.ForeignKey('Place', null=True)
     references = generic.GenericRelation('EventRef', related_name="refs",
                                          content_type_field="object_type",
                                          object_id_field="object_id")
@@ -204,13 +268,14 @@ class Event(DateObject, PrimaryObject):
 class Repository(PrimaryObject):
     repository_type = models.ForeignKey('RepositoryType')
     name = models.TextField(blank=True)
+    addresses = models.ManyToManyField('Address', null=True)
     references = generic.GenericRelation('RepositoryRef', related_name="refs",
                                          content_type_field="object_type",
                                          object_id_field="object_id")
 
 class Place(PrimaryObject):
     title = models.TextField(blank=True)
-    main_location = models.CharField(max_length=25, blank=True)
+    locations = models.ManyToManyField('Location', null=True)
     long = models.TextField(blank=True)
     lat = models.TextField(blank=True)
 
@@ -292,11 +357,11 @@ class Lds(SecondaryObject):
 
     DEFAULT_STATUS = STATUS_NONE
     """
-    lds_type = models.IntegerField() # FIXME
-    place = models.ForeignKey('Place')
-    famc = models.ForeignKey('Family')
+    lds_type = models.ForeignKey('LdsType')
+    place = models.ForeignKey('Place', null=True)
+    famc = models.ForeignKey('Family', null=True)
     temple = models.TextField(blank=True)
-    status = models.IntegerField() # FIXME
+    status = models.ForeignKey('LdsStatus') 
 
 class Markup(models.Model):
     note = models.ForeignKey('Note')
@@ -305,7 +370,7 @@ class Markup(models.Model):
     start_stop_list = models.TextField(default="[]")
 
 class Address(DateObject, SecondaryObject):
-    location = models.OneToOneField('Location')
+    locations = models.ManyToManyField('Location', null=True)
 
 class Location(models.Model):
     street = models.TextField(blank=True)
@@ -315,9 +380,10 @@ class Location(models.Model):
     country = models.TextField(blank=True)
     postal = models.TextField(blank=True)
     phone = models.TextField(blank=True)
-    parish = models.TextField(blank=True)
+    parish = models.TextField(blank=True, null=True)
+    order = models.PositiveIntegerField()
 
-## location
+## FIXME:
 ## attribute
 ## url models.URLField
 ## datamap
@@ -340,58 +406,58 @@ class BaseRef(models.Model):
     private = models.BooleanField()
   
 class NoteRef(BaseRef):
-    note = models.ForeignKey('Note') 
+    ref_object = models.ForeignKey('Note') 
 
     def __unicode__(self):
-        return "NoteRef from " + str(self.referenced_by)
+        return "NoteRef to " + str(self.ref_object)
 
 class SourceRef(DateObject, BaseRef):
+    ref_object = models.ForeignKey('Source')
     page = models.CharField(max_length=50)
     confidence = models.IntegerField()
-    source = models.ForeignKey('Source')
 
     def __unicode__(self):
-        return "SourceRef to " + str(self.source)
+        return "SourceRef to " + str(self.ref_object)
 
 class EventRef(BaseRef):
+    ref_object = models.ForeignKey('Event')
     role_type = models.ForeignKey('EventRoleType')
-    event = models.ForeignKey('Event')
 
     def __unicode__(self):
-        return "EventRef to " + str(self.event)
+        return "EventRef to " + str(self.ref_object)
 
 class RepositoryRef(BaseRef):
+    ref_object = models.ForeignKey('Repository')
     source_media_type = models.ForeignKey('SourceMediaType')
     call_number = models.CharField(max_length=50)
-    repository = models.ForeignKey('Repository')
 
     def __unicode__(self):
-        return "RepositoryRef to " + str(self.repository)
+        return "RepositoryRef to " + str(self.ref_object)
 
 class PersonRef(BaseRef):
+    ref_object = models.ForeignKey('Person')
     description = models.CharField(max_length=50)
-    person = models.ForeignKey('Person')
 
     def __unicode__(self):
-        return "PersonRef to " + str(self.person)
+        return "PersonRef to " + str(self.ref_object)
 
 class ChildRef(BaseRef):
     father_rel_type = models.ForeignKey('FamilyRelType', related_name="father_rel")
     mother_rel_type = models.ForeignKey('FamilyRelType', related_name="mother_rel")
-    child = models.ForeignKey('Person')
+    ref_object = models.ForeignKey('Person')
 
     def __unicode__(self):
-        return "ChildRef to " + str(self.child)
+        return "ChildRef to " + str(self.ref_object)
 
 class MediaRef(BaseRef):
     x1 = models.IntegerField()
     y1 = models.IntegerField()
     x2 = models.IntegerField()
     y2 = models.IntegerField()
-    media = models.ForeignKey('Media')
+    ref_object = models.ForeignKey('Media')
 
     def __unicode__(self):
-        return "MediaRef to " + str(self.media)
+        return "MediaRef to " + str(self.ref_object)
 
 #--------------------------------------------------------------------------------
 #
@@ -524,11 +590,11 @@ def test_Lds(place=None, famc=None):
 def test_NoteRef():
     note = test_Note()
     person = test_Person()
-    note_ref = NoteRef(referenced_by=person, note=note)
+    note_ref = NoteRef(referenced_by=person, ref_object=note)
     note_ref.order = 1
     note_ref.save()
     family = test_Family()
-    note_ref = NoteRef(referenced_by=family, note=note)
+    note_ref = NoteRef(referenced_by=family, ref_object=note)
     note_ref.order = 1
     note_ref.save()
     return note_ref
@@ -536,7 +602,7 @@ def test_NoteRef():
 def test_SourceRef():
     note = test_Note()
     source = test_Source()
-    source_ref = SourceRef(referenced_by=note, source=source, confidence=4)
+    source_ref = SourceRef(referenced_by=note, ref_object=source, confidence=4)
     source_ref.set_date_from_gdate(Today())
     source_ref.order = 1
     source_ref.save()

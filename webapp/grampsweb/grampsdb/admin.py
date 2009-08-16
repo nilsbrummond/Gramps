@@ -8,5 +8,5 @@ for obj in (MarkerType, NameType, AttributeType, UrlType, ChildRefType,
             Name, Address, Event, Note, Source, Place, Media, 
             Repository, NoteRef, SourceRef, EventRef, 
             RepositoryRef, PersonRef, ChildRef, MediaRef, Person, 
-            Family, Lds, Markup):
+            Family, Lds, Markup, Config):
     admin.site.register(obj)

@@ -5,6 +5,7 @@ but this makes it useful for all Django-based backends
 but still puts it into their syncdb API.
 """
 
+import time
 import os
 os.environ["DJANGO_SETTINGS_MODULE"] = "settings"
 import settings
@@ -21,7 +22,7 @@ from gen.lib.srcmediatype import SourceMediaType
 from gen.lib.eventroletype import EventRoleType
 from gen.lib.notetype import NoteType
 
-from grampsdb.models import GenderType
+from grampsdb.models import GenderType, LdsType, LdsStatus
 
 def get_datamap(x):
     """
@@ -32,6 +33,31 @@ def get_datamap(x):
 ## Add the data for the Views:
 
 print "["
+
+for table, dict in [("grampsdb.config", 
+                     {"db_version": "\"0.0.1\"", 
+                      "created": '"%s"' % time.strftime("%Y-%m-%d %H:%M"),
+                      }),
+                    ]:
+    count = 1
+    print "   {"
+    print "      \"model\": \"%s\"," % table
+    print "      \"pk\": %d," % count
+    print "      \"fields\":"
+    print "         {"
+    key_count = 0
+    for key in dict:
+        value = dict[key]
+        print ("            \"%s\"   : %s" % (key, value)),
+        key_count += 1
+        if key_count < len(dict):
+            print ","
+        else:
+            print
+    print "         }"
+    print "   },"
+    count += 1
+
 count = 1
 for name,constr in [("Person", "Person", ), 
                     ("Event", "Event", ),
@@ -57,7 +83,7 @@ for name,constr in [("Person", "Person", ),
 
 type_models = [MarkerType, NameType, AttributeType, UrlType, ChildRefType, 
                RepositoryType, EventType, FamilyRelType, SourceMediaType, 
-               EventRoleType, NoteType, GenderType]
+               EventRoleType, NoteType, GenderType, LdsType, LdsStatus]
 for type in type_models:
     count = 1
     # Add each code:
