@@ -400,7 +400,6 @@ def export_date(obj, date):
 
 def export_name(person, data, preferred):
     # A Step #2 function
-    # In order, primary was first:
     if data:
         (private, source_list, note_list, date,
          first_name, surname, suffix, title,

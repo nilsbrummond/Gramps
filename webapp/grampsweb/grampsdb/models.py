@@ -384,7 +384,6 @@ class Name(DateObject, SecondaryObject):
     order = models.PositiveIntegerField()
     name_type = models.ForeignKey('NameType', related_name="name_code")
     preferred = models.BooleanField('preferred name?')
-    primary_name = models.BooleanField('primary')
     first_name = models.TextField(blank=True)
     surname = models.TextField(blank=True)
     suffix = models.TextField(blank=True)
