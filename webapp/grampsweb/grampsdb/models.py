@@ -1,3 +1,34 @@
+# Gramps - a GTK+/GNOME based genealogy program
+#
+# Copyright (C) 2009  B. Malengier <benny.malengier@gmail.com>
+# Copyright (C) 2009  Douglas S. Blank <doug.blank@gmail.com>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+# $Id$
+#
+
+"""
+All of the models for the grampsdb Django data schema.
+This requires initial data for all of the Types, which
+is loaded by the fixtures/initial_data.json, which is
+created by init.py.
+"""
+
+_DEBUG = True
+
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
@@ -5,12 +36,44 @@ from django.contrib.contenttypes import generic
 from gen.lib.date import Date as GDate, Today
 from Utils import create_id, create_uid
 
-## Type tables are initially filled with their core values in init.py
-## which is run by make.
+#---------------------------------------------------------------------------
+#
+# Support functions
+#
+#---------------------------------------------------------------------------
 
-### START GRAMPS TYPES  
+def get_type(the_type, data):
+    """
+    Gets the default row for a given Type and data. Data is
+    a pair, (VAL, NAME). VAL + NAME should be unique. Will create
+    one if it doesn't already exist.
+    """
+    if type(data) == type(1):
+        return the_type.objects.get(val=data)
+    elif data[0] == the_type._CUSTOM:
+        (obj, new) = the_type.objects.get_or_create(val=data[0],
+                                                    name=data[1])
+        if new and _DEBUG:
+            print "DEBUG: Made new type:", the_type, data
+        return obj
+    else:
+        return the_type.objects.get(val=data[0])
+
+def get_default_type(the_type):
+    """
+    Gets the default row for a given Type.
+    """
+    val, name = the_type._DEFAULT
+    return the_type.objects.get(val=val, name=name)
+
 def get_datamap(grampsclass):
     return [(x[0],x[2]) for x in grampsclass._DATAMAP]
+
+#---------------------------------------------------------------------------
+#
+# Types
+#
+#---------------------------------------------------------------------------
 
 class mGrampsType(models.Model):
     """
@@ -28,7 +91,7 @@ class mGrampsType(models.Model):
     
     def __unicode__(self): return self.name
 
-    def get_default(self):
+    def get_default_type(self):
         """ return a tuple default (val,name) """
         return self._DATAMAP[self._DEFAULT]
 
@@ -65,7 +128,8 @@ class ChildRefType(mGrampsType):
     _DATAMAP = get_datamap(ChildRefType)
     _CUSTOM = ChildRefType._CUSTOM
     _DEFAULT = _DATAMAP[ChildRefType._DEFAULT]
-    val = models.IntegerField('child reference type', choices=_DATAMAP, blank=False)
+    val = models.IntegerField('child reference type', choices=_DATAMAP, 
+                              blank=False)
 
 class RepositoryType(mGrampsType):
     from gen.lib.repotype import RepositoryType
@@ -86,14 +150,16 @@ class FamilyRelType(mGrampsType):
     _DATAMAP = get_datamap(FamilyRelType)
     _CUSTOM = FamilyRelType._CUSTOM
     _DEFAULT = _DATAMAP[FamilyRelType._DEFAULT]
-    val = models.IntegerField('family relation type', choices=_DATAMAP, blank=False)
+    val = models.IntegerField('family relation type', choices=_DATAMAP, 
+                              blank=False)
 
 class SourceMediaType(mGrampsType):
     from gen.lib.srcmediatype import SourceMediaType
     _DATAMAP = get_datamap(SourceMediaType)
     _CUSTOM = SourceMediaType._CUSTOM
     _DEFAULT = _DATAMAP[SourceMediaType._DEFAULT]
-    val = models.IntegerField('source medium type', choices=_DATAMAP, blank=False)
+    val = models.IntegerField('source medium type', choices=_DATAMAP, 
+                              blank=False)
 
 class EventRoleType(mGrampsType):
     from gen.lib.eventroletype import EventRoleType
@@ -141,14 +207,11 @@ class LdsStatus(mGrampsType):
     _DEFAULT = _DATAMAP[0]
     val = models.IntegerField('lds status', choices=_DATAMAP, blank=False)
 
-
-### END GRAMPS TYPES 
-
-#--------------------------------------------------------------------------------
+#---------------------------------------------------------------------------
 #
 # Support definitions
 #
-#--------------------------------------------------------------------------------
+#---------------------------------------------------------------------------
 
 class DateObject(models.Model):
     class Meta: abstract = True
@@ -200,14 +263,19 @@ class DateObject(models.Model):
             (self.day1, self.month1, self.year1, self.slash1) = dateval
             (self.day2, self.month2, self.year2, self.slash2) = 0, 0, 0, False
 
-#--------------------------------------------------------------------------------
+#---------------------------------------------------------------------------
 #
 # Primary Tables
 #
-#--------------------------------------------------------------------------------
+#---------------------------------------------------------------------------
 
 class Config(models.Model):
-    db_version = models.CharField(max_length=25)
+    """
+    All of the meta config items for the entire system. Entries
+    are given as columns. (For the GRAMPS Config, we'll need another
+    table.)
+    """
+    db_version = models.CharField('database schema version', max_length=25)
     created = models.DateTimeField('date/time created')
 
 class PrimaryObject(models.Model):
@@ -235,7 +303,8 @@ class Person(PrimaryObject):
     gender_type = models.ForeignKey('GenderType')
     names = models.ManyToManyField('Name', null=True)
     families = models.ManyToManyField('Family', null=True)
-    parent_families = models.ManyToManyField('Family', related_name="parent_families")
+    parent_families = models.ManyToManyField('Family', 
+                                             related_name="parent_families")
     addresses = models.ManyToManyField('Address', null=True)
     references = generic.GenericRelation('PersonRef', related_name="refs",
                                          content_type_field="object_type",
@@ -295,11 +364,11 @@ class Note(PrimaryObject):
                                          content_type_field="object_type",
                                          object_id_field="object_id")
 
-#--------------------------------------------------------------------------------
+#---------------------------------------------------------------------------
 #
 # Secondary Tables
 #
-#--------------------------------------------------------------------------------
+#---------------------------------------------------------------------------
 
 class SecondaryObject(models.Model):
     """
@@ -388,11 +457,11 @@ class Location(models.Model):
 ## url models.URLField
 ## datamap
 
-#--------------------------------------------------------------------------------
+#---------------------------------------------------------------------------
 #
 # Reference Objects
 #
-#--------------------------------------------------------------------------------
+#---------------------------------------------------------------------------
 
 class BaseRef(models.Model):
     class Meta: abstract = True
@@ -442,8 +511,10 @@ class PersonRef(BaseRef):
         return "PersonRef to " + str(self.ref_object)
 
 class ChildRef(BaseRef):
-    father_rel_type = models.ForeignKey('FamilyRelType', related_name="father_rel")
-    mother_rel_type = models.ForeignKey('FamilyRelType', related_name="mother_rel")
+    father_rel_type = models.ForeignKey('ChildRefType', 
+                                        related_name="child_father_rel")
+    mother_rel_type = models.ForeignKey('ChildRefType', 
+                                        related_name="child_mother_rel")
     ref_object = models.ForeignKey('Person')
 
     def __unicode__(self):
@@ -459,17 +530,16 @@ class MediaRef(BaseRef):
     def __unicode__(self):
         return "MediaRef to " + str(self.ref_object)
 
-#--------------------------------------------------------------------------------
+#---------------------------------------------------------------------------
 #
 # Testing Functions
 #
-#--------------------------------------------------------------------------------
+#---------------------------------------------------------------------------
 
 ## Primary:
 
 def test_Person():
-    (val, name) = MarkerType.get_default()
-    m = MarkerType.objects.get(val=val, name=name)
+    m = get_default_type(MarkerType)
     p = Person(handle=create_id(), marker_type=m)
     p.gender_type = GenderType.objects.get(id=1) 
     p.gramps_id = "P%05d" % (Person.objects.count() + 1)
@@ -477,7 +547,7 @@ def test_Person():
     return p
 
 def test_Family():
-    m = MarkerType.objects.get(id=1)
+    m = get_default_type(MarkerType)
     frt = FamilyRelType.objects.get(id=1)
     f = Family(handle=create_id(), marker_type=m, family_rel_type=frt)
     f.gramps_id = "F%05d" % (Family.objects.count() + 1)
@@ -485,7 +555,7 @@ def test_Family():
     return f
 
 def test_Source():
-    m = MarkerType.objects.get(id=1)
+    m = get_default_type(MarkerType)
     s = Source(handle=create_id(), marker_type=m)
     s.save()
     s.gramps_id = "S%05d" % (Source.objects.count() + 1)
@@ -493,8 +563,8 @@ def test_Source():
     return s
 
 def test_Event():
-    m = MarkerType.objects.get(id=1)
-    et = EventType.objects.get(id=1)
+    m = get_default_type(MarkerType)
+    et = get_default_type(EventType)
     e = Event(handle=create_id(), marker_type=m, event_type=et)
     e.set_date_from_gdate( GDate() )
     e.gramps_id = "E%05d" % (Event.objects.count() + 1)
@@ -502,30 +572,30 @@ def test_Event():
     return e
 
 def test_Repository():
-    m = MarkerType.objects.get(id=1)
-    rt = RepositoryType.objects.get(id=1)
+    m = get_default_type(MarkerType)
+    rt = get_default_type(RepositoryType)
     r = Repository(handle=create_id(), marker_type=m, repository_type=rt)
     r.gramps_id = "R%05d" % (Repository.objects.count() + 1)
     r.save()
     return r
 
 def test_Place():
-    m = MarkerType.objects.get(id=1)
+    m = get_default_type(MarkerType)
     p = Place(handle=create_id(), marker_type=m)
     p.gramps_id = "L%05d" % (Place.objects.count() + 1)
     p.save()
     return p
     
 def test_Media():
-    m = MarkerType.objects.get(id=1)
+    m = get_default_type(MarkerType)
     media = Media(handle=create_id(), marker_type=m)
     media.save()
     media.gramps_id = "M%05d" % (Media.objects.count() + 1)
     return media
 
 def test_Note():
-    m = MarkerType.objects.get(id=1)
-    note_type = NoteType.objects.get(id=1)
+    m = get_default_type(MarkerType)
+    note_type = get_default_type(NoteType)
     note = Note(handle=create_id(), marker_type=m, note_type=note_type, 
                 preformatted=False)
     note.gramps_id = "N%05d" % (Note.objects.count() + 1)
@@ -537,15 +607,15 @@ def test_Family_with_children():
     fname = test_Name(father, "Blank", "Lowell")
     mother = test_Person()
     mname = test_Name(mother, "Bamford", "Norma")
-    family_rel_type = FamilyRelType.objects.get(id=1)
-    m = MarkerType.objects.get(id=1)
+    family_rel_type = get_default_type(FamilyRelType)
+    m = get_default_type(MarkerType)
     f = Family(handle=create_id(), father=father, mother=mother, 
                family_rel_type=family_rel_type, marker_type=m)
     f.save()
     for names in [("Blank", "Doug"), ("Blank", "Laura"), ("Blank", "David")]:
         p = test_Person()
         n = test_Name(p, names[0], names[1])
-        f.children.add(p)
+        p.families.add(f)
     f.save()
     return f
 
@@ -554,14 +624,14 @@ def test_Family_with_children():
 def test_Name(person=None, surname=None, first=None):
     if not person: # Testing
         person = test_Person()
-    m = MarkerType.objects.get(id=1)
+    m = get_default_type(MarkerType)
     n = Name()
     if first:
         n.first_name = first
     if surname:
         n.surname = surname
     n.set_date_from_gdate(Today())
-    n.name_type = NameType.objects.get(id=1)
+    n.name_type = get_default_type(NameType)
     n.order = 1
     n.sort_as = 1
     n.display_as = 1
@@ -583,7 +653,7 @@ def test_Lds(place=None, famc=None):
         place = test_Place()
     if not famc:
         famc = test_Family()
-    lds = Lds(lds_type=0, status=0, place=place, famc=famc)
+    lds = Lds(lds_type=get_default_type(LdsType), status=get_default_type(LdsStatus), place=place, famc=famc)
     lds.save()
     return lds
     
@@ -608,11 +678,11 @@ def test_SourceRef():
     source_ref.save()
     return source_ref
 
-#--------------------------------------------------------------------------------
+#---------------------------------------------------------------------------
 #
 # Testing
 #
-#--------------------------------------------------------------------------------
+#---------------------------------------------------------------------------
 
 def main():
     for test_Item in [test_Person, test_Family, test_Family_with_children, 
@@ -624,7 +694,7 @@ def main():
         obj = test_Item()
 
     sourceref = test_SourceRef()
-    print sourceref.source.references.all()
+    print sourceref.ref_object.references.all()
 
 if __name__ == "__main__":
     main()

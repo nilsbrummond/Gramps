@@ -87,15 +87,6 @@ def lookup(index, event_ref_list):
             count += 1
         return None
 
-def get_type(the_type, data):
-    if type(data) == type(1):
-        return the_type.objects.get(val=data)
-    elif data[0] == the_type._CUSTOM:
-        return the_type.objects.get_or_create(val=data[0],
-                                              name=data[1])[0]
-    else:
-        return the_type.objects.get(val=data[0])
-    
 def get_datamap(grampsclass):
     return [x[0] for x in grampsclass._DATAMAP if x[0] != grampsclass.CUSTOM]
 
@@ -106,7 +97,7 @@ def makeDB():
     dj.Address.objects.all().delete()
     #dj.AttributeType.objects.all().delete()
     dj.ChildRef.objects.all().delete()
-    dj.ChildRefType.objects.all().delete()
+    #dj.ChildRefType.objects.all().delete()
     dj.Event.objects.all().delete()
     dj.EventRef.objects.all().delete()
     #dj.EventRoleType.objects.all().delete()
@@ -267,8 +258,8 @@ def export_child_ref(obj, data):
                             referenced_by=obj,
                             ref_object=child,
                             order=count + 1,
-                            father_rel_type=get_type(dj.FamilyRelType, frel),
-                            mother_rel_type=get_type(dj.FamilyRelType, mrel))
+                            father_rel_type=dj.get_type(dj.ChildRefType, frel),
+                            mother_rel_type=dj.get_type(dj.ChildRefType, mrel))
     child_ref.save()
     export_source_ref_list(child_ref, source_list)
     export_note_list(child_ref, note_list)
@@ -281,7 +272,7 @@ def export_event_ref(obj, event_data):
                             referenced_by=obj,
                             ref_object=event,
                             order=count + 1,
-                            role_type = get_type(dj.EventRoleType, role))
+                            role_type = dj.get_type(dj.EventRoleType, role))
     event_ref.save()
     export_note_list(event_ref, note_list)
     export_attribute_list(event_ref, attribute_list)
@@ -297,7 +288,7 @@ def export_repository_ref(obj, reporef_data):
     repos_ref = dj.RepositoryRef(private=private,
                                  referenced_by=obj,
                                  call_number=call_number,
-                                 source_media_type=get_type(dj.SourceMediaType,
+                                 source_media_type=dj.get_type(dj.SourceMediaType,
                                                             source_media_type),
                                  ref_object=repository,
                                  order=count + 1)
@@ -334,11 +325,11 @@ def export_lds(person, data):
         famc = dj.Family.objects.get(handle=famc_handle)
     else:
         famc = None
-    lds = dj.Lds(lds_type = get_type(dj.LdsType, type),
+    lds = dj.Lds(lds_type = dj.get_type(dj.LdsType, type),
                  temple=temple, 
                  place=place,
                  famc=famc,
-                 status = get_type(dj.LdsStatus, status),
+                 status = dj.get_type(dj.LdsStatus, status),
                  private=private)
     export_date(lds, date)
     lds.save()
@@ -424,7 +415,7 @@ def export_name(person, data):
         name.surname = surname
         name.suffix = suffix
         name.title = title
-        name.name_type = get_type(dj.NameType, name_type)
+        name.name_type = dj.get_type(dj.NameType, name_type)
         name.prefix = prefix
         name.patronymic = patronymic
         name.group_as = group_as
@@ -471,8 +462,8 @@ def export_person(data, step):
                            gramps_id=gid,
                            last_changed=change,
                            private=private,
-                           marker_type = get_type(dj.MarkerType, marker),
-                           gender_type = get_type(dj.GenderType, gender))
+                           marker_type = dj.get_type(dj.MarkerType, marker),
+                           gender_type = dj.get_type(dj.GenderType, gender))
         person.save()
 
     elif step == 1:   # Add the relations:
@@ -505,8 +496,8 @@ def export_note(data, step):
                         private=private,
                         preformatted=format,
                         text=text,
-                        marker_type = get_type(dj.MarkerType, marker),
-                        note_type = get_type(dj.NoteType, note_type))
+                        marker_type = dj.get_type(dj.MarkerType, marker),
+                        note_type = dj.get_type(dj.NoteType, note_type))
         n.save()
         count = 1
         for markup in markup_list:
@@ -527,9 +518,9 @@ def export_family(data, step):
 
     if step == 0: # Add primary object
         family = dj.Family(handle=handle, gramps_id=gid, 
-                      family_rel_type = get_type(dj.FamilyRelType, the_type),
+                      family_rel_type = dj.get_type(dj.FamilyRelType, the_type),
                       last_changed=change, 
-                      marker_type = get_type(dj.MarkerType, marker),
+                      marker_type = dj.get_type(dj.MarkerType, marker),
                       private=private)
         family.save()
     elif step == 1:
@@ -561,7 +552,7 @@ def export_source(data, step):
         source = dj.Source(handle=handle, gramps_id=gid, title=title,
                            author=author, pubinfo=pubinfo, abbrev=abbrev,
                            last_changed=change, private=private)
-        source.marker_type = get_type(dj.MarkerType, marker)
+        source.marker_type = dj.get_type(dj.MarkerType, marker)
         source.save()
     elif step == 1:
         source = dj.Source.objects.get(handle=handle)
@@ -577,10 +568,10 @@ def export_repository(data, step):
     if step == 0:
         repository = dj.Repository(handle=handle,
                                    gramps_id=gid,
-                                   marker_type=get_type(dj.MarkerType, marker),
+                                   marker_type=dj.get_type(dj.MarkerType, marker),
                                    last_changed=change, 
                                    private=private,
-                                   repository_type=get_type(dj.RepositoryType, the_type),
+                                   repository_type=dj.get_type(dj.RepositoryType, the_type),
                                    name=name)
         repository.save()
     elif step == 1:
@@ -622,7 +613,7 @@ def export_place(data, step):
     if step == 0:
         place = dj.Place(handle=handle, gramps_id=gid, title=title,
                          long=long, lat=lat, last_changed=change,
-                         marker_type=get_type(dj.MarkerType, marker),
+                         marker_type=dj.get_type(dj.MarkerType, marker),
                          private=private)
         place.save()
     elif step == 1:
@@ -650,7 +641,7 @@ def export_media(data, step):
         media = dj.Media(handle=handle, gramps_id=gid,
                          path=path, mime=mime, 
                          desc=desc, last_changed=change,
-                         marker_type=get_type(dj.MarkerType, marker),
+                         marker_type=dj.get_type(dj.MarkerType, marker),
                          private=private)
         export_date(media, date)
         media.save()
@@ -667,9 +658,9 @@ def export_event(data, step):
     if step == 0:
         event = dj.Event(handle=handle,
                          gramps_id=gid, 
-                         event_type=get_type(dj.EventType, the_type),
+                         event_type=dj.get_type(dj.EventType, the_type),
                          private=private,
-                         marker_type=get_type(dj.MarkerType, marker),
+                         marker_type=dj.get_type(dj.MarkerType, marker),
                          description=description,
                          last_changed=change)
         export_date(event, date)
@@ -771,6 +762,8 @@ def export_all(database, filename, option_box=None, callback=None):
         for media_handle in database.media_map.keys():
             data = database.media_map[media_handle]
             export_media(data, step)
+            count += 1
+            callback(100 * count/total)
 
     total_time = time.time() - start
     msg = ngettext('Export Complete: %d second','Export Complete: %d seconds', total_time ) % total_time
