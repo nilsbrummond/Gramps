@@ -504,42 +504,46 @@ class DjangoReader(object):
                  sql.query("select count(*) from repository;")[0][0] + 
                  sql.query("select count(*) from place;")[0][0] + 
                  sql.query("select count(*) from media;")[0][0] + 
-                 sql.query("select count(*) from source;")[0][0])
+                 sql.query("select count(*) from source;")[0][0]) * 2 # two pass
         self.trans = self.db.transaction_begin("",batch=True)
         self.db.disable_signals()
         count = 0.0
         self.t = time.time()
-        # ---------------------------------
-        # Process note
-        # ---------------------------------
-        notes = sql.query("""select * from note;""")
-        for note in notes:
-            (handle,
-             gid, 
-             text,
-             format,
-             note_type1, 
-             note_type2,
-             change,
-             marker0,
-             marker1,
-             private) = note
-            styled_text = [text, []]
-            # direct connection with note handle
-            markups = sql.query("""select * from markup where handle = ?""", handle)
-            for markup in markups:
-                (mhandle,
-                 markup0,
-                 markup1,
-                 value, 
-                 start_stop_list) = markup
-                ss_list = eval(start_stop_list)
-                styled_text[1] += [((markup0, markup1), value, ss_list)]
-            self.db.note_map[str(handle)] = (str(handle), gid, styled_text, 
-                                        format, (note_type1, note_type2), change, 
-                                        (marker0, marker1), private)
-            count += 1
-            self.callback(100 * count/total)
+
+        for step in range(2):
+            # ---------------------------------
+            # Process note
+            # ---------------------------------
+            for note in notes:
+                if step == 0:
+                    sytled_text = [[], note.text]
+                    notes = dj.Note.objects.all()
+                    markups = dj.Markup.objects.filter()
+                    for markup in markups:
+                        (mhandle,
+                         markup0,
+                         markup1,
+                         value, 
+                         start_stop_list) = markup
+                        ss_list = eval(start_stop_list)
+                        styled_text[1] += [((markup0, markup1), value, ss_list)]
+                        
+                        
+                    self.db.note_map[str(handle)] = (str(note.handle), 
+                                                     note.gramps_id, 
+                                                     styled_text, 
+                                                     format, 
+                                                     note_type, 
+                                                     change, 
+                                                     marker_type, 
+                                                     private)
+                elif step == 1:
+                    pass # nothing to do for notes
+
+                count += 1
+                self.callback(100 * count/total)
+
+            continue
 
         # ---------------------------------
         # Process event
