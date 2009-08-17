@@ -122,6 +122,8 @@ class DjangoReader(object):
         return None
 
     def get_child_ref_list(self, family):
+        # FIXME
+        return []
         results = self.get_links(sql, from_type, from_handle, "child_ref")
         retval = []
         for handle in results:
@@ -290,7 +292,7 @@ class DjangoReader(object):
         birth_ref_index = lookup_role_index(dj.EventType.BIRTH, event_ref_list)
         return (str(person.handle),
                 person.gramps_id,  
-                person.gender_type,
+                tuple(person.gender_type),
                 primary_name,       
                 alternate_names,    
                 death_ref_index,    
