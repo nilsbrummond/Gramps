@@ -157,6 +157,8 @@ class EventType(mGrampsType):
     _DATAMAP = get_datamap(EventType)
     _CUSTOM = EventType._CUSTOM
     _DEFAULT = _DATAMAP[EventType._DEFAULT]
+    BIRTH = 12
+    DEATH = 13
     val = models.IntegerField('event type', choices=_DATAMAP, blank=False)
 
 class FamilyRelType(mGrampsType):
@@ -323,6 +325,8 @@ class Person(PrimaryObject):
     references = generic.GenericRelation('PersonRef', related_name="refs",
                                          content_type_field="object_type",
                                          object_id_field="object_id")
+    lds_list = models.ManyToManyField('Lds', null=True)
+    urls = models.ManyToManyField('Url', null=True)
 
 class Family(PrimaryObject):
     father = models.ForeignKey('Person', related_name="father_ref", 
@@ -330,6 +334,7 @@ class Family(PrimaryObject):
     mother = models.ForeignKey('Person', related_name="mother_ref", 
                                null=True, blank=True)
     family_rel_type = models.ForeignKey('FamilyRelType')
+    lds_list = models.ManyToManyField('Lds', null=True)
 
 class Source(PrimaryObject):
     title = models.CharField(max_length=50, blank=True)
@@ -355,12 +360,14 @@ class Repository(PrimaryObject):
     references = generic.GenericRelation('RepositoryRef', related_name="refs",
                                          content_type_field="object_type",
                                          object_id_field="object_id")
+    urls = models.ManyToManyField('Url', null=True)
 
 class Place(PrimaryObject):
     title = models.TextField(blank=True)
     locations = models.ManyToManyField('Location', null=True)
     long = models.TextField(blank=True)
     lat = models.TextField(blank=True)
+    urls = models.ManyToManyField('Url', null=True)
 
 class Media(PrimaryObject):
     path = models.TextField(blank=True)
@@ -393,9 +400,9 @@ class SecondaryObject(models.Model):
 
     private = models.BooleanField()
     last_changed = models.DateTimeField('last changed', auto_now=True)
+    order = models.PositiveIntegerField()
 
 class Name(DateObject, SecondaryObject):
-    order = models.PositiveIntegerField()
     name_type = models.ForeignKey('NameType', related_name="name_code")
     preferred = models.BooleanField('preferred name?')
     first_name = models.TextField(blank=True)
@@ -464,6 +471,13 @@ class Location(models.Model):
     postal = models.TextField(blank=True)
     phone = models.TextField(blank=True)
     parish = models.TextField(blank=True, null=True)
+    order = models.PositiveIntegerField()
+
+class Url(models.Model):
+    private = models.BooleanField('private url?')
+    path = models.TextField(blank=True, null=True)
+    desc = models.TextField(blank=True, null=True)
+    url_type = models.ForeignKey('UrlType') 
     order = models.PositiveIntegerField()
 
 ## FIXME:
@@ -667,7 +681,8 @@ def test_Lds(place=None, famc=None):
         place = test_Place()
     if not famc:
         famc = test_Family()
-    lds = Lds(lds_type=get_default_type(LdsType), status=get_default_type(LdsStatus), place=place, famc=famc)
+    lds = Lds(lds_type=get_default_type(LdsType), status=get_default_type(LdsStatus), 
+              place=place, famc=famc, order=1)
     lds.save()
     return lds
     

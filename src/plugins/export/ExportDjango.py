@@ -166,20 +166,27 @@ def export_attribute_list(obj, attribute_list):
         export_attribute(obj, attribute_data)
 
 def export_url_list(obj, urls):
+    if not urls: return None
+    count = 1
     for url_data in urls:
-        export_url(obj, url_data) 
+        export_url(obj, url_data, count) 
+        count += 1
         
 def export_person_ref_list(obj, person_ref_list):
     for person_ref_data in person_ref_list:
         export_person_ref(obj, person_ref_data)
 
 def export_address_list(obj, address_list):
+    count = 1
     for address_data in address_list:
-        export_address(obj, address_data)
+        export_address(obj, address_data, count)
+        count += 1
 
 def export_lds_list(person, lds_ord_list):
+    count = 1
     for ldsord in lds_ord_list:
-        export_lds(person, ldsord)
+        export_lds(person, ldsord, count)
+        count += 1
 
 def export_repository_ref_list(obj, reporef_list):
     for data in reporef_list:
@@ -314,7 +321,7 @@ def export_datamap_dict(source, datamap):
                       value_field) values (?, ?, ?)""",
                  handle, key_field, value_field)
 
-def export_lds(person, data):
+def export_lds(person, data, order):
     (lsource_list, lnote_list, date, type, place_handle,
      famc_handle, temple, status, private) = data
     if place_handle:
@@ -329,6 +336,7 @@ def export_lds(person, data):
                  temple=temple, 
                  place=place,
                  famc=famc,
+                 order=order,
                  status = dj.get_type(dj.LdsStatus, status),
                  private=private)
     export_date(lds, date)
@@ -336,9 +344,9 @@ def export_lds(person, data):
     export_note_list(lds, lnote_list)
     export_source_ref_list(lds, lsource_list)
 
-def export_address(obj, address_data):
+def export_address(obj, address_data, order):
     (private, asource_list, anote_list, date, location) = address_data
-    address = dj.Address(private=private)
+    address = dj.Address(private=private, order=order)
     export_date(address, date)
     address.save()
     export_location(address, location, 1)
@@ -353,8 +361,15 @@ def export_attribute(obj, attribute_data):
     # FIXME
     pass
 
-def export_url(obj, url_data):
-    pass
+def export_url(obj, url_data, order):
+    (private, path, desc, type) = url_data
+    url = dj.Url(private=private,
+                 path=path,
+                 desc=desc,
+                 order=order,
+                 url_type=dj.get_type(dj.UrlType, type))
+    url.save()
+    obj.urls.add(url)
 
 def export_place_ref(event, place_handle):
     if place_handle:
