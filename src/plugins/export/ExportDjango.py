@@ -134,10 +134,10 @@ def export_attribute_list(obj, attribute_list):
     for attribute_data in attribute_list:
         export_attribute(obj, attribute_data)
 
-def export_url_list(obj, urls):
-    if not urls: return None
+def export_url_list(obj, url_list):
+    if not url_list: return None
     count = 1
-    for url_data in urls:
+    for url_data in url_list:
         export_url(obj, url_data, count) 
         count += 1
         
@@ -338,7 +338,7 @@ def export_url(obj, url_data, order):
                  order=order,
                  url_type=dj.get_type(dj.UrlType, type))
     url.save()
-    obj.urls.add(url)
+    obj.url_list.add(url)
 
 def export_place_ref(event, place_handle):
     if place_handle:
@@ -431,7 +431,7 @@ def export_person(data, step):
      media_list,         # 10
      address_list,       # 11
      attribute_list,     # 12
-     urls,               # 13
+     url_list,               # 13
      lds_ord_list,       # 14
      psource_list,       # 15
      pnote_list,         # 16
@@ -461,7 +461,7 @@ def export_person(data, step):
         export_media_ref_list(person, media_list)
         export_note_list(person, pnote_list)
         export_attribute_list(person, attribute_list)
-        export_url_list(person, urls) 
+        export_url_list(person, url_list) 
         export_person_ref_list(person, person_ref_list)
         export_source_ref_list(person, psource_list)
         export_address_list(person, address_list)
@@ -547,7 +547,7 @@ def export_source(data, step):
 
 def export_repository(data, step):
     (handle, gid, the_type, name, note_list,
-     address_list, urls, change, marker, private) = data
+     address_list, url_list, change, marker, private) = data
 
     if step == 0:
         repository = dj.Repository(handle=handle,
@@ -561,7 +561,7 @@ def export_repository(data, step):
     elif step == 1:
         repository = dj.Repository.objects.get(handle=handle)
         export_note_list(repository, note_list)
-        export_url_list(repository, urls)
+        export_url_list(repository, url_list)
         export_address_list(repository, address_list)
 
 def export_location(obj, location_data, order):
@@ -589,7 +589,7 @@ def export_location(obj, location_data, order):
 def export_place(data, step):
     (handle, gid, title, long, lat,
      main_loc, alt_location_list,
-     urls,
+     url_list,
      media_list,
      source_list,
      note_list,
@@ -602,7 +602,7 @@ def export_place(data, step):
         place.save()
     elif step == 1:
         place = dj.Place.objects.get(handle=handle)
-        export_url_list(place, urls)
+        export_url_list(place, url_list)
         export_media_ref_list(place, media_list)
         export_source_ref_list(place, source_list)
         export_note_list(place, note_list) 

@@ -104,42 +104,26 @@ class DjangoReader(object):
         self.debug = 0
 
     # -----------------------------------------------
-    # Get methods to retrieve data from the tables
+    # Get methods to retrieve list data from the tables
     # -----------------------------------------------
 
-    def get_address_list(self, obj, with_parish): # person or repository
-        addresses = obj.addresses.all().order_by("order")
-        retval = []
-        count = 1
-        for address in addresses:
-            retval.append(self.pack_address(address, with_parish))
-            count += 1
-        return retval
-
-    def get_place_handle(self, obj): 
-        if obj.place:
-            return obj.place.handle
-        return None
-
-    def get_child_ref_list(self, family):
-        # FIXME
-        return []
-        results = self.get_links(sql, from_type, from_handle, "child_ref")
-        retval = []
-        for handle in results:
-            rows = sql.query("select * from child_ref where handle = ?;",
-                             handle)
-            for row in rows:
-                (handle, ref, frel0, frel1, mrel0, mrel1, private) = row
-                source_list = self.get_source_ref_list(sql, "child_ref", handle)
-                note_list = self.get_note_list(sql, "child_ref", handle) 
-                retval.append((private, source_list, note_list, ref, 
-                               (frel0, frel1), (mrel0, mrel1)))
-        return retval
-
-    def get_datamap(self, obj):
+    def get_names(self, person, preferred):
+        names = person.names.filter(preferred=preferred).order_by("order")
+        if preferred:
+            if len(names) > 0:
+                return self.pack_name(names[0])
+            else:
+                return gen.lib.Name().serialize()
+        else:
+            return [self.pack_name(name) for name in names]
+     
+    def get_datamap(self, obj): # obj is source
         # FIXME
         return {}
+
+    def get_url_list(self, obj):
+        # FIXME
+        return []
 
     def get_attribute_list(self, obj):
         # FIXME
@@ -161,6 +145,51 @@ class DjangoReader(object):
 #                 retval.append((private, source_list, note_list, 
 #                                (the_type0, the_type1), value))
 #         return retval
+
+    def get_media_list(self, obj):
+        obj_type = ContentType.objects.get_for_model(obj)
+        mediarefs = dj.MediaRef.objects.filter(object_id=obj.id, 
+                                               object_type=obj_type)
+        retval = []
+        for mediaref in mediarefs:
+            retval.append(self.pack_media_ref(mediaref))
+        return retval
+
+    def get_note_list(self, obj):
+        obj_type = ContentType.objects.get_for_model(obj)
+        noterefs = dj.NoteRef.objects.filter(object_id=obj.id, 
+                                             object_type=obj_type)
+        retval = []
+        for noteref in noterefs:
+            retval.append( noteref.ref_object.handle)
+        return retval
+
+    def get_repository_ref_list(self, obj):
+        obj_type = ContentType.objects.get_for_model(obj)
+        reporefs = dj.RepositoryRef.objects.filter(object_id=obj.id, 
+                                                   object_type=obj_type)
+        return [self.pack_repository_ref(repo) for repo in reporefs]
+
+    def get_url_list(self, obj):
+        return [self.pack_url(url) for url in obj.url_list.all().order_by("order")]
+
+    def get_address_list(self, obj, with_parish): # person or repository
+        addresses = obj.addresses.all().order_by("order")
+        retval = []
+        count = 1
+        for address in addresses:
+            retval.append(self.pack_address(address, with_parish))
+            count += 1
+        return retval
+
+    def get_child_ref_list(self, family):
+        obj_type = ContentType.objects.get_for_model(family)
+        childrefs = dj.ChildRef.objects.filter(object_id=family.id, \
+                                                   object_type=obj_type).order_by("order")
+        retval = []
+        for childref in childrefs:
+            retval.append(self.pack_child_ref(childref))
+        return retval
 
     def get_source_ref_list(self, obj):
         obj_type = ContentType.objects.get_for_model(obj)
@@ -192,21 +221,19 @@ class DjangoReader(object):
                 dj.PersonRef.objects.filter(object_id=person.id, 
                                             object_type=obj_type)]
 
-    def pack_person_ref(self, personref):
-        source_list = self.get_source_ref_list(personref)
-        note_list = self.get_note_list(personref)
-        return (personref.private, 
-                source_list,
-                note_list,
-                personref.ref_object.handle,
-                personref.description)
-
     def get_location_list(self, place, with_parish):
         locations = place.locations.all().order_by("order")
         return [self.pack_location(location, with_parish) for location in locations]
 
     def get_lds_list(self, obj): # person or family
         return [self.pack_lds(lds) for lds in obj.lds_list.all().order_by("order")]
+
+    def get_place_handle(self, obj): # obj is event
+        if obj.place:
+            return obj.place.handle
+        return ''
+
+    ## Packers:
 
     def get_event(self, event):
         handle = event.handle
@@ -227,140 +254,60 @@ class DjangoReader(object):
                 change, marker, private)
 
     def get_note(self, note):
-        if note:
-            styled_text = [note.text, []]
-            markups = dj.Markup.objects.filter(note=note).order_by("order")
-            for markup in markups:
-                value = markup.value
-                start_stop_list  = markup.start_stop_list
-                ss_list = eval(start_stop_list)
-                styled_text[1] += [(tuple(markup.markup_type), 
-                                    value, ss_list)]
-            changed = totime(note.last_changed)
-            return (str(note.handle), 
-                    note.gramps_id, 
-                    styled_text, 
-                    note.preformatted, 
-                    tuple(note.note_type), 
-                    changed, 
-                    tuple(note.marker_type), 
-                    note.private)
-        return None
-
+        styled_text = [note.text, []]
+        markups = dj.Markup.objects.filter(note=note).order_by("order")
+        for markup in markups:
+            value = markup.value
+            start_stop_list  = markup.start_stop_list
+            ss_list = eval(start_stop_list)
+            styled_text[1] += [(tuple(markup.markup_type), 
+                                value, ss_list)]
+        changed = totime(note.last_changed)
+        return (str(note.handle), 
+                note.gramps_id, 
+                styled_text, 
+                note.preformatted, 
+                tuple(note.note_type), 
+                changed, 
+                tuple(note.marker_type), 
+                note.private)
 
     def get_family(self, family):
-        retval = gen.lib.Family()
-        retval.set_handle(family.handle)
-        return retval.serialize()
+        child_ref_list = self.get_child_ref_list(family)
+        event_ref_list = self.get_event_ref_list(family)
+        media_list = self.get_media_list(family)
+        attribute_list = self.get_attribute_list(family)
+        lds_seal_list = self.get_lds_list(family)
+        source_list = self.get_source_ref_list(family)
+        note_list = self.get_note_list(family)
+        if family.father:
+            father_handle = family.father.handle
+        else:
+            father_handle = ''
+        if family.mother:
+            mother_handle = family.mother.handle
+        else:
+            mother_handle = ''
+        return (str(family.handle), family.gramps_id, 
+                father_handle, mother_handle,
+                child_ref_list, tuple(family.family_rel_type), 
+                event_ref_list, media_list,
+                attribute_list, lds_seal_list, 
+                source_list, note_list,
+                family.last_changed, tuple(family.marker_type), 
+                family.private)
 
     def get_repository(self, repo):
+        # FIXME, placeholder
         retval = gen.lib.Repository()
-        retval.set_handle(repo.handle)
+        retval.set_handle(str(repo.handle))
         return retval.serialize()
 
-    def pack_place(self, place):
-        retval = gen.lib.Place()
-        retval.set_handle(place.handle)
-        return retval.serialize()
-
-    def get_source(self, source):
-        retval = gen.lib.Source()
-        retval.set_handle(source.handle)
-        return retval.serialize()
-
-    def get_media(self, media):
-        retval = gen.lib.MediaObject()
-        retval.set_handle(media.handle)
-        return retval.serialize()
-
-    def get_person(self, person):
-        primary_name = self.get_names(person, True) # one
-        alternate_names = self.get_names(person, False) # list
-        #ok
-        event_ref_list = self.get_event_ref_list(person)
-        family_list = self.get_family_list(person)
-        parent_family_list = self.get_parent_family_list(person)
-        media_list = self.get_media_list(person)
-        address_list = self.get_address_list(person, with_parish=False)
-        attribute_list = self.get_attribute_list(person)
-        urls = self.get_url_list(person)
-        lds_ord_list = self.get_lds_list(person)
-        psource_list = self.get_source_ref_list(person)
-        pnote_list = self.get_note_list(person)
-        person_ref_list = self.get_person_ref_list(person)
-        death_ref_index = lookup_role_index(dj.EventType.DEATH, event_ref_list)
-        birth_ref_index = lookup_role_index(dj.EventType.BIRTH, event_ref_list)
-        return (str(person.handle),
-                person.gramps_id,  
-                tuple(person.gender_type),
-                primary_name,       
-                alternate_names,    
-                death_ref_index,    
-                birth_ref_index,    
-                event_ref_list,     
-                family_list,        
-                parent_family_list, 
-                media_list,         
-                address_list,       
-                attribute_list,     
-                urls,               
-                lds_ord_list,       
-                psource_list,       
-                pnote_list,         
-                totime(person.last_changed),             
-                tuple(person.marker_type), 
-                person.private,            
-                person_ref_list)
-
-
-#         # ---------------------------------
-#         # Process family
-#         # ---------------------------------
-#         families = sql.query("""select * from family;""")
-#         for family in families:
-#             (handle,
-#              gid,
-#              father_handle,
-#              mother_handle,
-#              the_type0,
-#              the_type1,
-#              change,
-#              marker0,
-#              marker1,
-#              private) = family
-
-#             child_ref_list = self.get_child_ref_list(sql, "family", handle)
-#             event_ref_list = self.get_event_ref_list(sql, "family", handle)
-#             media_list = self.get_media_list(sql, "family", handle)
-#             attribute_list = self.get_attribute_list(sql, "family", handle)
-#             lds_seal_list = self.get_lds_list(sql, "family", handle)
-#             source_list = self.get_source_ref_list(sql, "family", handle)
-#             note_list = self.get_note_list(sql, "family", handle)
-
-#             self.db.family_map[str(handle)] = (str(handle), gid, 
-#                                                father_handle, mother_handle,
-#                                                child_ref_list, (the_type0, the_type1), 
-#                                                event_ref_list, media_list,
-#                                                attribute_list, lds_seal_list, 
-#                                                source_list, note_list,
-#                                                change, (marker0, marker1), private)
-
-#             count += 1
-#             self.callback(100 * count/total)
 #         # ---------------------------------
 #         # Process repository
 #         # ---------------------------------
 #         repositories = sql.query("""select * from repository;""")
 #         for repo in repositories:
-#             (handle, 
-#              gid, 
-#              the_type0, 
-#              the_type1, 
-#              name, 
-#              change, 
-#              marker0, 
-#              marker1, 
-#              private) = repo
 
 #             note_list = self.get_note_list(sql, "repository", handle)
 #             address_list = self.get_address_list(sql, "repository", handle, with_parish=False)
@@ -371,57 +318,48 @@ class DjangoReader(object):
 #                                                    name, note_list,
 #                                                    address_list, urls, change, 
 #                                                    (marker0, marker1), private)
-#             count += 1
-#             self.callback(100 * count/total)
-#         # ---------------------------------
-#         # Process place
-#         # ---------------------------------
-#         places = sql.query("""select * from place;""")
-#         for place in places:
-#             count += 1
-#             (handle, 
-#              gid, 
-#              title, 
-#              main_loc,
-#              long, 
-#              lat, 
-#              change, 
-#              marker0, 
-#              marker1, 
-#              private) = place
 
-#             # We could look this up by "place_main", but we have the handle:
-#             main_loc = self.get_main_location(sql, handle, with_parish=True)
-#             alt_location_list = self.get_location_list(sql, "place_alt", handle, 
-#                                                        with_parish=True)
-#             urls = self.get_url_list(sql, "place", handle)
-#             media_list = self.get_media_list(sql, "place", handle)
-#             source_list = self.get_source_ref_list(sql, "place", handle)
-#             note_list = self.get_note_list(sql, "place", handle)
-#             self.db.place_map[str(handle)] = (str(handle), gid, title, long, lat,
-#                                               main_loc, alt_location_list,
-#                                               urls,
-#                                               media_list,
-#                                               source_list,
-#                                               note_list,
-#                                               change, (marker0, marker1), 
-#                                               private)
-#             self.callback(100 * count/total)
+
+    def pack_place(self, place):
+        locations = place.locations.all().order_by("order")
+        main_loc = None
+        alt_location_list = []
+        for location in locations:
+            if main_loc is None:
+                main_loc = self.pack_location(location, True)
+            else:
+                alt_location_list.append(self.pack_location(location, True))
+        url_list = self.get_url_list(place)
+        media_list = self.get_media_list(place)
+        source_list = self.get_source_ref_list(place)
+        note_list = self.get_note_list(place)
+        return (str(place.handle), 
+                place.gramps_id,
+                place.title, 
+                place.long, 
+                place.lat,
+                main_loc, 
+                alt_location_list,
+                url_list,
+                media_list,
+                source_list,
+                note_list,
+                place.last_changed, 
+                tuple(place.marker_type), 
+                place.private)
+
+    def get_source(self, source):
+        # FIXME, placeholder
+        retval = gen.lib.Source()
+        retval.set_handle(str(source.handle))
+        return retval.serialize()
+
 #         # ---------------------------------
 #         # Process source
 #         # ---------------------------------
 #         sources = sql.query("""select * from source;""")
 #         for source in sources:
-#             (handle, 
-#              gid,
-#              title,
-#              author,
-#              pubinfo,
-#              abbrev,
-#              change,
-#              marker0,
-#              marker1,
-#              private) = source
+
 #             note_list = self.get_note_list(sql, "source", handle)
 #             media_list = self.get_media_list(sql, "source", handle)
 #             datamap = self.get_datamap(sql, "source", handle)
@@ -435,22 +373,18 @@ class DjangoReader(object):
 #                                                change, datamap,
 #                                                reporef_list,
 #                                                (marker0, marker1), private)
-#             count += 1
-#             self.callback(100 * count/total)
+
+    def get_media(self, media):
+        # FIXME, placeholder
+        retval = gen.lib.MediaObject()
+        retval.set_handle(media.handle)
+        return retval.serialize()
+
 #         # ---------------------------------
 #         # Process media
 #         # ---------------------------------
 #         media = sql.query("""select * from media;""")
 #         for med in media:
-#             (handle, 
-#              gid,
-#              path,
-#              mime,
-#              desc,
-#              change,
-#              marker0,
-#              marker1,
-#              private) = med
 
 #             attribute_list = self.get_attribute_list(sql, "media", handle)
 #             source_list = self.get_source_ref_list(sql, "media", handle)
@@ -467,82 +401,67 @@ class DjangoReader(object):
 #                                               date,
 #                                               (marker0, marker1),
 #                                               private)
-#             count += 1
-#             self.callback(100 * count/total)
 
-
-    def get_source_ref(self, obj):
-        date = self.get_date(obj)
-        note_list = self.get_note_list(obj)
-        return (date, obj.private, note_list, obj.confidence, 
-                obj.ref_object.handle, obj.page)
-
-    def get_media_list(self, obj):
-        obj_type = ContentType.objects.get_for_model(obj)
-        mediarefs = dj.MediaRef.objects.filter(object_id=obj.id, 
-                                               object_type=obj_type)
-        retval = []
-        for mediaref in mediarefs:
-            retval.append(self.get_media_ref(mediaref))
-        return retval
-
-    def get_media_ref(self, media_ref):
-        note_list = self.get_note_list(media_ref)
-        attribute_list = self.get_attribute_list(media_ref)
-        source_list = self.get_source_ref_list(media_ref)
-        return (media_ref.private, source_list, note_list, attribute_list, 
-                media_ref.ref_object.handle, (media_ref.x1,
-                                              media_ref.y1,
-                                              media_ref.x2,
-                                              media_ref.y2))
-    
-    def get_note_list(self, obj):
-        obj_type = ContentType.objects.get_for_model(obj)
-        noterefs = dj.NoteRef.objects.filter(object_id=obj.id, 
-                                             object_type=obj_type)
-        retval = []
-        for noteref in noterefs:
-            retval.append( noteref.ref_object.handle)
-        return retval
-
-    def get_repository_ref_list(self, obj):
-        obj_type = ContentType.objects.get_for_model(obj)
-        reporefs = dj.RepositoryRef.objects.filter(object_id=obj.id, 
-                                                   object_type=obj_type)
-        return [self.pack_repository_ref(repo) for repo in reporefs]
-
-    def get_url_list(self, obj):
-        return [self.pack_url(url) for url in obj.urls.all().order_by("order")]
+    def get_person(self, person):
+        primary_name = self.get_names(person, True) # one
+        alternate_names = self.get_names(person, False) # list
+        event_ref_list = self.get_event_ref_list(person)
+        family_list = self.get_family_list(person)
+        parent_family_list = self.get_parent_family_list(person)
+        media_list = self.get_media_list(person)
+        address_list = self.get_address_list(person, with_parish=False)
+        attribute_list = self.get_attribute_list(person)
+        url_list = self.get_url_list(person)
+        lds_ord_list = self.get_lds_list(person)
+        psource_list = self.get_source_ref_list(person)
+        pnote_list = self.get_note_list(person)
+        person_ref_list = self.get_person_ref_list(person)
+        death_ref_index = lookup_role_index(dj.EventType.DEATH, event_ref_list)
+        birth_ref_index = lookup_role_index(dj.EventType.BIRTH, event_ref_list)
+        return (str(person.handle),
+                person.gramps_id,  
+                tuple(person.gender_type)[0],
+                primary_name,       
+                alternate_names,    
+                death_ref_index,    
+                birth_ref_index,    
+                event_ref_list,     
+                family_list,        
+                parent_family_list, 
+                media_list,         
+                address_list,       
+                attribute_list,     
+                url_list,               
+                lds_ord_list,       
+                psource_list,       
+                pnote_list,         
+                totime(person.last_changed),             
+                tuple(person.marker_type), 
+                person.private,            
+                person_ref_list)
 
     # ---------------------------------
-    # Helpers
+    # Packers
     # ---------------------------------
 
-    def pack_address(self, address, with_parish):
-        source_list = self.get_source_ref_list(address)
-        date = self.get_date(address)
-        note_list = self.get_note_list(address)
-        locations = address.locations.all()
-        if len(locations) > 0:
-            location = self.pack_location(locations[0], with_parish)
-        else:
-            location = None
-        return (address.private, source_list, note_list, date, location)
+    ## The packers build GRAMPS raw unserialized data.
 
-    def pack_lds(self, lds):
-        source_list = self.get_source_ref_list(lds)
-        note_list = self.get_note_list(lds)
-        date = self.get_date(lds)
-        if lds.famc:
-            famc = lds.famc.handle
-        else:
-            famc = None
-        if lds.place:
-            place = lds.place.handle
-        else:
-            place = None
-        return (source_list, note_list, date, tuple(lds_type), place,
-                famc, lds.temple, tuple(lds_status), lds.private)
+    ## Reference packers
+
+    def pack_child_ref(self, child_ref):
+        source_list = self.get_source_ref_list(child_ref)
+        note_list = self.get_note_list(child_ref) 
+        return (child_ref.private, source_list, note_list, child_ref.ref_object.handle, 
+                tuple(child_ref.father_rel_type), tuple(child_ref.mother_rel_type))
+
+    def pack_person_ref(self, personref):
+        source_list = self.get_source_ref_list(personref)
+        note_list = self.get_note_list(personref)
+        return (personref.private, 
+                source_list,
+                note_list,
+                personref.ref_object.handle,
+                personref.description)
 
     def pack_media_ref(self, media_ref):
         source_list = self.get_source_ref_list(media_ref)
@@ -563,9 +482,16 @@ class DjangoReader(object):
                 tuple(repo_ref.source_media_type),
                 repo_ref.private)
 
-    def pack_url(self, url):
-        return  (url.private, url.path, url.desc, tuple(url.url_type))
-
+    def pack_media_ref(self, media_ref):
+        note_list = self.get_note_list(media_ref)
+        attribute_list = self.get_attribute_list(media_ref)
+        source_list = self.get_source_ref_list(media_ref)
+        return (media_ref.private, source_list, note_list, attribute_list, 
+                media_ref.ref_object.handle, (media_ref.x1,
+                                              media_ref.y1,
+                                              media_ref.x2,
+                                              media_ref.y2))
+    
     def pack_event_ref(self, event_ref):
         note_list = self.get_note_list(event_ref)
         attribute_list = self.get_attribute_list(event_ref)
@@ -581,11 +507,40 @@ class DjangoReader(object):
         note_list = self.get_note_list(source_ref)
         return (date, private, note_list, confidence, ref, page)
 
+    def pack_address(self, address, with_parish):
+        source_list = self.get_source_ref_list(address)
+        date = self.get_date(address)
+        note_list = self.get_note_list(address)
+        locations = address.locations.all().order_by("order")
+        if len(locations) > 0:
+            location = self.pack_location(locations[0], with_parish)
+        else:
+            if with_parish:
+                location = (("", "", "", "", "", "", ""), "")
+            else:
+                location = ("", "", "", "", "", "", "")
+        return (address.private, source_list, note_list, date, location)
+
+    def pack_lds(self, lds):
+        source_list = self.get_source_ref_list(lds)
+        note_list = self.get_note_list(lds)
+        date = self.get_date(lds)
+        if lds.famc:
+            famc = lds.famc.handle
+        else:
+            famc = ''
+        place = self.get_place_handle(lds)
+        return (source_list, note_list, date, tuple(lds_type)[0], place,
+                famc, lds.temple, tuple(lds_status)[0], lds.private)
+
+    def pack_url(self, url):
+        return  (url.private, url.path, url.desc, tuple(url.url_type))
+
     def pack_source(self, source):
         note_list = self.get_note_list(source)
         media_list = self.get_media_list(source)
         reporef_list = self.get_repository_ref_list(source)
-        datamap = {} # FIXME
+        datamap = self.get_datamap(source)
         return (source.handle, source.gramps_id, source.title,
                 source.author, source.pubinfo,
                 note_list,
@@ -595,18 +550,7 @@ class DjangoReader(object):
                 reporef_list,
                 tuple(source.marker_type), source.private)
 
-    def get_names(self, person, preferred):
-        names = person.names.filter(preferred=preferred).order_by("order")
-        if preferred:
-            if len(names) > 0:
-                return self.pack_name(names[0])
-            else:
-                return gen.lib.Name().serialize()
-        else:
-            return [self.pack_name(name) for name in names]
-     
     def pack_name(self, name):
-        # build up a GRAMPS object:
         source_list = self.get_source_ref_list(name)
         note_list = self.get_note_list(name)
         date = self.get_date(name)
@@ -622,13 +566,6 @@ class DjangoReader(object):
         else:
             return (loc.street, loc.city, loc.county, loc.state, loc.country, 
                     loc.postal, loc.phone)
-
-    def get_main_location(self, obj, with_parish): # place or address
-        locations = obj.locations.all().order_by("order")
-        if len(locations) > 0:
-            return self.pack_location(locations[0], with_parish)
-        else:
-            return gen.lib.Location().serialize()
 
     def get_date(self, obj):
         if obj: 
@@ -723,7 +660,7 @@ class DjangoReader(object):
         sources = dj.Source.objects.all()
         for source in sources:
             data = self.get_source(source)
-            self.db.place_map[str(source.handle)] = data
+            self.db.source_map[str(source.handle)] = data
             count += 1
             self.callback(100 * count/total)
 
