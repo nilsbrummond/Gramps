@@ -371,7 +371,7 @@ class Place(PrimaryObject):
     lat = models.TextField(blank=True)
     url_list = models.ManyToManyField('Url', null=True)
 
-class Media(PrimaryObject):
+class Media(DateObject, PrimaryObject):
     path = models.TextField(blank=True)
     mime = models.TextField(blank=True)
     desc = models.TextField(blank=True)

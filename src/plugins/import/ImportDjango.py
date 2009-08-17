@@ -294,31 +294,24 @@ class DjangoReader(object):
                 event_ref_list, media_list,
                 attribute_list, lds_seal_list, 
                 source_list, note_list,
-                family.last_changed, tuple(family.marker_type), 
+                totime(family.last_changed), 
+                tuple(family.marker_type), 
                 family.private)
 
-    def get_repository(self, repo):
-        # FIXME, placeholder
-        retval = gen.lib.Repository()
-        retval.set_handle(str(repo.handle))
-        return retval.serialize()
-
-#         # ---------------------------------
-#         # Process repository
-#         # ---------------------------------
-#         repositories = sql.query("""select * from repository;""")
-#         for repo in repositories:
-
-#             note_list = self.get_note_list(sql, "repository", handle)
-#             address_list = self.get_address_list(sql, "repository", handle, with_parish=False)
-#             urls = self.get_url_list(sql, "repository", handle)
-
-#             self.db.repository_map[str(handle)] = (str(handle), gid, 
-#                                                    (the_type0, the_type1),
-#                                                    name, note_list,
-#                                                    address_list, urls, change, 
-#                                                    (marker0, marker1), private)
-
+    def get_repository(self, repository):
+        note_list = self.get_note_list(repository)
+        address_list = self.get_address_list(repository, with_parish=False)
+        url_list = self.get_url_list(repository)
+        return (str(repository.handle), 
+                repository.gramps_id, 
+                tuple(repository.repository_type),
+                repository.name, 
+                note_list,
+                address_list, 
+                url_list, 
+                totime(repository.last_changed), 
+                tuple(repository.marker_type), 
+                repository.private)
 
     def pack_place(self, place):
         locations = place.locations.all().order_by("order")
@@ -344,63 +337,46 @@ class DjangoReader(object):
                 media_list,
                 source_list,
                 note_list,
-                place.last_changed, 
+                totime(place.last_changed), 
                 tuple(place.marker_type), 
                 place.private)
 
     def get_source(self, source):
-        # FIXME, placeholder
-        retval = gen.lib.Source()
-        retval.set_handle(str(source.handle))
-        return retval.serialize()
-
-#         # ---------------------------------
-#         # Process source
-#         # ---------------------------------
-#         sources = sql.query("""select * from source;""")
-#         for source in sources:
-
-#             note_list = self.get_note_list(sql, "source", handle)
-#             media_list = self.get_media_list(sql, "source", handle)
-#             datamap = self.get_datamap(sql, "source", handle)
-#             reporef_list = self.get_repository_ref_list(sql, "source", handle)
-
-#             self.db.source_map[str(handle)] = (str(handle), gid, title,
-#                                                author, pubinfo,
-#                                                note_list,
-#                                                media_list,
-#                                                abbrev,
-#                                                change, datamap,
-#                                                reporef_list,
-#                                                (marker0, marker1), private)
+        note_list = self.get_note_list(source)
+        media_list = self.get_media_list(source)
+        datamap = self.get_datamap(source)
+        reporef_list = self.get_repository_ref_list(source)
+        return (str(source.handle), 
+                source.gramps_id, 
+                source.title,
+                source.author, 
+                source.pubinfo,
+                note_list,
+                media_list,
+                source.abbrev,
+                totime(source.last_changed), 
+                datamap,
+                reporef_list,
+                tuple(source.marker_type), 
+                source.private)
 
     def get_media(self, media):
-        # FIXME, placeholder
-        retval = gen.lib.MediaObject()
-        retval.set_handle(media.handle)
-        return retval.serialize()
-
-#         # ---------------------------------
-#         # Process media
-#         # ---------------------------------
-#         media = sql.query("""select * from media;""")
-#         for med in media:
-
-#             attribute_list = self.get_attribute_list(sql, "media", handle)
-#             source_list = self.get_source_ref_list(sql, "media", handle)
-#             note_list = self.get_note_list(sql, "media", handle)
-            
-#             date_handle = self.get_link(sql, "media", handle, "date")
-#             date = self.get_date(sql, date_handle)
-
-#             self.db.media_map[str(handle)] = (str(handle), gid, path, mime, desc,
-#                                               attribute_list,
-#                                               source_list,
-#                                               note_list,
-#                                               change,
-#                                               date,
-#                                               (marker0, marker1),
-#                                               private)
+        attribute_list = self.get_attribute_list(media)
+        source_list = self.get_source_ref_list(media)
+        note_list = self.get_note_list(media)
+        date = self.get_date(media)
+        return (str(media.handle), 
+                media.gramps_id, 
+                media.path, 
+                media.mime, 
+                media.desc,
+                attribute_list,
+                source_list,
+                note_list,
+                totime(media.last_changed),
+                date,
+                tuple(media.marker_type),
+                media.private)
 
     def get_person(self, person):
         primary_name = self.get_names(person, True) # one
