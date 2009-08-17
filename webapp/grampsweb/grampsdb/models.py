@@ -89,16 +89,17 @@ class mGrampsType(models.Model):
 
     name = models.CharField(max_length=40)
     
-    def __unicode__(self): return self.name
+    def __unicode__(self): return "%s: (%d,%s)" % (self.__class__.__name__,
+                                                   self.val,
+                                                   self.name)
 
     def get_default_type(self):
         """ return a tuple default (val,name) """
         return self._DATAMAP[self._DEFAULT]
 
-    def __iter__(self):
-        """ for use with tuple(Type) """
-        yield self.val
-        yield self.name
+    def __len__(self):
+        """ For use as a sequence for getting (val, name) """
+        return 2
 
     def __getitem__(self, pos):
         """ for getting the parts as if they were the original tuples."""
@@ -310,7 +311,8 @@ class PrimaryObject(models.Model):
     ## Keys:
     marker_type = models.ForeignKey('MarkerType')
 
-    def __unicode__(self): return self.gramps_id 
+    def __unicode__(self): return "%s: %s" % (self.__class__.__name__,
+                                              self.gramps_id)
 
 class Person(PrimaryObject):
     """
@@ -417,7 +419,10 @@ class Name(DateObject, SecondaryObject):
     display_as = models.IntegerField(blank=True)
 
     def __unicode__(self):
-        return self.surname + ", " + self.first_name
+        return "%s%s%s, %s" % (self.prefix, 
+                               ["", " "][bool(self.prefix)],
+                               self.surname, 
+                               self.first_name)
 
 class Lds(SecondaryObject):
     """
@@ -480,9 +485,11 @@ class Url(models.Model):
     url_type = models.ForeignKey('UrlType') 
     order = models.PositiveIntegerField()
 
+## FIXME: consider using:
+## URLField
+
 ## FIXME:
 ## attribute
-## url models.URLField
 ## datamap
 
 #---------------------------------------------------------------------------
