@@ -280,17 +280,13 @@ def export_family_ref(obj, handle):
 
 ## Export individual objects:
 
-def export_datamap_dict(source, datamap):
-    # FIXME
-    return
-    for key_field in datamap:
-        handle = create_id()
-        value_field = datamap[key_field]
-        db.query("""INSERT INTO datamap (
-                      handle,
-                      key_field, 
-                      value_field) values (?, ?, ?)""",
-                 handle, key_field, value_field)
+def export_datamap_dict(source, datamap_dict):
+    for key in datamap_dict:
+        value = datamap_dict[key]
+        datamap = dj.Datamap(key=key, value=value)
+        datamap.save()
+        source.datamaps.add(datamap)
+        source.save()
 
 def export_lds(person, data, order):
     (lsource_list, lnote_list, date, type, place_handle,

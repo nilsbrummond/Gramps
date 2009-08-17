@@ -345,6 +345,7 @@ class Source(PrimaryObject):
     author = models.CharField(max_length=50, blank=True)
     pubinfo = models.CharField(max_length=50, blank=True)
     abbrev = models.CharField(max_length=50, blank=True)
+    datamaps = models.ManyToManyField('Datamap', null=True)
     references = generic.GenericRelation('SourceRef', related_name="refs",
                                          content_type_field="object_type",
                                          object_id_field="object_id")
@@ -466,6 +467,10 @@ class Markup(models.Model):
     order = models.PositiveIntegerField()
     string = models.TextField(blank=True, null=True)
     start_stop_list = models.TextField(default="[]")
+
+class Datamap(models.Model):
+    key = models.CharField(max_length=80, blank=True)
+    value = models.CharField(max_length=80, blank=True)
 
 class Address(DateObject, SecondaryObject):
     locations = models.ManyToManyField('Location', null=True)

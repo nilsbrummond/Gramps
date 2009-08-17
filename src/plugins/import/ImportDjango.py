@@ -118,12 +118,18 @@ class DjangoReader(object):
             return [self.pack_name(name) for name in names]
      
     def get_datamap(self, obj): # obj is source
-        # FIXME
-        return {}
+        datamap_dict = {}
+        datamap_list = obj.datamaps.all()
+        for datamap in datamap_list:
+            datamap_dict[datamap.key] = datamap.value
+        return datamap_dict
 
     def get_url_list(self, obj):
-        # FIXME
-        return []
+        url_list = obj.url_list.all()
+        return [self.pack_url(url) for url in url_list]
+        
+    def pack_url(url):
+        return  (url.private, url.path, url.desc, tuple(url_type))
 
     def get_attribute_list(self, obj):
         attribute_list = obj.attributes.all()
