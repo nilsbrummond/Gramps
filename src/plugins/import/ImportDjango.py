@@ -35,6 +35,7 @@ from gettext import ngettext
 import time
 import sys
 import os
+import pdb
 
 #------------------------------------------------------------------------
 #
@@ -63,7 +64,7 @@ sys.path += [const.ROOT_DIR + os.sep + '..' + os.sep + 'webapp' ]
 sys.path += [const.ROOT_DIR + os.sep + '..' + os.sep + 'webapp' + os.sep + 'grampsweb' ]
 
 import grampsweb.grampsdb.models as dj
-
+from django.contrib.contenttypes.models import ContentType
 
 #-------------------------------------------------------------------------
 #
@@ -112,23 +113,30 @@ class DjangoReader(object):
             retval.append(self.pack_address(sql, result[0], with_parish))
         return retval
 
-    def get_attribute_list(self, sql, from_type, from_handle):
-        handles = self.get_links(sql, from_type, from_handle, "attribute")
-        retval = []
-        for handle in handles:
-            rows = sql.query("select * from attribute where handle = ?;",
-                             handle)
-            for row in rows:
-                (handle,
-                 the_type0, 
-                 the_type1, 
-                 value, 
-                 private) = row
-                source_list = self.get_source_ref_list(sql, "attribute", handle)
-                note_list = self.get_note_list(sql, "attribute", handle)
-                retval.append((private, source_list, note_list, 
-                               (the_type0, the_type1), value))
-        return retval
+    def get_place(self, obj):
+        if obj.place:
+            return obj.place.handle
+        return None
+
+    def get_attribute_list(self, obj):
+        # FIXME
+        return []
+#         handles = self.get_links(sql, from_type, from_handle, "attribute")
+#         retval = []
+#         for handle in handles:
+#             rows = sql.query("select * from attribute where handle = ?;",
+#                              handle)
+#             for row in rows:
+#                 (handle,
+#                  the_type0, 
+#                  the_type1, 
+#                  value, 
+#                  private) = row
+#                 source_list = self.get_source_ref_list(sql, "attribute", handle)
+#                 note_list = self.get_note_list(sql, "attribute", handle)
+#                 retval.append((private, source_list, note_list, 
+#                                (the_type0, the_type1), value))
+#         return retval
 
     def get_child_ref_list(self, sql, from_type, from_handle):
         results = self.get_links(sql, from_type, from_handle, "child_ref")
@@ -207,16 +215,88 @@ class DjangoReader(object):
                                  handle)
         return [self.pack_lds(sql, result) for result in results]
 
-    def get_media_list(self, sql, from_type, from_handle):
-        handles = self.get_links(sql, from_type, from_handle, "media_ref")
-        results = []
-        for handle in handles:
-            results += sql.query("""select * from media_ref where handle = ?;""",
-                                 handle)
-        return [self.pack_media_ref(sql, result) for result in results]
+    def get_event(self, event):
+        handle = event.handle
+        gid = event.gramps_id
+        the_type = tuple(event.event_type)
+        description = event.description
+        change = time.mktime(event.last_changed.timetuple())
+        marker = tuple(event.marker_type)
+        private = event.private
+        note_list = self.get_note_list(event)           
+        source_list = self.get_source_ref_list(event)   
+        media_list = self.get_media_list(event)         
+        attribute_list = self.get_attribute_list(event)
+        date = self.get_date(event)
+        place = self.get_place(event)
+        return (str(handle), gid, the_type, date, description, place, 
+                source_list, note_list, media_list, attribute_list,
+                change, marker, private)
 
-    def get_note_list(self, sql, from_type, from_handle):
-        return self.get_links(sql, from_type, from_handle, "note")
+    def get_note(self, note):
+        if note:
+            styled_text = [note.text, []]
+            markups = dj.Markup.objects.filter(note=note).order_by("order")
+            for markup in markups:
+                value = markup.value
+                start_stop_list  = markup.start_stop_list
+                ss_list = eval(start_stop_list)
+                styled_text[1] += [(tuple(markup.markup_type), 
+                                    value, ss_list)]
+            changed = time.mktime(note.last_changed.timetuple())
+            return (str(note.handle), 
+                    note.gramps_id, 
+                    styled_text, 
+                    note.preformatted, 
+                    tuple(note.note_type), 
+                    changed, 
+                    tuple(note.marker_type), 
+                    note.private)
+        return None
+
+    def get_source_ref_list(self, obj):
+        pdb.set_trace()
+        obj_type = ContentType.objects.get_for_model(obj)
+        sourcerefs = dj.SourceRef.objects.filter(object_id=obj.id, \
+                                  object_type=obj_type).order_by("order")
+        retval = []
+        for sourceref in sourcerefs:
+            retval.append(self.get_source_ref(sourceref))
+        return retval
+
+    def get_source_ref(self, obj):
+        date = self.get_date(obj)
+        note_list = self.get_note_list(obj)
+        return (date, obj.private, note_list, obj.confidence, 
+                obj.ref_object.handle, obj.page)
+
+    def get_media_list(self, obj):
+        obj_type = ContentType.objects.get_for_model(obj)
+        mediarefs = dj.MediaRef.objects.filter(object_id=obj.id, 
+                                               object_type=obj_type)
+        retval = []
+        for mediaref in mediarefs:
+            retval.append(self.get_media_ref(mediaref))
+        return retval
+
+    def get_media_ref(self, media_ref):
+        note_list = self.get_note_list(media_ref)
+        attribute_list = self.get_attribute_list(media_ref)
+        source_list = self.get_source_ref_list(media_ref)
+        return (media_ref.private, source_list, note_list, attribute_list, 
+                media_ref.ref_object.handle, (media_ref.x1,
+                                              media_ref.y1,
+                                              media_ref.x2,
+                                              media_ref.y2))
+    
+    def get_note_list(self, obj):
+        obj_type = ContentType.objects.get_for_model(obj)
+        noterefs = dj.NoteRef.objects.filter(object_id=obj.id, 
+                                             object_type=obj_type)
+        retval = []
+        for noteref in noterefs:
+            retval.append( noteref.ref_object.handle)
+        return retval
 
     def get_repository_ref_list(self, sql, from_type, from_handle):
         handles = self.get_links(sql, from_type, from_handle, "repository_ref")
@@ -225,14 +305,6 @@ class DjangoReader(object):
             results += sql.query("""select * from repository_ref where handle = ?;""",
                                  handle)
         return [self.pack_repository_ref(sql, result) for result in results]
-
-    def get_source_ref_list(self, sql, from_type, from_handle):
-        handles = self.get_links(sql, from_type, from_handle, "source_ref")
-        results = []
-        for handle in handles:
-            results += sql.query("""select * from source_ref where handle = ?;""",
-                                 handle)
-        return [self.pack_source_ref(sql, result) for result in results]
 
     def get_url_list(self, sql, from_type, from_handle):
         handles = self.get_links(sql, from_type, from_handle, "url")
@@ -315,15 +387,13 @@ class DjangoReader(object):
         role = (role0, role1)
         return (private, note_list, attribute_list, ref, role)
 
-    def pack_source_ref(self, sql, data):
-        (handle, 
-         ref, 
-         confidence,
-         page,
-         private) = data
-        date_handle = self.get_link(sql, "source_ref", handle, "date")
-        date = self.get_date(sql, date_handle)
-        note_list = self.get_note_list(sql, "source_ref", handle)
+    def pack_source_ref(self, source_ref):
+        ref = source_ref.ref_object.handle
+        confidence = source_ref.confidence
+        page = source_ref.page
+        private = source_ref.private
+        date = self.get_date(source_ref)
+        note_list = self.get_note_list(source_ref)
         return (date, private, note_list, confidence, ref, page)
 
     def pack_source(self, sql, data):
@@ -466,34 +536,17 @@ class DjangoReader(object):
                             from_type, from_handle, to_link)
         return [result[0] for result in results]
 
-    def get_date(self, sql, handle):
-        assert type(handle) in [unicode, str, type(None)], "handle is wrong type: %s" % handle
-        if handle: 
-            rows = sql.query("select * from date where handle = ?;", handle)
-            if len(rows) == 1:
-                (handle,
-                 calendar, 
-                 modifier, 
-                 quality,
-                 day1, 
-                 month1, 
-                 year1, 
-                 slash1,
-                 day2, 
-                 month2, 
-                 year2, 
-                 slash2,
-                 text, 
-                 sortval, 
-                 newyear) = rows[0]
-                dateval = day1, month1, year1, slash1, day2, month2, year2, slash2
-                if slash1 == day2 == month2 == year2 == slash2 == 0:
-                    dateval = day1, month1, year1, slash1
-                return (calendar, modifier, quality, dateval, text, sortval, newyear)
-            elif len(rows) == 0:
-                return None
+    def get_date(self, obj):
+        if obj: 
+            if ((not obj.slash1) and (not obj.slash2) and 
+                (obj.day2 == obj.month2 == obj.year2 == 0)):
+                dateval = (obj.day1, obj.month1, obj.year1, obj.slash1)
             else:
-                print Exception("ERROR, wrong number of dates: %s" % rows)
+                dateval = (obj.day1, obj.month1, obj.year1, obj.slash1, 
+                           obj.day2, obj.month2, obj.year2, obj.slash2)
+            return (obj.calendar, obj.modifier, obj.quality, dateval, 
+                    obj.text, obj.sortval, obj.newyear)
+        return None
 
     def process(self):
         sql = None
@@ -504,78 +557,31 @@ class DjangoReader(object):
                  dj.Repository.objects.count() +
                  dj.Place.objects.count() +
                  dj.Media.objects.count() +
-                 dj.Source.objects.count()) * 2
+                 dj.Source.objects.count())
         self.trans = self.db.transaction_begin("",batch=True)
         self.db.disable_signals()
         count = 0.0
         self.t = time.time()
 
-        for step in range(2):
-            # ---------------------------------
-            # Process note
-            # ---------------------------------
-            notes = dj.Note.objects.all()
-            for note in notes:
-                if step == 0:
-                    styled_text = [note.text, []]
-                    markups = dj.Markup.objects.filter()
-                    for markup in markups:
-                        markup0 = markup.markup_type.val
-                        markup1 = markup.markup_type.name
-                        value = markup.value
-                        start_stop_list  = markup.start_stop_list
-                        ss_list = eval(start_stop_list)
-                        styled_text[1] += [(tuple(markup.markup_type), 
-                                            value, ss_list)]
-                    changed = time.mktime(note.last_changed.timetuple())
-                    self.db.note_map[str(note.handle)] = (str(note.handle), 
-                                                          note.gramps_id, 
-                                                          styled_text, 
-                                                          note.preformatted, 
-                                                          tuple(note.note_type), 
-                                                          changed, 
-                                                          tuple(note.marker_type), 
-                                                          note.private)
-                elif step == 1:
-                    pass # nothing to do for notes
+        # ---------------------------------
+        # Process note
+        # ---------------------------------
+        notes = dj.Note.objects.all()
+        for note in notes:
+            data = self.get_note(note)
+            self.db.note_map[str(note.handle)] = data
+            count += 1
+            self.callback(100 * count/total)
 
-                count += 1
-                self.callback(100 * count/total)
-
-#         # ---------------------------------
-#         # Process event
-#         # ---------------------------------
-#         events = sql.query("""select * from event;""")
-#         for event in events:
-#             (handle, 
-#              gid,
-#              the_type0,
-#              the_type1,
-#              description,
-#              change,
-#              marker0,
-#              marker1,
-#              private) = event
-
-#             note_list = self.get_note_list(sql, "event", handle)
-#             source_list = self.get_source_ref_list(sql, "event", handle)
-#             media_list = self.get_media_list(sql, "event", handle)
-#             attribute_list = self.get_attribute_list(sql, "event", handle)
-
-#             date_handle = self.get_link(sql, "event", handle, "date")
-#             date = self.get_date(sql, date_handle)
-
-#             place_handle = self.get_link(sql, "event", handle, "place")
-#             place = self.get_place_from_handle(sql, place_handle)
-
-#             data = (str(handle), gid, (the_type0, the_type1), date, description, place, 
-#                     source_list, note_list, media_list, attribute_list,
-#                     change, (marker0, marker1), private)
-
-#             self.db.event_map[str(handle)] = data
-
-#             count += 1
-#             self.callback(100 * count/total)
+        # ---------------------------------
+        # Process event
+        # ---------------------------------
+        events = dj.Event.objects.all()
+        for event in events:
+            data = self.get_event(event)
+            self.db.event_map[str(event.handle)] = data
+            count += 1
+            self.callback(100 * count/total)
 
 #         # ---------------------------------
 #         # Process person
