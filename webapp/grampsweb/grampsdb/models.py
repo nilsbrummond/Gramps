@@ -328,7 +328,7 @@ class Person(PrimaryObject):
                                          content_type_field="object_type",
                                          object_id_field="object_id")
     lds_list = models.ManyToManyField('Lds', null=True)
-    urls = models.ManyToManyField('Url', null=True)
+    url_list = models.ManyToManyField('Url', null=True)
 
 class Family(PrimaryObject):
     father = models.ForeignKey('Person', related_name="father_ref", 
@@ -362,14 +362,14 @@ class Repository(PrimaryObject):
     references = generic.GenericRelation('RepositoryRef', related_name="refs",
                                          content_type_field="object_type",
                                          object_id_field="object_id")
-    urls = models.ManyToManyField('Url', null=True)
+    url_list = models.ManyToManyField('Url', null=True)
 
 class Place(PrimaryObject):
     title = models.TextField(blank=True)
     locations = models.ManyToManyField('Location', null=True)
     long = models.TextField(blank=True)
     lat = models.TextField(blank=True)
-    urls = models.ManyToManyField('Url', null=True)
+    url_list = models.ManyToManyField('Url', null=True)
 
 class Media(PrimaryObject):
     path = models.TextField(blank=True)
