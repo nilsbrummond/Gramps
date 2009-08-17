@@ -308,6 +308,7 @@ class PrimaryObject(models.Model):
     last_saved = models.DateTimeField('last changed', auto_now=True) 
     last_changed = models.DateTimeField('last changed', null=True) # user edits
     private = models.BooleanField('private')
+    attributes = models.ManyToManyField("Attribute", null=True)
 
     ## Keys:
     marker_type = models.ForeignKey('MarkerType')
@@ -487,11 +488,15 @@ class Url(models.Model):
     url_type = models.ForeignKey('UrlType') 
     order = models.PositiveIntegerField()
 
+class Attribute(models.Model):
+    private = models.BooleanField('private attribute?')
+    attribute_type = models.ForeignKey('AttributeType') 
+    value = models.TextField(blank=True, null=True)
+
 ## FIXME: consider using:
 ## URLField
 
 ## FIXME:
-## attribute
 ## datamap
 
 #---------------------------------------------------------------------------
@@ -510,6 +515,7 @@ class BaseRef(models.Model):
     order = models.PositiveIntegerField()
     last_saved = models.DateTimeField('last changed', auto_now=True)
     last_changed = models.DateTimeField('last changed', null=True) # user edits
+    attributes = models.ManyToManyField("Attribute", null=True)
     private = models.BooleanField()
   
 class NoteRef(BaseRef):
@@ -596,6 +602,7 @@ TABLES = [
     ("primary", Media),
     ("primary", Note),
     ("abstract", SecondaryObject),
+    ("secondary", Attribute),
     ("secondary", Name),
     ("secondary", Lds),
     ("secondary", Markup),

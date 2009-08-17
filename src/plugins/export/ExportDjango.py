@@ -329,8 +329,16 @@ def export_address(obj, address_data, order):
     obj.save()
 
 def export_attribute(obj, attribute_data):
-    # FIXME
-    pass
+    (private, source_list, note_list, the_type, value) = attribute_data
+    attribute_type = dj.get_type(dj.AttributeType, the_type)
+    attribute = dj.Attribute(private=private,
+                             attribute_type=attribute_type,
+                             value=value)
+    attribute.save()
+    export_source_ref_list(attribute, source_list)
+    export_note_list(attribute, note_list)
+    obj.attributes.add(attribute)
+    obj.save()
 
 def export_url(obj, url_data, order):
     (private, path, desc, type) = url_data
@@ -341,6 +349,7 @@ def export_url(obj, url_data, order):
                  url_type=dj.get_type(dj.UrlType, type))
     url.save()
     obj.url_list.add(url)
+    obj.save()
 
 def export_place_ref(event, place_handle):
     if place_handle:

@@ -126,25 +126,18 @@ class DjangoReader(object):
         return []
 
     def get_attribute_list(self, obj):
-        # FIXME
-        return []
+        attribute_list = obj.attributes.all()
+        return [self.pack_attribute(attribute) for attribute 
+                in attribute_list]
 
-#         handles = self.get_links(sql, from_type, from_handle, "attribute")
-#         retval = []
-#         for handle in handles:
-#             rows = sql.query("select * from attribute where handle = ?;",
-#                              handle)
-#             for row in rows:
-#                 (handle,
-#                  the_type0, 
-#                  the_type1, 
-#                  value, 
-#                  private) = row
-#                 source_list = self.get_source_ref_list(sql, "attribute", handle)
-#                 note_list = self.get_note_list(sql, "attribute", handle)
-#                 retval.append((private, source_list, note_list, 
-#                                (the_type0, the_type1), value))
-#         return retval
+    def pack_attribute(self, attribute):
+        source_list = self.get_source_ref_list(attribute)
+        note_list = self.get_note_list(attribute)
+        return (attribute.private, 
+                source_list, 
+                note_list, 
+                tuple(attribute.attribute_type), 
+                attribute.value)
 
     def get_media_list(self, obj):
         obj_type = ContentType.objects.get_for_model(obj)
