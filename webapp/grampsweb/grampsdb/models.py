@@ -558,6 +558,74 @@ class MediaRef(BaseRef):
     def __unicode__(self):
         return "MediaRef to " + str(self.ref_object)
 
+TABLES = [
+    ("abstract", mGrampsType),
+    ("type", MarkerType),
+    ("type", NameType),
+    ("type", AttributeType),
+    ("type", UrlType),
+    ("type", ChildRefType),
+    ("type", RepositoryType),
+    ("type", EventType),
+    ("type", FamilyRelType),
+    ("type", SourceMediaType),
+    ("type", EventRoleType),
+    ("type", NoteType),
+    ("type", GenderType),
+    ("type", LdsType),
+    ("type", LdsStatus),
+    ("abstract", DateObject),
+    ("meta", Config),
+    ("abstract", PrimaryObject),
+    ("primary", Person),
+    ("primary", Family),
+    ("primary", Source),
+    ("primary", Event),
+    ("primary", Repository),
+    ("primary", Place),
+    ("primary", Media),
+    ("primary", Note),
+    ("abstract", SecondaryObject),
+    ("secondary", Name),
+    ("secondary", Lds),
+    ("secondary", Markup),
+    ("secondary", Address),
+    ("secondary", Location),
+    ("secondary", Url),
+    ("abstract", BaseRef),
+    ("ref", NoteRef),
+    ("ref", SourceRef),
+    ("ref", EventRef),
+    ("ref", RepositoryRef),
+    ("ref", PersonRef),
+    ("ref", ChildRef),
+    ("ref", MediaRef)
+    ]
+
+def clear_tables(*categories):
+    """
+    Clear the entries of categories of tables. Category is:
+    "abstract", "type", "ref", "meta", "primary" and "secondary".
+    """
+    for pair in get_tables(*categories):
+        if pair[0] != "abstract":
+            pair[1].objects.all().delete() 
+
+def table_stats(*categories):
+    """
+    Shows the record counts for each table category.
+    """
+    tables = get_tables(*categories)
+    tables.sort()
+    for pair in tables:
+        if pair[0] != "abstract":
+            print ("%-25s" % pair[1].__name__), ":", \
+                pair[1].objects.all().count()
+
+def get_tables(*categories):
+    return [pair for pair in TABLES if (pair[0] in categories) or 
+            ("all" in categories)]
+
 #---------------------------------------------------------------------------
 #
 # Testing Functions
