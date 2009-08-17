@@ -305,7 +305,8 @@ class PrimaryObject(models.Model):
     id = models.AutoField(primary_key=True)
     handle = models.CharField(max_length=19, unique=True)
     gramps_id =  models.CharField('gramps id', max_length=25, blank=True)
-    last_changed = models.DateTimeField('last changed', auto_now=True)
+    last_saved = models.DateTimeField('last changed', auto_now=True) 
+    last_changed = models.DateTimeField('last changed', null=True) # user edits
     private = models.BooleanField('private')
 
     ## Keys:
@@ -401,7 +402,8 @@ class SecondaryObject(models.Model):
     class Meta: abstract = True
 
     private = models.BooleanField()
-    last_changed = models.DateTimeField('last changed', auto_now=True)
+    last_saved = models.DateTimeField('last changed', auto_now=True)
+    last_changed = models.DateTimeField('last changed', null=True) # user edits
     order = models.PositiveIntegerField()
 
 class Name(DateObject, SecondaryObject):
@@ -506,7 +508,8 @@ class BaseRef(models.Model):
     referenced_by = generic.GenericForeignKey("object_type", "object_id")
 
     order = models.PositiveIntegerField()
-    last_changed = models.DateTimeField('last changed', auto_now=True)
+    last_saved = models.DateTimeField('last changed', auto_now=True)
+    last_changed = models.DateTimeField('last changed', null=True) # user edits
     private = models.BooleanField()
   
 class NoteRef(BaseRef):

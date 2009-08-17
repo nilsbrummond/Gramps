@@ -36,7 +36,6 @@ import os
 from gettext import gettext as _
 from gettext import ngettext
 import time
-import datetime
 
 #------------------------------------------------------------------------
 #
@@ -72,6 +71,9 @@ CUSTOMMARKER = {}
 # Export functions
 #
 #-------------------------------------------------------------------------
+def todate(t):
+    return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(t))
+
 def lookup(index, event_ref_list):
     """
     Get the unserialized event_ref in an list of them and return it.
@@ -444,7 +446,7 @@ def export_person(data, step):
     if step == 0:     # Add the primary data:
         person = dj.Person(handle=handle,
                            gramps_id=gid,
-                           last_changed=change,
+                           last_changed=todate(change),
                            private=private,
                            marker_type = dj.get_type(dj.MarkerType, marker),
                            gender_type = dj.get_type(dj.GenderType, gender))
@@ -475,13 +477,13 @@ def export_note(data, step):
 
     if step == 0:     # Add the primary data:
         n = dj.Note(handle=handle,
-                        gramps_id=gid,
-                        last_changed=change,
-                        private=private,
-                        preformatted=format,
-                        text=text,
-                        marker_type = dj.get_type(dj.MarkerType, marker),
-                        note_type = dj.get_type(dj.NoteType, note_type))
+                    gramps_id=gid,
+                    last_changed=todate(change),
+                    private=private,
+                    preformatted=format,
+                    text=text,
+                    marker_type = dj.get_type(dj.MarkerType, marker),
+                    note_type = dj.get_type(dj.NoteType, note_type))
         n.save()
         count = 1
         for markup in markup_list:
@@ -503,7 +505,7 @@ def export_family(data, step):
     if step == 0: # Add primary object
         family = dj.Family(handle=handle, gramps_id=gid, 
                       family_rel_type = dj.get_type(dj.FamilyRelType, the_type),
-                      last_changed=change, 
+                      last_changed=todate(change), 
                       marker_type = dj.get_type(dj.MarkerType, marker),
                       private=private)
         family.save()
@@ -535,7 +537,7 @@ def export_source(data, step):
     if step == 0:
         source = dj.Source(handle=handle, gramps_id=gid, title=title,
                            author=author, pubinfo=pubinfo, abbrev=abbrev,
-                           last_changed=change, private=private)
+                           last_changed=todate(change), private=private)
         source.marker_type = dj.get_type(dj.MarkerType, marker)
         source.save()
     elif step == 1:
@@ -553,7 +555,7 @@ def export_repository(data, step):
         repository = dj.Repository(handle=handle,
                                    gramps_id=gid,
                                    marker_type=dj.get_type(dj.MarkerType, marker),
-                                   last_changed=change, 
+                                   last_changed=todate(change), 
                                    private=private,
                                    repository_type=dj.get_type(dj.RepositoryType, the_type),
                                    name=name)
@@ -596,7 +598,7 @@ def export_place(data, step):
      change, marker, private) = data
     if step == 0:
         place = dj.Place(handle=handle, gramps_id=gid, title=title,
-                         long=long, lat=lat, last_changed=change,
+                         long=long, lat=lat, last_changed=todate(change),
                          marker_type=dj.get_type(dj.MarkerType, marker),
                          private=private)
         place.save()
@@ -624,7 +626,7 @@ def export_media(data, step):
     if step == 0:
         media = dj.Media(handle=handle, gramps_id=gid,
                          path=path, mime=mime, 
-                         desc=desc, last_changed=change,
+                         desc=desc, last_changed=todate(change),
                          marker_type=dj.get_type(dj.MarkerType, marker),
                          private=private)
         export_date(media, date)
@@ -646,7 +648,7 @@ def export_event(data, step):
                          private=private,
                          marker_type=dj.get_type(dj.MarkerType, marker),
                          description=description,
-                         last_changed=change)
+                         last_changed=todate(change))
         export_date(event, date)
         event.save()
     elif step == 1:

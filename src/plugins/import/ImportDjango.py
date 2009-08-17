@@ -87,7 +87,7 @@ def lookup_role_index(role0, event_ref_list):
         return -1
 
 def totime(dtime):
-    return time.mktime(dtime.timetuple())
+    return int(time.mktime(dtime.timetuple()))
 
 #-------------------------------------------------------------------------
 #
@@ -546,7 +546,11 @@ class DjangoReader(object):
     def get_date(self, obj):
         if obj: 
             if ((not obj.slash1) and (not obj.slash2) and 
+                (obj.day1 == obj.month1 == obj.year1 == 0) and
                 (obj.day2 == obj.month2 == obj.year2 == 0)):
+                return None
+            elif ((not obj.slash1) and (not obj.slash2) and 
+                  (obj.day2 == obj.month2 == obj.year2 == 0)):
                 dateval = (obj.day1, obj.month1, obj.year1, obj.slash1)
             else:
                 dateval = (obj.day1, obj.month1, obj.year1, obj.slash1, 
