@@ -482,7 +482,6 @@ def export_note(data, step):
     (handle, gid, styled_text, format, note_type,
      change, marker, private) = data
     text, markup_list = styled_text
-
     if step == 0:     # Add the primary data:
         n = dj.Note(handle=handle,
                     gramps_id=gid,
@@ -496,8 +495,10 @@ def export_note(data, step):
         count = 1
         for markup in markup_list:
             markup_code, value, start_stop_list = markup
-            m = dj.Markup(note=n, order=count, string=value,
-                              start_stop_list=str(start_stop_list))
+            m = dj.Markup(note=n, order=count, 
+                          markup_type=dj.get_type(dj.MarkupType, markup_code, get_or_create=True),
+                          string=value,
+                          start_stop_list=str(start_stop_list))
             m.save()
     elif step == 1:   
         # Nothing for notes to do

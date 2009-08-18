@@ -42,7 +42,7 @@ from Utils import create_id, create_uid
 #
 #---------------------------------------------------------------------------
 
-def get_type(the_type, data):
+def get_type(the_type, data, get_or_create=False):
     """
     Gets the default row for a given Type and data. Data is
     a pair, (VAL, NAME). VAL + NAME should be unique. Will create
@@ -50,7 +50,7 @@ def get_type(the_type, data):
     """
     if type(data) == type(1):
         return the_type.objects.get(val=data)
-    elif data[0] == the_type._CUSTOM:
+    elif data[0] == the_type._CUSTOM or get_or_create:
         (obj, new) = the_type.objects.get_or_create(val=data[0],
                                                     name=data[1])
         if new and _DEBUG:
@@ -190,6 +190,13 @@ class NoteType(mGrampsType):
     _DATAMAP = get_datamap(NoteType)
     _CUSTOM = NoteType._CUSTOM
     _DEFAULT = _DATAMAP[NoteType._DEFAULT]
+    val = models.IntegerField('note type', choices=_DATAMAP, blank=False)
+
+class MarkupType(mGrampsType):
+    from gen.lib.notetype import NoteType
+    _DATAMAP = [(0, "Custom")]
+    _CUSTOM = 0
+    _DEFAULT = _DATAMAP[0]
     val = models.IntegerField('note type', choices=_DATAMAP, blank=False)
 
 class GenderType(mGrampsType):
@@ -464,6 +471,7 @@ class Lds(DateObject, SecondaryObject):
 
 class Markup(models.Model):
     note = models.ForeignKey('Note')
+    markup_type = models.ForeignKey('MarkupType')
     order = models.PositiveIntegerField()
     string = models.TextField(blank=True, null=True)
     start_stop_list = models.TextField(default="[]")
@@ -582,6 +590,7 @@ class MediaRef(BaseRef):
 TABLES = [
     ("abstract", mGrampsType),
     ("type", MarkerType),
+    ("type", MarkupType),
     ("type", NameType),
     ("type", AttributeType),
     ("type", UrlType),

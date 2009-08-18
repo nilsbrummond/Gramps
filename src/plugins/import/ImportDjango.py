@@ -81,7 +81,8 @@ def lookup_role_index(role0, event_ref_list):
         count = 0
         for event_ref in event_ref_list:
             (private, note_list, attribute_list, ref, erole) = event_ref
-            if role0 == erole[0]:
+            event = dj.Event.objects.get(handle=ref)
+            if event.event_type[0] == role0:
                 return count
             count += 1
         return -1
@@ -256,7 +257,7 @@ class DjangoReader(object):
         styled_text = [note.text, []]
         markups = dj.Markup.objects.filter(note=note).order_by("order")
         for markup in markups:
-            value = markup.value
+            value = markup.string
             start_stop_list  = markup.start_stop_list
             ss_list = eval(start_stop_list)
             styled_text[1] += [(tuple(markup.markup_type), 
@@ -391,6 +392,7 @@ class DjangoReader(object):
         psource_list = self.get_source_ref_list(person)
         pnote_list = self.get_note_list(person)
         person_ref_list = self.get_person_ref_list(person)
+        # This looks up the events for the first EventType given:
         death_ref_index = lookup_role_index(dj.EventType.DEATH, event_ref_list)
         birth_ref_index = lookup_role_index(dj.EventType.BIRTH, event_ref_list)
         return (str(person.handle),
@@ -596,6 +598,7 @@ class DjangoReader(object):
         # ---------------------------------
         # Process person
         # ---------------------------------
+        ## Do this after Events to get the birth/death data
         people = dj.Person.objects.all()
         for person in people:
             data = self.get_person(person)
