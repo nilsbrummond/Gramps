@@ -506,11 +506,8 @@ class Attribute(models.Model):
     attribute_type = models.ForeignKey('AttributeType') 
     value = models.TextField(blank=True, null=True)
 
-## FIXME: consider using:
+## consider using:
 ## URLField
-
-## FIXME:
-## datamap
 
 #---------------------------------------------------------------------------
 #
