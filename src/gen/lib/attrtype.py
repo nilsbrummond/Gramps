@@ -71,8 +71,8 @@ class AttributeType(GrampsType):
         (CAUSE       , _("Cause"), "Cause"),
         (AGENCY      , _("Agency"), "Agency"),
         (AGE         , _("Age"), "Age"),
-        (FATHER_AGE  , _("Father's Age"), "Father Age"),
-        (MOTHER_AGE  , _("Mother's Age"), "Mother Age"),
+        (FATHER_AGE  , _("Father's Age"), "Father's Age"),
+        (MOTHER_AGE  , _("Mother's Age"), "Mother's Age"),
         (WITNESS     , _("Witness"), "Witness"),
         ]
 
