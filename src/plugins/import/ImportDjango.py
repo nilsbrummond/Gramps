@@ -504,10 +504,10 @@ class DjangoReader(object):
         if lds.famc:
             famc = lds.famc.handle
         else:
-            famc = ''
+            famc = None
         place = self.get_place_handle(lds)
-        return (source_list, note_list, date, tuple(lds_type)[0], place,
-                famc, lds.temple, tuple(lds_status)[0], lds.private)
+        return (source_list, note_list, date, lds.lds_type[0], place,
+                famc, lds.temple, lds.status[0], lds.private)
 
     def pack_url(self, url):
         return  (url.private, url.path, url.desc, tuple(url.url_type))
@@ -544,7 +544,12 @@ class DjangoReader(object):
                     loc.postal, loc.phone)
 
     def get_date(self, obj):
-        if ((not obj.slash1) and (not obj.slash2) and 
+        if ((obj.calendar == obj.modifier == obj.quality == obj.sortval == obj.newyear == 0) and
+            obj.text == "" and (not obj.slash1) and (not obj.slash2) and 
+            (obj.day1 == obj.month1 == obj.year1 == 0) and 
+            (obj.day2 == obj.month2 == obj.year2 == 0)):
+            return None
+        elif ((not obj.slash1) and (not obj.slash2) and 
             (obj.day2 == obj.month2 == obj.year2 == 0)):
             dateval = (obj.day1, obj.month1, obj.year1, obj.slash1)
         else:

@@ -428,7 +428,7 @@ class Name(DateObject, SecondaryObject):
                                self.surname, 
                                self.first_name)
 
-class Lds(SecondaryObject):
+class Lds(DateObject, SecondaryObject):
     """
     BAPTISM         = 0
     ENDOWMENT       = 1
@@ -608,6 +608,7 @@ TABLES = [
     ("primary", Note),
     ("abstract", SecondaryObject),
     ("secondary", Attribute),
+    ("secondary", Datamap),
     ("secondary", Name),
     ("secondary", Lds),
     ("secondary", Markup),

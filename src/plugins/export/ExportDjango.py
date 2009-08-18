@@ -153,10 +153,12 @@ def export_address_list(obj, address_list):
         export_address(obj, address_data, count)
         count += 1
 
-def export_lds_list(person, lds_ord_list):
+def export_lds_list(obj, lds_ord_list):
     count = 1
     for ldsord in lds_ord_list:
-        export_lds(person, ldsord, count)
+        lds = export_lds(ldsord, count)
+        obj.lds_list.add(lds)
+        obj.save()
         count += 1
 
 def export_repository_ref_list(obj, reporef_list):
@@ -288,7 +290,7 @@ def export_datamap_dict(source, datamap_dict):
         source.datamaps.add(datamap)
         source.save()
 
-def export_lds(person, data, order):
+def export_lds(data, order):
     (lsource_list, lnote_list, date, type, place_handle,
      famc_handle, temple, status, private) = data
     if place_handle:
@@ -310,6 +312,7 @@ def export_lds(person, data, order):
     lds.save()
     export_note_list(lds, lnote_list)
     export_source_ref_list(lds, lsource_list)
+    return lds
 
 def export_address(obj, address_data, order):
     (private, asource_list, anote_list, date, location) = address_data
@@ -417,8 +420,8 @@ def export_name(person, data, preferred):
         name.save()
         person.names.add(name)
         person.save()
-        export_note_list(person, note_list)
-        export_source_ref_list(person, source_list)
+        export_note_list(name, note_list)
+        export_source_ref_list(name, source_list)
         person.save()
        
 ## Export primary objects:
