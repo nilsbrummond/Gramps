@@ -442,7 +442,8 @@ class DjangoReader(object):
         source_list = self.get_source_ref_list(media_ref)
         note_list = self.get_note_list(media_ref)
         attribute_list = self.get_attribute_list(media_ref)
-        if media_ref.x1 == media_ref.y1 == media_ref.x2 == media_ref.y2 == -1:
+        if ((media_ref.x1 == media_ref.y1 == media_ref.x2 == media_ref.y2 == -1) or
+            (media_ref.x1 == media_ref.y1 == media_ref.x2 == media_ref.y2 == 0)):
             role = None
         else:
             role = (media_ref.x1, media_ref.y1, media_ref.x2, media_ref.y2)
@@ -543,20 +544,14 @@ class DjangoReader(object):
                     loc.postal, loc.phone)
 
     def get_date(self, obj):
-        if obj: 
-            if ((not obj.slash1) and (not obj.slash2) and 
-                (obj.day1 == obj.month1 == obj.year1 == 0) and
-                (obj.day2 == obj.month2 == obj.year2 == 0)):
-                return None
-            elif ((not obj.slash1) and (not obj.slash2) and 
-                  (obj.day2 == obj.month2 == obj.year2 == 0)):
-                dateval = (obj.day1, obj.month1, obj.year1, obj.slash1)
-            else:
-                dateval = (obj.day1, obj.month1, obj.year1, obj.slash1, 
-                           obj.day2, obj.month2, obj.year2, obj.slash2)
-            return (obj.calendar, obj.modifier, obj.quality, dateval, 
-                    obj.text, obj.sortval, obj.newyear)
-        return None
+        if ((not obj.slash1) and (not obj.slash2) and 
+            (obj.day2 == obj.month2 == obj.year2 == 0)):
+            dateval = (obj.day1, obj.month1, obj.year1, obj.slash1)
+        else:
+            dateval = (obj.day1, obj.month1, obj.year1, obj.slash1, 
+                       obj.day2, obj.month2, obj.year2, obj.slash2)
+        return (obj.calendar, obj.modifier, obj.quality, dateval, 
+                obj.text, obj.sortval, obj.newyear)
 
     def process(self):
         sql = None
