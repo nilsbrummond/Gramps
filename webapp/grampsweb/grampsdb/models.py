@@ -714,6 +714,7 @@ def test_Place():
 def test_Media():
     m = get_default_type(MarkerType)
     media = Media(handle=create_id(), marker_type=m)
+    media.set_date_from_gdate( GDate() )
     media.save()
     media.gramps_id = "M%05d" % (Media.objects.count() + 1)
     return media
@@ -768,7 +769,10 @@ def test_Name(person=None, surname=None, first=None):
 def test_Markup(note=None):
     if not note:
         note = test_Note()
-    markup = Markup(note=note)
+    markup = Markup(note=note, 
+                    markup_type=get_type(MarkupType, 
+                                         (1, "Testing"), 
+                                         get_or_create=True))
     markup.order = 1
     markup.save()
     return markup
@@ -780,6 +784,7 @@ def test_Lds(place=None, famc=None):
         famc = test_Family()
     lds = Lds(lds_type=get_default_type(LdsType), status=get_default_type(LdsStatus), 
               place=place, famc=famc, order=1)
+    lds.set_date_from_gdate(Today())
     lds.save()
     return lds
     
