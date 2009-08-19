@@ -313,9 +313,10 @@ class PrimaryObject(models.Model):
     handle = models.CharField(max_length=19, unique=True)
     gramps_id =  models.CharField('gramps id', max_length=25, blank=True)
     last_saved = models.DateTimeField('last changed', auto_now=True) 
-    last_changed = models.DateTimeField('last changed', null=True) # user edits
+    last_changed = models.DateTimeField('last changed', null=True,
+                                        blank=True) # user edits
     private = models.BooleanField('private')
-    attributes = models.ManyToManyField("Attribute", null=True)
+    attributes = models.ManyToManyField("Attribute", blank=True, null=True)
 
     ## Keys:
     marker_type = models.ForeignKey('MarkerType')
@@ -328,16 +329,17 @@ class Person(PrimaryObject):
     The model for the person object
     """
     gender_type = models.ForeignKey('GenderType')
-    names = models.ManyToManyField('Name', null=True)
-    families = models.ManyToManyField('Family', null=True)
+    names = models.ManyToManyField('Name', blank=True, null=True)
+    families = models.ManyToManyField('Family', blank=True, null=True)
     parent_families = models.ManyToManyField('Family', 
-                                             related_name="parent_families")
-    addresses = models.ManyToManyField('Address', null=True)
+                                             related_name="parent_families",
+                                             blank=True, null=True)
+    addresses = models.ManyToManyField('Address', null=True, blank=True)
     references = generic.GenericRelation('PersonRef', related_name="refs",
                                          content_type_field="object_type",
                                          object_id_field="object_id")
-    lds_list = models.ManyToManyField('Lds', null=True)
-    url_list = models.ManyToManyField('Url', null=True)
+    lds_list = models.ManyToManyField('Lds', null=True, blank=True)
+    url_list = models.ManyToManyField('Url', null=True, blank=True)
 
 class Family(PrimaryObject):
     father = models.ForeignKey('Person', related_name="father_ref", 
@@ -345,14 +347,14 @@ class Family(PrimaryObject):
     mother = models.ForeignKey('Person', related_name="mother_ref", 
                                null=True, blank=True)
     family_rel_type = models.ForeignKey('FamilyRelType')
-    lds_list = models.ManyToManyField('Lds', null=True)
+    lds_list = models.ManyToManyField('Lds', null=True, blank=True)
 
 class Source(PrimaryObject):
     title = models.CharField(max_length=50, blank=True)
     author = models.CharField(max_length=50, blank=True)
     pubinfo = models.CharField(max_length=50, blank=True)
     abbrev = models.CharField(max_length=50, blank=True)
-    datamaps = models.ManyToManyField('Datamap', null=True)
+    datamaps = models.ManyToManyField('Datamap', null=True, blank=True)
     references = generic.GenericRelation('SourceRef', related_name="refs",
                                          content_type_field="object_type",
                                          object_id_field="object_id")
@@ -368,18 +370,18 @@ class Event(DateObject, PrimaryObject):
 class Repository(PrimaryObject):
     repository_type = models.ForeignKey('RepositoryType')
     name = models.TextField(blank=True)
-    addresses = models.ManyToManyField('Address', null=True)
+    addresses = models.ManyToManyField('Address', null=True, blank=True)
     references = generic.GenericRelation('RepositoryRef', related_name="refs",
                                          content_type_field="object_type",
                                          object_id_field="object_id")
-    url_list = models.ManyToManyField('Url', null=True)
+    url_list = models.ManyToManyField('Url', null=True, blank=True)
 
 class Place(PrimaryObject):
     title = models.TextField(blank=True)
-    locations = models.ManyToManyField('Location', null=True)
+    locations = models.ManyToManyField('Location', null=True, blank=True)
     long = models.TextField(blank=True)
     lat = models.TextField(blank=True)
-    url_list = models.ManyToManyField('Url', null=True)
+    url_list = models.ManyToManyField('Url', null=True, blank=True)
 
 class Media(DateObject, PrimaryObject):
     path = models.TextField(blank=True)
@@ -412,7 +414,8 @@ class SecondaryObject(models.Model):
 
     private = models.BooleanField()
     last_saved = models.DateTimeField('last changed', auto_now=True)
-    last_changed = models.DateTimeField('last changed', null=True) # user edits
+    last_changed = models.DateTimeField('last changed', null=True,
+                                        blank=True) # user edits
     order = models.PositiveIntegerField()
 
 class Name(DateObject, SecondaryObject):
@@ -637,8 +640,7 @@ def clear_tables(*categories):
     "abstract", "type", "ref", "meta", "primary" and "secondary".
     """
     for pair in get_tables(*categories):
-        if pair[0] != "abstract":
-            pair[1].objects.all().delete() 
+        pair[1].objects.all().delete() 
 
 def table_stats(*categories):
     """
@@ -647,13 +649,12 @@ def table_stats(*categories):
     tables = get_tables(*categories)
     tables.sort()
     for pair in tables:
-        if pair[0] != "abstract":
-            print ("%-25s" % pair[1].__name__), ":", \
-                pair[1].objects.all().count()
+        print ("%-25s" % pair[1].__name__), ":", \
+            pair[1].objects.all().count()
 
 def get_tables(*categories):
     return [pair for pair in TABLES if (pair[0] in categories) or 
-            ("all" in categories)]
+            ("all" in categories) and pair[0] != "abstract"]
 
 #---------------------------------------------------------------------------
 #

@@ -1,37 +1,55 @@
 from django.shortcuts import get_object_or_404, render_to_response
 from django.template import Context
+from django.contrib.auth.models import User
+from django.template import RequestContext
+from django.core.paginator import Paginator, InvalidPage, EmptyPage
+
 from grampsweb.views.models import View
+from grampsweb.grampsdb.models import *
 from grampsweb.sortheaders import SortHeaders
 
-def homepage(request):
-    """
-    Index of all views.
-    """
-    headers = (('Available Views', 'name'),
-               )
-    sort_headers = SortHeaders(request, headers, 
-                               default_order_field = 0)
-    view_list = View.objects.order_by(sort_headers.get_order_by())
-    content = {
-        'title': 'Homepage - ',
-        'heading': 'My Family Tree',
-        'footer':  '',
-        'copyright': 'Copyright (c) 2009, by Me.',
-        'headers' : list(sort_headers.headers()),
-        'view_list': view_list,
-        #'meta': ,
-        }
-    context = Context(content)
-    return render_to_response('gramps-base.html', context)
-                              
 def view(request, view, handle=None):
-    content = {
-        'title': view.title() + ' View - ',
-        'heading': view.title() + 'View',
-        'footer':  '',
-        'copyright': 'Copyright (c) 2009, by Me.',
-        #'meta': ,
-        }
-    context = Context(content)
-    return render_to_response('gramps-base.html', context)
-    
+    cview = view.title()
+    if view == "event":
+        object_list = Event.objects.all()
+        headers = ["gramps_id", ]
+    elif view == "family":
+        object_list = Family.objects.all()
+        headers = ["gramps_id",]
+    elif view == "media":
+        object_list = Media.objects.all()
+        headers = ["gramps_id",]
+    elif view == "note":
+        object_list = Note.objects.all()
+        headers = ["gramps_id",]
+    elif view == "person":
+        object_list = Name.objects.all()
+        headers = ["gramps_id", "surname", "first_name"]
+    elif view == "place":
+        object_list = Place.objects.all()
+        headers = ["gramps_id",]
+    elif view == "repository":
+        object_list = Repository.objects.all()
+        headers = ["gramps_id",]
+    elif view == "source":
+        object_list = Source.objects.all()
+        headers = ["gramps_id",]
+
+    paginator = Paginator(object_list, 10) 
+
+    try:
+        page = int(request.GET.get('page', '1'))
+    except ValueError:
+        page = 1
+
+    try:
+        page = paginator.page(page)
+    except (EmptyPage, InvalidPage):
+        page = paginator.page(paginator.num_pages)
+
+    context = RequestContext(request)
+    context["page"] = page
+    context["views"] = View.objects.order_by("name")
+    context["view"] = cview
+    context["headers"] = headers
+    return render_to_response('view_page.html', context)

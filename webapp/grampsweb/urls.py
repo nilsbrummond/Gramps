@@ -3,6 +3,8 @@ from django.conf.urls.defaults import *
 from django.contrib import admin
 admin.autodiscover()
 
+from grampsweb.grampsdb.views import *
+
 urlpatterns = patterns('',
     # Specific matches first:
     (r'^admin/(.*)', admin.site.root),
@@ -26,7 +28,10 @@ urlpatterns += patterns('',
 
 # The rest will match views:
 urlpatterns += patterns('',
+    (r'^$', main_page),
+    (r'^user/(\w+)/$', user_page),
+    (r'^login/$', 'django.contrib.auth.views.login'),
+    (r'^logout/$', logout_page),
     (r'^(?P<view>(.*))/(?P<handle>(.*))$', 'grampsweb.view'),
     (r'^(?P<view>(.*))/$', 'grampsweb.view'),
-    (r'^$', 'grampsweb.homepage'),
 )
