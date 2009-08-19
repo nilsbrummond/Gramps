@@ -80,6 +80,7 @@ img {
 }
 .content {
     width:965px;
+    min-height:500px;
     margin:0 auto;
     padding-bottom:.5em;
     background:url(../images/Web_Mainz_Mid.png) #FFF2C6 repeat;
@@ -99,6 +100,25 @@ img {
     width:96px;
     margin:0 auto;
 }
+.content div.grampsweb {
+    padding-top:20px;
+    padding-left:20px;
+}
+
+.content div.grampsweb p {
+    padding-bottom:10px;
+}
+
+.content div.grampsweb h2 {
+    display:block;
+    padding-bottom:20px;
+    text-decoration:underline;
+    font-size:1.2em;
+    font-weight:normal;
+    font-style:normal;
+    margin:0;
+}
+
 .fullclear {
     width:100%;
     height:1px;
