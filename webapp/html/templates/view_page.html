@@ -1,6 +1,6 @@
 {% extends "gramps-base.html" %}
-{% block title %}GRAMPS Connect - {{view}} view page {% endblock %}
-{% block heading %}GRAMPS - {{view}} view page {% endblock %}
+{% block title %}GRAMPS Connect - {{cview}} view page {% endblock %}
+{% block heading %}GRAMPS - {{cview}} view page {% endblock %}
 
 {% block content %} 
 
@@ -24,9 +24,11 @@
    <tr>
    {% with page.object_list.values.0 as row %}
       {% for key, value in row.items %}
-          {% if 1 %}
-              <th>{{key}}</th>
-          {% endif %}
+          {% for header in headers %}
+             {% ifequal header key %}
+                <th>{{key}}</th>
+             {% endifequal %}
+          {% endfor %}
       {% endfor %}
    {% endwith %}
    </tr>
@@ -34,9 +36,11 @@
 {% for row in page.object_list.values %}
    <tr>
       {% for key, value in row.items %}
-          {% if 1 %}
-              <td>{{ value }} </td>
-          {% endif %}
+          {% for header in headers %}
+             {% ifequal header key %}
+                <td><a href="/{{view}}/{{row.handle}}/">{{ value }}</a> </td>
+             {% endifequal %}
+          {% endfor %}
       {% endfor %}
    </tr>
 {% endfor %}

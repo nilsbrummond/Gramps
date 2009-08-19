@@ -6,8 +6,12 @@
 
 <p>Welcome to GRAMPS Connect, a new web-based collaboration tool.</p>
 
+{% if user.is_authenticated %}
+
 <p>You are now logged in
 as <a href="/user/{{user.username}}">{{user.username}}</a>.</p>
+
+{% endif %}
 
 {% endblock %}
 

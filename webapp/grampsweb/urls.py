@@ -32,6 +32,6 @@ urlpatterns += patterns('',
     (r'^user/(\w+)/$', user_page),
     (r'^login/$', 'django.contrib.auth.views.login'),
     (r'^logout/$', logout_page),
-    (r'^(?P<view>(.*))/(?P<handle>(.*))$', 'grampsweb.view'),
-    (r'^(?P<view>(.*))/$', 'grampsweb.view'),
+    (r'^(?P<view>(\w+))/$', 'grampsweb.view'),
+    (r'^(?P<view>(\w+))/(?P<handle>(\w+))/$', 'grampsweb.view_detail'),
 )
