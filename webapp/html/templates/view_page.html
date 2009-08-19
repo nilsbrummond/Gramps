@@ -1,0 +1,19 @@
+{% extends "gramps-base.html" %}
+{% block title %}GRAMPS Connect - {{view}} view page {% endblock %}
+{% block heading %}GRAMPS - {{view}} view page {% endblock %}
+
+{% block content %} 
+
+{% load my_tags %}
+<table cellspacing="0">
+<thead>
+  <tr>
+{% table_header %}
+  </tr>
+</thead>
+<tbody>
+{% paginator %}
+</tbody>
+</table>
+
+{% endblock %}

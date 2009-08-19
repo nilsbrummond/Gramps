@@ -1,0 +1,13 @@
+{% extends "gramps-base.html" %}
+{% block title %}GRAMPS Connect - main page {% endblock %}
+{% block heading %}GRAMPS - main page {% endblock %}
+
+{% block content %} 
+
+<p>Welcome to GRAMPS Connect, a new web-based collaboration tool.</p>
+
+<p>You are now logged in
+as <a href="/user/{{user.username}}">{{user.username}}</a>.</p>
+
+{% endblock %}
+
