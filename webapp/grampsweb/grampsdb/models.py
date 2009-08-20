@@ -295,12 +295,12 @@ class DateObject(models.Model):
 
 class Config(models.Model):
     """
-    All of the meta config items for the entire system. Entries
-    are given as columns. (For the GRAMPS Config, we'll need another
-    table.)
+    All of the meta config items for the entire system.
     """
-    db_version = models.CharField('database schema version', max_length=25)
-    created = models.DateTimeField('date/time created')
+    setting = models.CharField('config setting', max_length=25)
+    description = models.TextField('description')
+    value_type = models.CharField('type of value', max_length=25)
+    value = models.TextField('value')
 
 class PrimaryObject(models.Model):
     """

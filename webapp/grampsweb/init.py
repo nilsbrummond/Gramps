@@ -34,29 +34,35 @@ def get_datamap(x):
 
 print "["
 
-for table, dict in [("grampsdb.config", 
-                     {"db_version": "\"0.0.1\"", 
-                      "created": '"%s"' % time.strftime("%Y-%m-%d %H:%M"),
-                      }),
-                    ]:
-    count = 1
-    print "   {"
-    print "      \"model\": \"%s\"," % table
-    print "      \"pk\": %d," % count
-    print "      \"fields\":"
-    print "         {"
-    key_count = 0
-    for key in dict:
-        value = dict[key]
-        print ("            \"%s\"   : %s" % (key, value)),
-        key_count += 1
-        if key_count < len(dict):
-            print ","
-        else:
-            print
-    print "         }"
-    print "   },"
-    count += 1
+for table, entries in [("grampsdb.config", 
+                        [(("setting", "\"db_version\""), 
+                          ("description", "\"database scheme version\""),
+                          ("value_type", "\"str\""), 
+                          ("value", "\"0.5.0\"")),
+                         (("setting", "\"db_created\""), 
+                          ("description", "\"database creation date/time\""),
+                          ("value_type", "\"str\""), 
+                          ("value", ('"%s"' % time.strftime("%Y-%m-%d %H:%M")))),
+                         ])]:
+    entry_count = 0
+    for entry in entries:
+        print "   {"
+        print "      \"model\": \"%s\"," % table
+        print "      \"pk\": %d," % (entry_count + 1)
+        print "      \"fields\":"
+        print "         {"
+        key_count = 0
+        for items in entry:
+            key, value = items
+            print ("            \"%s\"   : %s" % (key, value)),
+            key_count += 1
+            if key_count < len(entry):
+                print ","
+            else:
+                print
+        print "         }"
+        print "   },"
+        entry_count += 1
 
 count = 1
 for name,constr in [("Person", "Person", ), 
