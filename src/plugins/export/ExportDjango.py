@@ -136,29 +136,29 @@ def export_attribute_list(obj, attribute_list):
     for attribute_data in attribute_list:
         export_attribute(obj, attribute_data)
 
-def export_url_list(obj, url_list):
+def export_url_list(field, obj, url_list):
     if not url_list: return None
     count = 1
     for url_data in url_list:
-        export_url(obj, url_data, count) 
+        export_url(field, obj, url_data, count) 
         count += 1
         
 def export_person_ref_list(obj, person_ref_list):
     for person_ref_data in person_ref_list:
         export_person_ref(obj, person_ref_data)
 
-def export_address_list(obj, address_list):
+def export_address_list(field, obj, address_list):
     count = 1
     for address_data in address_list:
-        export_address(obj, address_data, count)
+        export_address(field, obj, address_data, count)
         count += 1
 
-def export_lds_list(obj, lds_ord_list):
+def export_lds_list(field, obj, lds_ord_list):
     count = 1
     for ldsord in lds_ord_list:
-        lds = export_lds(ldsord, count)
-        obj.lds_list.add(lds)
-        obj.save()
+        lds = export_lds(field, obj, ldsord, count)
+        #obj.lds_list.add(lds)
+        #obj.save()
         count += 1
 
 def export_repository_ref_list(obj, reporef_list):
@@ -286,11 +286,12 @@ def export_datamap_dict(source, datamap_dict):
     for key in datamap_dict:
         value = datamap_dict[key]
         datamap = dj.Datamap(key=key, value=value)
+        datamap.source = source
         datamap.save()
-        source.datamaps.add(datamap)
-        source.save()
+        #source.datamaps.add(datamap)
+        #source.save()
 
-def export_lds(data, order):
+def export_lds(field, obj, data, order):
     (lsource_list, lnote_list, date, type, place_handle,
      famc_handle, temple, status, private) = data
     if place_handle:
@@ -312,20 +313,35 @@ def export_lds(data, order):
     lds.save()
     export_note_list(lds, lnote_list)
     export_source_ref_list(lds, lsource_list)
+    if field == "person":
+        lds.person = obj
+    elif field == "family":
+        lds.family = obj
+    else:
+        raise AttributeError("invalid field '%s' to attach lds" %
+                             field)
+    lds.save()
     return lds
 
-def export_address(obj, address_data, order):
+def export_address(field, obj, address_data, order):
     (private, asource_list, anote_list, date, location) = address_data
     address = dj.Address(private=private, order=order)
     export_date(address, date)
     address.save()
-    export_location(address, location, 1)
+    export_location("address", address, location, 1)
     export_note_list(address, anote_list) 
     export_source_ref_list(address, asource_list)
+    if field == "person":
+        address.person = obj
+    elif field == "repository":
+        address.repository = obj
+    else:
+        raise AttributeError("invalid field '%s' to attach address" %
+                             field)
     address.save()
-    obj.save()
-    obj.addresses.add(address)
-    obj.save()
+    #obj.save()
+    #obj.addresses.add(address)
+    #obj.save()
 
 def export_attribute(obj, attribute_data):
     (private, source_list, note_list, the_type, value) = attribute_data
@@ -339,16 +355,25 @@ def export_attribute(obj, attribute_data):
     obj.attributes.add(attribute)
     obj.save()
 
-def export_url(obj, url_data, order):
+def export_url(field, obj, url_data, order):
     (private, path, desc, type) = url_data
     url = dj.Url(private=private,
                  path=path,
                  desc=desc,
                  order=order,
                  url_type=dj.get_type(dj.UrlType, type))
+    if field == "person":
+        url.person = obj
+    elif field == "repository":
+        url.repository = obj
+    elif field == "place":
+        url.place = obj
+    else:
+        raise AttributeError("invalid field '%s' to attach to url" %
+                             field)
     url.save()
-    obj.url_list.add(url)
-    obj.save()
+    #obj.url_list.add(url)
+    #obj.save()
 
 def export_place_ref(event, place_handle):
     if place_handle:
@@ -376,7 +401,7 @@ def export_date(obj, date):
         elif len(dateval) == 8:
             day1, month1, year1, slash1, day2, month2, year2, slash2 = dateval
         else:
-            raise ("ERROR: date dateval format", dateval)
+            raise AttributeError("ERROR: dateval format '%s'" % dateval)
     obj.calendar = calendar
     obj.modifier = modifier
     obj.quality = quality
@@ -400,7 +425,7 @@ def export_name(person, data, preferred):
          name_type, prefix, patronymic,
          group_as, sort_as, display_as, call) = data
 
-        count = person.names.count()
+        count = person.name_set.count()
         name = dj.Name()
         name.order = count + 1
         name.preferred = preferred
@@ -416,13 +441,14 @@ def export_name(person, data, preferred):
         name.sort_as = sort_as
         name.display_as = display_as 
         name.call = call
+        # we know person exists from step #1
+        # needs to have an ID for key
+        name.person = person
         export_date(name, date) 
         name.save()
-        person.names.add(name)
-        person.save()
         export_note_list(name, note_list)
         export_source_ref_list(name, source_list)
-        person.save()
+        #person.save()
        
 ## Export primary objects:
 
@@ -471,11 +497,11 @@ def export_person(data, step):
         export_media_ref_list(person, media_list)
         export_note_list(person, pnote_list)
         export_attribute_list(person, attribute_list)
-        export_url_list(person, url_list) 
+        export_url_list("person", person, url_list) 
         export_person_ref_list(person, person_ref_list)
         export_source_ref_list(person, psource_list)
-        export_address_list(person, address_list)
-        export_lds_list(person, lds_ord_list)
+        export_address_list("person", person, address_list)
+        export_lds_list("person", person, lds_ord_list)
 
 def export_note(data, step):
     # Unpack from the BSDDB:
@@ -532,7 +558,7 @@ def export_family(data, step):
         export_source_ref_list(family, source_list)
         export_media_ref_list(family, media_list)
         export_event_ref_list(family, event_ref_list)
-        export_lds_list(family, lds_seal_list)
+        export_lds_list("family", family, lds_seal_list)
     
 def export_source(data, step):
     (handle, gid, title,
@@ -572,10 +598,10 @@ def export_repository(data, step):
     elif step == 1:
         repository = dj.Repository.objects.get(handle=handle)
         export_note_list(repository, note_list)
-        export_url_list(repository, url_list)
-        export_address_list(repository, address_list)
+        export_url_list("repository", repository, url_list)
+        export_address_list("repository", repository, address_list)
 
-def export_location(obj, location_data, order):
+def export_location(field, obj, location_data, order):
     if location_data == None: return
     if len(location_data) == 7:
         (street, city, county, state, country, postal, phone) = location_data
@@ -593,9 +619,16 @@ def export_location(obj, location_data, order):
                            phone = phone,
                            parish = parish,
                            order = order)
+    if field == "address":
+        location.address = obj
+    elif field == "place":
+        location.place = obj
+    else:
+        raise AttributeError("invalid field '%s' to attach to location" %
+                             field)
     location.save()
-    obj.locations.add(location)
-    obj.save()
+    #obj.locations.add(location)
+    #obj.save()
 
 def export_place(data, step):
     (handle, gid, title, long, lat,
@@ -613,14 +646,14 @@ def export_place(data, step):
         place.save()
     elif step == 1:
         place = dj.Place.objects.get(handle=handle)
-        export_url_list(place, url_list)
+        export_url_list("place", place, url_list)
         export_media_ref_list(place, media_list)
         export_source_ref_list(place, source_list)
         export_note_list(place, note_list) 
-        export_location(place, main_loc, 1)
+        export_location("place", place, main_loc, 1)
         count = 2
         for loc_data in alt_location_list:
-            export_location(place, loc_data, count)
+            export_location("place", place, loc_data, count)
             count + 1
 
 def export_media(data, step):

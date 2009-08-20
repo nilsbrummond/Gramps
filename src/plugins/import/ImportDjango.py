@@ -109,7 +109,7 @@ class DjangoReader(object):
     # -----------------------------------------------
 
     def get_names(self, person, preferred):
-        names = person.names.filter(preferred=preferred).order_by("order")
+        names = person.name_set.filter(preferred=preferred).order_by("order")
         if preferred:
             if len(names) > 0:
                 return self.pack_name(names[0])
@@ -120,15 +120,11 @@ class DjangoReader(object):
      
     def get_datamap(self, obj): # obj is source
         datamap_dict = {}
-        datamap_list = obj.datamaps.all()
+        datamap_list = obj.datamap_set.all()
         for datamap in datamap_list:
             datamap_dict[datamap.key] = datamap.value
         return datamap_dict
 
-    def get_url_list(self, obj):
-        url_list = obj.url_list.all()
-        return [self.pack_url(url) for url in url_list]
-        
     def pack_url(url):
         return  (url.private, url.path, url.desc, tuple(url_type))
 
@@ -171,10 +167,10 @@ class DjangoReader(object):
         return [self.pack_repository_ref(repo) for repo in reporefs]
 
     def get_url_list(self, obj):
-        return [self.pack_url(url) for url in obj.url_list.all().order_by("order")]
+        return [self.pack_url(url) for url in obj.url_set.all().order_by("order")]
 
     def get_address_list(self, obj, with_parish): # person or repository
-        addresses = obj.addresses.all().order_by("order")
+        addresses = obj.address_set.all().order_by("order")
         retval = []
         count = 1
         for address in addresses:
@@ -221,12 +217,8 @@ class DjangoReader(object):
                 dj.PersonRef.objects.filter(object_id=person.id, 
                                             object_type=obj_type)]
 
-    def get_location_list(self, place, with_parish):
-        locations = place.locations.all().order_by("order")
-        return [self.pack_location(location, with_parish) for location in locations]
-
     def get_lds_list(self, obj): # person or family
-        return [self.pack_lds(lds) for lds in obj.lds_list.all().order_by("order")]
+        return [self.pack_lds(lds) for lds in obj.lds_set.all().order_by("order")]
 
     def get_place_handle(self, obj): # obj is event
         if obj.place:
@@ -314,7 +306,7 @@ class DjangoReader(object):
                 repository.private)
 
     def pack_place(self, place):
-        locations = place.locations.all().order_by("order")
+        locations = place.location_set.all().order_by("order")
         main_loc = None
         alt_location_list = []
         for location in locations:
@@ -489,7 +481,7 @@ class DjangoReader(object):
         source_list = self.get_source_ref_list(address)
         date = self.get_date(address)
         note_list = self.get_note_list(address)
-        locations = address.locations.all().order_by("order")
+        locations = address.location_set.all().order_by("order")
         if len(locations) > 0:
             location = self.pack_location(locations[0], with_parish)
         else:

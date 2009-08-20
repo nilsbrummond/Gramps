@@ -329,17 +329,22 @@ class Person(PrimaryObject):
     The model for the person object
     """
     gender_type = models.ForeignKey('GenderType')
-    names = models.ManyToManyField('Name', blank=True, null=True)
     families = models.ManyToManyField('Family', blank=True, null=True)
     parent_families = models.ManyToManyField('Family', 
                                              related_name="parent_families",
                                              blank=True, null=True)
-    addresses = models.ManyToManyField('Address', null=True, blank=True)
+    #addresses = models.ManyToManyField('Address', null=True, blank=True)
     references = generic.GenericRelation('PersonRef', related_name="refs",
                                          content_type_field="object_type",
                                          object_id_field="object_id")
-    lds_list = models.ManyToManyField('Lds', null=True, blank=True)
-    url_list = models.ManyToManyField('Url', null=True, blank=True)
+    #lds_list = models.ManyToManyField('Lds', null=True, blank=True)
+    #url_list = models.ManyToManyField('Url', null=True, blank=True)
+
+    # Others keys here:
+    #   .name_set 
+    #   .address_set
+    #   .lds_set
+    #   .url_set
 
 class Family(PrimaryObject):
     father = models.ForeignKey('Person', related_name="father_ref", 
@@ -347,17 +352,22 @@ class Family(PrimaryObject):
     mother = models.ForeignKey('Person', related_name="mother_ref", 
                                null=True, blank=True)
     family_rel_type = models.ForeignKey('FamilyRelType')
-    lds_list = models.ManyToManyField('Lds', null=True, blank=True)
+    #lds_list = models.ManyToManyField('Lds', null=True, blank=True)
+
+    # Others keys here:
+    #   .lds_set
 
 class Source(PrimaryObject):
     title = models.CharField(max_length=50, blank=True)
     author = models.CharField(max_length=50, blank=True)
     pubinfo = models.CharField(max_length=50, blank=True)
     abbrev = models.CharField(max_length=50, blank=True)
-    datamaps = models.ManyToManyField('Datamap', null=True, blank=True)
+    #datamaps = models.ManyToManyField('Datamap', null=True, blank=True)
     references = generic.GenericRelation('SourceRef', related_name="refs",
                                          content_type_field="object_type",
                                          object_id_field="object_id")
+    # Other keys here:
+    #   .datamap_set
 
 class Event(DateObject, PrimaryObject):
     event_type = models.ForeignKey('EventType')
@@ -370,18 +380,26 @@ class Event(DateObject, PrimaryObject):
 class Repository(PrimaryObject):
     repository_type = models.ForeignKey('RepositoryType')
     name = models.TextField(blank=True)
-    addresses = models.ManyToManyField('Address', null=True, blank=True)
+    #addresses = models.ManyToManyField('Address', null=True, blank=True)
     references = generic.GenericRelation('RepositoryRef', related_name="refs",
                                          content_type_field="object_type",
                                          object_id_field="object_id")
-    url_list = models.ManyToManyField('Url', null=True, blank=True)
+    #url_list = models.ManyToManyField('Url', null=True, blank=True)
+
+    # Others keys here:
+    #   .address_set
+    #   .url_set
 
 class Place(PrimaryObject):
     title = models.TextField(blank=True)
-    locations = models.ManyToManyField('Location', null=True, blank=True)
+    #locations = models.ManyToManyField('Location', null=True, blank=True)
     long = models.TextField(blank=True)
     lat = models.TextField(blank=True)
-    url_list = models.ManyToManyField('Url', null=True, blank=True)
+    #url_list = models.ManyToManyField('Url', null=True, blank=True)
+
+    # Others keys here:
+    #   .url_set
+    #   .location_set
 
 class Media(DateObject, PrimaryObject):
     path = models.TextField(blank=True)
@@ -432,6 +450,9 @@ class Name(DateObject, SecondaryObject):
     sort_as = models.IntegerField(blank=True)
     display_as = models.IntegerField(blank=True)
 
+    ## Key:
+    person = models.ForeignKey("Person")
+
     def __unicode__(self):
         return "%s%s%s, %s" % (self.prefix, 
                                ["", " "][bool(self.prefix)],
@@ -468,9 +489,12 @@ class Lds(DateObject, SecondaryObject):
     """
     lds_type = models.ForeignKey('LdsType')
     place = models.ForeignKey('Place', null=True)
-    famc = models.ForeignKey('Family', null=True)
+    famc = models.ForeignKey('Family', related_name="famc", null=True)
     temple = models.TextField(blank=True)
     status = models.ForeignKey('LdsStatus') 
+
+    person = models.ForeignKey("Person", null=True, blank=True)
+    family = models.ForeignKey("Family", null=True, blank=True)
 
 class Markup(models.Model):
     note = models.ForeignKey('Note')
@@ -483,8 +507,16 @@ class Datamap(models.Model):
     key = models.CharField(max_length=80, blank=True)
     value = models.CharField(max_length=80, blank=True)
 
+    source = models.ForeignKey("Source", null=True, blank=True)
+
 class Address(DateObject, SecondaryObject):
-    locations = models.ManyToManyField('Location', null=True)
+    #locations = models.ManyToManyField('Location', null=True)
+    person = models.ForeignKey('Person', null=True, blank=True)
+    repository = models.ForeignKey('Repository', null=True, blank=True)
+
+    # Others keys here:
+    #   .location_set
+
 
 class Location(models.Model):
     street = models.TextField(blank=True)
@@ -497,12 +529,19 @@ class Location(models.Model):
     parish = models.TextField(blank=True, null=True)
     order = models.PositiveIntegerField()
 
+    place = models.ForeignKey("Place", null=True, blank=True)
+    address = models.ForeignKey("Address", null=True, blank=True)
+
 class Url(models.Model):
     private = models.BooleanField('private url?')
     path = models.TextField(blank=True, null=True)
     desc = models.TextField(blank=True, null=True)
     url_type = models.ForeignKey('UrlType') 
     order = models.PositiveIntegerField()
+
+    person = models.ForeignKey("Person", null=True, blank=True)
+    place = models.ForeignKey("Place", null=True, blank=True)
+    repository = models.ForeignKey("Repository", null=True, blank=True)
 
 class Attribute(models.Model):
     private = models.BooleanField('private attribute?')
@@ -762,9 +801,9 @@ def test_Name(person=None, surname=None, first=None):
     n.order = 1
     n.sort_as = 1
     n.display_as = 1
-    n.save()
-    person.names.add(n)
     person.save()
+    n.person = person
+    n.save()
     return n
 
 def test_Markup(note=None):
