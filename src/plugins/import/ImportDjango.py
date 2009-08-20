@@ -129,7 +129,9 @@ class DjangoReader(object):
         return  (url.private, url.path, url.desc, tuple(url_type))
 
     def get_attribute_list(self, obj):
-        attribute_list = obj.attributes.all()
+        obj_type = ContentType.objects.get_for_model(obj)
+        attribute_list = dj.Attribute.objects.filter(object_id=obj.id, 
+                                                     object_type=obj_type)
         return [self.pack_attribute(attribute) for attribute 
                 in attribute_list]
 

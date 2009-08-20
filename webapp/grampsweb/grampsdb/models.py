@@ -316,7 +316,7 @@ class PrimaryObject(models.Model):
     last_changed = models.DateTimeField('last changed', null=True,
                                         blank=True) # user edits
     private = models.BooleanField('private')
-    attributes = models.ManyToManyField("Attribute", blank=True, null=True)
+    #attributes = models.ManyToManyField("Attribute", blank=True, null=True)
 
     ## Keys:
     marker_type = models.ForeignKey('MarkerType')
@@ -548,6 +548,10 @@ class Attribute(models.Model):
     attribute_type = models.ForeignKey('AttributeType') 
     value = models.TextField(blank=True, null=True)
 
+    object_type = models.ForeignKey(ContentType)
+    object_id = models.PositiveIntegerField()
+    attribute_of = generic.GenericForeignKey("object_type", "object_id")
+
 ## consider using:
 ## URLField
 
@@ -567,7 +571,7 @@ class BaseRef(models.Model):
     order = models.PositiveIntegerField()
     last_saved = models.DateTimeField('last changed', auto_now=True)
     last_changed = models.DateTimeField('last changed', null=True) # user edits
-    attributes = models.ManyToManyField("Attribute", null=True)
+    #attributes = models.ManyToManyField("Attribute", null=True)
     private = models.BooleanField()
   
 class NoteRef(BaseRef):
