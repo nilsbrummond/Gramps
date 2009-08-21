@@ -1,4 +1,6 @@
 {% extends "gramps-base.html" %}
+{% load my_tags %}
+
 {% block title %}GRAMPS Connect - {{cview}} view page {% endblock %}
 {% block heading %}GRAMPS - {{cview}} view page {% endblock %}
 
@@ -6,22 +8,29 @@
 
 <div class="pagination">
     <span class="step-links">
+        [<a href="?page=1">first</a>]
         {% if page.has_previous %}
-            <a href="?page={{ page.previous_page_number }}">previous</a>
+            [<a href="?page={{page.previous_page_number}}">previous</a>]
+	{% else %}
+            [previous]
         {% endif %}
 
         <span class="current">
-            Page {{ page.number }} of {{ page.paginator.num_pages }}.
+            Page {{ page.number }} of {{ page.paginator.num_pages }}
         </span>
 
         {% if page.has_next %}
-            <a href="?page={{ page.next_page_number }}">next</a>
+            [<a href="?page={{ page.next_page_number }}">next</a>]
+	{% else %}
+            [next]
         {% endif %}
+        [<a href="?page={{page.paginator.num_pages}}">last</a>]
     </span>
 </div>
 
 <table>
    <tr>
+   <th>Item #</th>
    {% with page.object_list.values.0 as row %}
       {% for key, value in row.items %}
           {% for header in headers %}
@@ -35,6 +44,7 @@
 
 {% for row in page.object_list.values %}
    <tr>
+      <td>{{ forloop.counter|row_count:page }}</td>
       {% for key, value in row.items %}
           {% for header in headers %}
              {% ifequal header key %}
@@ -48,17 +58,23 @@
 
 <div class="pagination">
     <span class="step-links">
+        [<a href="?page=1">first</a>]
         {% if page.has_previous %}
-            <a href="?page={{ page.previous_page_number }}">previous</a>
+            [<a href="?page={{page.previous_page_number}}">previous</a>]
+	{% else %}
+            [previous]
         {% endif %}
 
         <span class="current">
-            Page {{ page.number }} of {{ page.paginator.num_pages }}.
+            Page {{ page.number }} of {{ page.paginator.num_pages }}
         </span>
 
         {% if page.has_next %}
-            <a href="?page={{ page.next_page_number }}">next</a>
+            [<a href="?page={{ page.next_page_number }}">next</a>]
+	{% else %}
+            [next]
         {% endif %}
+        [<a href="?page={{page.paginator.num_pages}}">last</a>]
     </span>
 </div>
 

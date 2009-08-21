@@ -44,7 +44,7 @@ def view(request, view):
         object_list = Source.objects.all().order_by("gramps_id")
         headers = ["gramps_id",]
 
-    paginator = Paginator(object_list, 10) 
+    paginator = Paginator(object_list, 20) 
 
     try:
         page = int(request.GET.get('page', '1'))
