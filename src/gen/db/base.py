@@ -82,15 +82,6 @@ CLASS_TO_KEY_MAP = {Person.__name__: PERSON_KEY,
                     Repository.__name__:REPOSITORY_KEY,
                     Note.__name__: NOTE_KEY}
 
-CLASS_TO_OBJ_MAP = {Person.__name__: Person,
-                    Family.__name__: Family,
-                    Source.__name__: Source,
-                    Event.__name__: Event,
-                    MediaObject.__name__: MediaObject,
-                    Place.__name__: Place,
-                    Repository.__name__:Repository,
-                    Note.__name__: Note}
-                    
 KEY_TO_CLASS_MAP = {PERSON_KEY: Person.__name__, 
                     FAMILY_KEY: Family.__name__, 
                     SOURCE_KEY: Source.__name__, 
@@ -426,6 +417,10 @@ class GrampsDbBase(Callback):
         """
         Notify clients that the data has changed significantly, and that all
         internal data dependent on the database should be rebuilt.
+        Note that all rebuild signals on all objects are emitted at the same
+        time. It is correct to assume that this is always the case.
+        TODO: it might be better to replace these rebuild signals by one single
+                database-rebuild signal.
         """
         self.emit('person-rebuild')
         self.emit('family-rebuild')
@@ -1674,7 +1669,7 @@ class GrampsDbBase(Callback):
 
     def transaction_commit(self, transaction, msg):
         """
-        Commit the transaction to the assocated UNDO database.
+        Commit the transaction to the associated UNDO database.
         """
         if self._LOG_ALL:
             LOG.debug("%s: Transaction commit '%s'\n"
@@ -2014,28 +2009,28 @@ class GrampsDbBase(Callback):
 
     def get_person_event_types(self):
         """
-        Return a list of all Event types assocated with Person instances in 
+        Return a list of all Event types associated with Person instances in 
         the database.
         """
         return list(self.individual_event_names)
 
     def get_person_attribute_types(self):
         """
-        Return a list of all Attribute types assocated with Person instances 
+        Return a list of all Attribute types associated with Person instances 
         in the database.
         """
         return list(self.individual_attributes)
 
     def get_family_attribute_types(self):
         """
-        Return a list of all Attribute types assocated with Family instances 
+        Return a list of all Attribute types associated with Family instances 
         in the database.
         """
         return list(self.family_attributes)
 
     def get_family_event_types(self):
         """
-        Return a list of all Event types assocated with Family instances in 
+        Return a list of all Event types associated with Family instances in 
         the database.
         """
         return list(self.family_event_names)
@@ -2048,63 +2043,63 @@ class GrampsDbBase(Callback):
         
     def get_media_attribute_types(self):
         """
-        Return a list of all Attribute types assocated with Media and MediaRef 
+        Return a list of all Attribute types associated with Media and MediaRef 
         instances in the database.
         """
         return list(self.media_attributes)
 
     def get_family_relation_types(self):
         """
-        Return a list of all relationship types assocated with Family
+        Return a list of all relationship types associated with Family
         instances in the database.
         """
         return list(self.family_rel_types)
 
     def get_child_reference_types(self):
         """
-        Return a list of all child reference types assocated with Family
+        Return a list of all child reference types associated with Family
         instances in the database.
         """
         return list(self.child_ref_types)
 
     def get_event_roles(self):
         """
-        Return a list of all custom event role names assocated with Event
+        Return a list of all custom event role names associated with Event
         instances in the database.
         """
         return list(self.event_role_names)
 
     def get_name_types(self):
         """
-        Return a list of all custom names types assocated with Person
+        Return a list of all custom names types associated with Person
         instances in the database.
         """
         return list(self.name_types)
 
     def get_repository_types(self):
         """
-        Return a list of all custom repository types assocated with Repository 
+        Return a list of all custom repository types associated with Repository 
         instances in the database.
         """
         return list(self.repository_types)
 
     def get_note_types(self):
         """
-        Return a list of all custom note types assocated with Note instances 
+        Return a list of all custom note types associated with Note instances 
         in the database.
         """
         return list(self.note_types)
 
     def get_source_media_types(self):
         """
-        Return a list of all custom source media types assocated with Source 
+        Return a list of all custom source media types associated with Source 
         instances in the database.
         """
         return list(self.source_media_types)
 
     def get_url_types(self):
         """
-        Return a list of all custom names types assocated with Url instances 
+        Return a list of all custom names types associated with Url instances 
         in the database.
         """
         return list(self.url_types)
@@ -2477,7 +2472,8 @@ class GrampsDbBase(Callback):
         Return the Event display common information stored in the database's 
         metadata.
         """
-        default = [(1, 0, 200), (1, 1, 75), (1, 2, 100), (1, 3, 150),
+        default = [(1, 0, 200), (1, 1, 75), (1, 2, 100), 
+                   (0, 6, 230), (1, 3, 150),
                    (1, 4, 200), (0, 5, 100)]
         return self.__get_columns(EVENT_COL_KEY, default)
 
@@ -2527,7 +2523,7 @@ class GrampsDbBase(Callback):
         """
         Find all objects that hold a reference to the object handle.
         
-        Returns an interator over alist of (class_name, handle) tuples.
+        Returns an iterator over a list of (class_name, handle) tuples.
 
         @param handle: handle of the object to search for.
         @type handle: database handle
@@ -2535,7 +2531,7 @@ class GrampsDbBase(Callback):
                                 Default: None means include all classes.
         @type include_classes: list of class names
         
-        This default implementation does a sequencial scan through all
+        This default implementation does a sequential scan through all
         the primary object databases and is very slow. Backends can
         override this method to provide much faster implementations that
         make use of additional capabilities of the backend.
