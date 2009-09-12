@@ -25,21 +25,18 @@
    <div id="navigation">
     {% block navigation %}
     <ul>
-    <li><a href="/">Home</a></li>
-  {% if user.is_authenticated %}
+    <li>[<a href="/">Home</a>]</li>
     {% for view in views %}
-         <li><a href="/{{view.name|lower}}/">{{view.name}}</a></li>
+         <li>[<a href="/{{view.name|lower}}/">{{view.name}}</a>]</li>
     {% endfor %}
-  {% endif %}
 
   {% if user.is_authenticated %}
-    <li><a href="/logout">Logout</a></li>
-    <li><a href="/user/{{user.username}}/">{{user.username}}</a></li>
-    {% if user.is_authenticated %}
-      <li><a href="/admin">Admin</a></li>
+    <li>[<a href="/logout">Logout</a>]</li>
+    {% if user.is_superuser %}
+      <li>[<a href="/admin">Admin</a>]</li>
     {% endif %}
   {% else %}
-    <li><a href="/login/">Login</a></li>
+    <li>[<a href="/login/">Login</a>]</li>
   {% endif %}
     </ul>
     {% endblock %}

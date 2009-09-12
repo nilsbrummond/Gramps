@@ -7,11 +7,16 @@
 <p>Welcome to GRAMPS Connect, a new web-based collaboration tool.</p>
 
 {% if user.is_authenticated %}
-
-<p>You are now logged in
-as <a href="/user/{{user.username}}">{{user.username}}</a>.</p>
-
+  <p>You are now logged in
+  as <a href="/user/{{user.username}}">{{user.username}}</a>.</p>
 {% endif %}
+
+Database information:
+<ul>
+{% for view in views %}
+   <li><a href="/{{view|lower}}">{{view}}</a></li>
+{% endfor %}
+</ul>
 
 {% endblock %}
 

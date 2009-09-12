@@ -33,7 +33,7 @@ def view(request, view):
         headers = ["gramps_id",]
     elif view == "person":
         object_list = Name.objects.all().order_by("surname", "first_name")
-        headers = ["surname", "first_name"]
+        headers = ["surname", "id"]
     elif view == "place":
         object_list = Place.objects.all().order_by("gramps_id")
         headers = ["gramps_id",]

@@ -277,7 +277,7 @@ a:visited {
     float:left;
 }
 #navigation ul li a, #subnavigation ul li a {
-    display:block;
+//    display:block;
     font-size:12px;
     line-height:100%;
     font-weight:normal;

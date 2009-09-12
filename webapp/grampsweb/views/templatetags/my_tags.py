@@ -8,7 +8,6 @@ def mult(value1, value2):
 register.filter('mult', mult)
 
 def row_count(row, page):
-    print dir(page.paginator)
     return row + (page.number - 1) * page.paginator.per_page
 
 register.filter('row_count', row_count)
