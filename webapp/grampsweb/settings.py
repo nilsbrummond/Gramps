@@ -82,7 +82,7 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'grampsweb.views',
     'grampsweb.grampsdb',
-    'django_extensions',
+#    'django_extensions',
 )
 
 GRAMPS_PATH = "/home/dblank/gramps/gep-013-server/src"

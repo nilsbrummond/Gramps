@@ -250,7 +250,7 @@ class DateObject(models.Model):
     day2 = models.IntegerField(blank=True, null=True)
     month2 = models.IntegerField(blank=True, null=True)
     year2 = models.IntegerField(blank=True, null=True)
-    slash2 = models.BooleanField(blank=True, null=True)
+    slash2 = models.NullBooleanField(blank=True, null=True)
     text = models.CharField(max_length=80, blank=True)
     sortval = models.IntegerField()
     newyear = models.IntegerField()
