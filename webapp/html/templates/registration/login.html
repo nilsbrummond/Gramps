@@ -1,9 +1,14 @@
 {% extends "gramps-base.html" %}
 
-{%block content %}
+{% block title %}GRAMPS Connect - login {% endblock %}
+{% block heading %}GRAMPS - login {% endblock %}
+
+{% block content %}
 <h2>User Login</h2>
 {% if form.errors %}
-<p>Your username and password did not match. Please try again.</p>
+<p id="description">Your username or password were not valid. Please try again.</p>
+{% else %}
+<p id="description">Enter your login ID and password below. </p>
 {% endif %}
 <form method="post" action=".">
  <table>

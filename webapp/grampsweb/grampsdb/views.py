@@ -10,6 +10,8 @@ from grampsweb.views.models import View
 def main_page(request):
     context = RequestContext(request)
     context["views"] = View.objects.order_by("name")
+    context["view"] = 'home'
+    context["cview"] = 'Home'
     return render_to_response("main_page.html", context)
                               
 def logout_page(request):
@@ -24,4 +26,6 @@ def user_page(request, username):
     context = RequestContext(request)
     context["username"] =  username
     context["views"] = View.objects.order_by("name")
+    context["view"] = 'user'
+    context["cview"] = 'User'
     return render_to_response('user_page.html', context)

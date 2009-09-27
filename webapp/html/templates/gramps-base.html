@@ -14,8 +14,9 @@
     <link href="/images/favicon.ico" type="image/x-icon" rel="shortcut icon" />
     {% block css %}
     <link media="screen" href="/styles/behaviour.css" type="text/css" rel="stylesheet" />
-    <link media="screen" href="/styles/narrative-screen.css" type="text/css" rel="stylesheet" />
-    <link media="print" href="/styles/narrative-print.css" type="text/css" rel="stylesheet" />
+    <link media="screen" href="/styles/Web_Alphabet-Horizontal.css" type="text/css" rel="stylesheet" />
+    <link media="screen" href="/styles/Web_Mainz.css" type="text/css" rel="stylesheet" />
+    <link media="print" href="/styles/Web_Print-Default.css" type="text/css" rel="stylesheet" />
     {% endblock %}
 </head>
 <body id= "NarrativeWeb">
@@ -25,18 +26,17 @@
    <div id="navigation">
     {% block navigation %}
     <ul>
-    <li>[<a href="/">Home</a>]</li>
+    <li class="{{ cview|currentSection:"home" }}"><a href="/">Home</a></li>
     {% for view in views %}
-         <li>[<a href="/{{view.name|lower}}/">{{view.name}}</a>]</li>
+         <li class="{{ cview|currentSection:view.name }}"><a href="/{{view.name|lower}}/">{{view.name}}</a></li>
     {% endfor %}
-
-  {% if user.is_authenticated %}
-    <li>[<a href="/logout">Logout</a>]</li>
-    {% if user.is_superuser %}
-      <li>[<a href="/admin">Admin</a>]</li>
-    {% endif %}
-  {% else %}
-    <li>[<a href="/login/">Login</a>]</li>
+    {% if user.is_authenticated %}
+         <li><a href="/logout">Logout</a></li>
+       {% if user.is_superuser %}
+         <li><a href="/admin">Admin</a></li>
+       {% endif %}
+    {% else %}
+         <li><a href="/login/">Login</a></li>
   {% endif %}
     </ul>
     {% endblock %}

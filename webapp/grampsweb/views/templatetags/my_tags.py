@@ -2,6 +2,13 @@ from django import template
 
 register = template.Library()
 
+def currentSection(view1, view2):
+    if view1.strip().lower() == view2.strip().lower():
+        return "CurrentSection"
+    return "OtherSection"
+currentSection.is_safe = True
+register.filter('currentSection', currentSection)
+
 def mult(value1, value2):
     return value1 * value2
 
