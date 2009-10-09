@@ -1,12 +1,6 @@
 import time
-import sys
-import os
 
-#django initialization
-if "DJANGO_SETTINGS_MODULE" not in os.environ:
-    loc = os.environ["DJANGO_SETTINGS_MODULE"] = 'settings'
-
-import grampsdb.models as models
+import grampsweb.grampsdb.models as models
 from django.contrib.contenttypes.models import ContentType
 
 #-------------------------------------------------------------------------
@@ -65,8 +59,24 @@ def get_datamap(grampsclass):
 #
 #-------------------------------------------------------------------------
 class DjangoInterface(object):
-    def __init__(self, db=None):
-        self.db = db
+    """
+    DjangoInterface for interoperating between Gramps and Django.
+    
+    This interface comes in a number of parts: 
+        get_ITEMS()
+        add_ITEMS()
+
+    get_ITEM(ITEM)
+
+    Given an ITEM from a Django table, construct a Gramps Raw Data tuple.
+
+    add_ITEM(data)
+
+    Given a Gramps Raw Data tuple, add the data to the Django tables.
+    
+
+    """
+    def __init__(self):
         self.debug = 0
 
     def __getattr__(self, name):
@@ -482,9 +492,6 @@ class DjangoInterface(object):
         return (source_list, note_list, date, lds.lds_type[0], place,
                 famc, lds.temple, lds.status[0], lds.private)
 
-    def pack_url(self, url):
-        return  (url.private, url.path, url.desc, tuple(url.url_type))
-
     def pack_source(self, source):
         note_list = self.get_note_list(source)
         media_list = self.get_media_list(source)
@@ -516,8 +523,8 @@ class DjangoInterface(object):
             return (loc.street, loc.city, loc.county, loc.state, loc.country, 
                     loc.postal, loc.phone)
 
-    def pack_url(url):
-        return  (url.private, url.path, url.desc, tuple(url_type))
+    def pack_url(self, url):
+        return  (url.private, url.path, url.desc, tuple(url.url_type))
 
     def pack_attribute(self, attribute):
         source_list = self.get_source_ref_list(attribute)

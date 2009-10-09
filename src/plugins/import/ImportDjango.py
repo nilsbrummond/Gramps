@@ -55,11 +55,12 @@ from gen.plug import PluginManager, ImportPlugin
 from Utils import create_id
 import const
 
-sys.path += [const.ROOT_DIR + os.sep + '..' + os.sep + 
-             'webapp' ]
-sys.path += [const.ROOT_DIR + os.sep + '..' + os.sep + 
-             'webapp' + os.sep + 'grampsweb' ]
-from libdjango import DjangoInterface
+#django initialization
+if "DJANGO_SETTINGS_MODULE" not in os.environ:
+    loc = os.environ["DJANGO_SETTINGS_MODULE"] = 'grampsweb.settings'
+sys.path += [const.ROOT_DIR + os.sep + '..' + os.sep + 'webapp']
+
+from grampsweb.libdjango import DjangoInterface
 
 #-------------------------------------------------------------------------
 #
@@ -71,7 +72,7 @@ class DjangoReader(object):
         if not callable(callback): 
             callback = lambda (percent): None # dummy
         self.db = db
-        self.dji = DjangoInterface(self.db)
+        self.dji = DjangoInterface()
         self.filename = filename
         self.callback = callback
         self.debug = 0

@@ -403,7 +403,7 @@ class Place(PrimaryObject):
 
 class Media(DateObject, PrimaryObject):
     path = models.TextField(blank=True)
-    mime = models.TextField(blank=True)
+    mime = models.TextField(blank=True, null=True)
     desc = models.TextField(blank=True)
     references = generic.GenericRelation('MediaRef', related_name="refs",
                                          content_type_field="object_type",

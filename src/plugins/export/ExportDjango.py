@@ -56,12 +56,12 @@ from Utils import create_id
 import const
 import gen.lib
 
-sys.path += [const.ROOT_DIR + os.sep + '..' + os.sep + 
-             'webapp' ]
-sys.path += [const.ROOT_DIR + os.sep + '..' + os.sep + 'webapp' + 
-             os.sep + 'grampsweb' ]
+#django initialization
+if "DJANGO_SETTINGS_MODULE" not in os.environ:
+    loc = os.environ["DJANGO_SETTINGS_MODULE"] = 'grampsweb.settings'
+sys.path += [const.ROOT_DIR + os.sep + '..' + os.sep + 'webapp']
 
-from libdjango import DjangoInterface
+from grampsweb.libdjango import DjangoInterface
 
 def export_all(database, filename, option_box=None, callback=None):
     if not callable(callback): 
@@ -77,7 +77,7 @@ def export_all(database, filename, option_box=None, callback=None):
              database.get_number_of_media_objects() +
              database.get_number_of_sources()) * 2 # steps
     count = 0.0
-    dji = DjangoInterface(database)
+    dji = DjangoInterface()
     dji.clear_tables("primary", "secondary")
 
     for step in (0, 1):
