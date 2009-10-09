@@ -3,6 +3,12 @@ import time
 import grampsweb.grampsdb.models as models
 from django.contrib.contenttypes.models import ContentType
 
+import gen.lib 
+
+# 1. djperson = dji.Person.get(handle='djhgsdh324hjg234hj24')
+# 2. tuple = dji.get_person(p)
+# 3. lib.gen.Person(tuple)
+
 #-------------------------------------------------------------------------
 #
 # Import functions
@@ -80,10 +86,23 @@ class DjangoInterface(object):
         self.debug = 0
 
     def __getattr__(self, name):
+        """
+        Django Objects database interface.
+
+        >>> self.Person.all()
+        >>> self.Person.get(id=1)
+        >>> self.Person.get(handle='gh71234dhf3746347734')
+        """
+        if hasattr(models, name):
+            return getattr(models, name).objects
+        else:
+            raise AttributeError("no such model: '%s'" % name)
+
+    def get_model(self, name):
         if hasattr(models, name):
             return getattr(models, name)
         else:
-            raise AttributeError("no such attribute: '%s'" % name)
+            raise AttributeError("no such model: '%s'" % name)
 
     # -----------------------------------------------
     # Get methods to retrieve list data from the tables
