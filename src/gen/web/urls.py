@@ -3,7 +3,8 @@ from django.conf.urls.defaults import *
 from django.contrib import admin
 admin.autodiscover()
 
-from grampsweb.grampsdb.views import *
+from gen.web.grampsdb.views import (main_page, user_page, logout_page,
+                                    view, view_detail)
 
 urlpatterns = patterns('',
     # Specific matches first:
@@ -11,16 +12,16 @@ urlpatterns = patterns('',
 )
 
 urlpatterns += patterns('',
-    # DANGEROUS in production:
+    # Static serves! DANGEROUS in production:
      (r'^styles/(?P<path>.*)$', 'django.views.static.serve',
       {'document_root': 
-          '/home/dblank/gramps/gep-013-server/webapp/html/styles', 
+          '/home/dblank/gramps/gep-013-server/src/data', 
        'show_indexes': 
           True},
       ),
      (r'^images/(?P<path>.*)$', 'django.views.static.serve',
       {'document_root': 
-          '/home/dblank/gramps/gep-013-server/webapp/html/images', 
+          '/home/dblank/gramps/gep-013-server/src/images', 
        'show_indexes': 
           True},
       ),
@@ -32,6 +33,6 @@ urlpatterns += patterns('',
     (r'^user/(\w+)/$', user_page),
     (r'^login/$', 'django.contrib.auth.views.login'),
     (r'^logout/$', logout_page),
-    (r'^(?P<view>(\w+))/$', 'grampsweb.view'),
-    (r'^(?P<view>(\w+))/(?P<handle>(\w+))/$', 'grampsweb.view_detail'),
+    (r'^(?P<view>(\w+))/$', view),
+    (r'^(?P<view>(\w+))/(?P<handle>(\w+))/$', view_detail),
 )

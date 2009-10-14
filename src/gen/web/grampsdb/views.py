@@ -1,12 +1,38 @@
-from django.shortcuts import get_object_or_404, render_to_response
-from django.template import Context
-from django.contrib.auth.models import User
-from django.template import RequestContext
-from django.core.paginator import Paginator, InvalidPage, EmptyPage
+# Create your views here.
 
-from grampsweb.views.models import View
-from grampsweb.grampsdb.models import *
-from grampsweb.sortheaders import SortHeaders
+from django.contrib.auth import logout
+from django.contrib.auth.models import User
+from django.core.paginator import Paginator, InvalidPage, EmptyPage
+from django.http import Http404, HttpResponseRedirect
+from django.shortcuts import get_object_or_404, render_to_response
+from django.template import Context, RequestContext
+
+from gen.web.grampsdb.models import *
+from gen.web.views.models import View
+from gen.web.sortheaders import SortHeaders
+
+def main_page(request):
+    context = RequestContext(request)
+    context["views"] = View.objects.order_by("name")
+    context["view"] = 'home'
+    context["cview"] = 'Home'
+    return render_to_response("main_page.html", context)
+                              
+def logout_page(request):
+    logout(request)
+    return HttpResponseRedirect('/')
+
+def user_page(request, username):
+    try:
+        user = User.objects.get(username=username)
+    except User.DoesNotExist:
+        raise Http404('Requested user not found.')
+    context = RequestContext(request)
+    context["username"] =  username
+    context["views"] = View.objects.order_by("name")
+    context["view"] = 'user'
+    context["cview"] = 'User'
+    return render_to_response('user_page.html', context)
 
 def view_detail(request, view, handle):
     cview = view.title()

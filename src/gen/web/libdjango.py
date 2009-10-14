@@ -1,6 +1,6 @@
 import time
 
-import grampsweb.grampsdb.models as models
+import gen.web.grampsdb.models as models
 from django.contrib.contenttypes.models import ContentType
 
 import gen.lib 

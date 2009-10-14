@@ -56,12 +56,12 @@ from Utils import create_id
 import const
 import gen.lib
 
-#django initialization
-if "DJANGO_SETTINGS_MODULE" not in os.environ:
-    loc = os.environ["DJANGO_SETTINGS_MODULE"] = 'grampsweb.settings'
-sys.path += [const.ROOT_DIR + os.sep + '..' + os.sep + 'webapp']
+from django.conf import settings
+import gen.web.settings as default_settings
+try:
+    settings.configure(default_settings, DEBUG=True)
 
-from grampsweb.libdjango import DjangoInterface
+from gen.web.libdjango import DjangoInterface
 
 def export_all(database, filename, option_box=None, callback=None):
     if not callable(callback): 

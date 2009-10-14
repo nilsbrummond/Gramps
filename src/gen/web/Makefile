@@ -1,7 +1,6 @@
 # Initialize GRAMPS Django site
 
 update: init
-	ln -f -s ../../../trunk/src/data ../html/styles
 	python manage.py syncdb
 
 init: 

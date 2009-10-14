@@ -1,4 +1,4 @@
-from grampsweb.grampsdb.models import *
+from gen.web.grampsdb.models import *
 from django.contrib import admin
 
 for type_name in get_tables("all"):

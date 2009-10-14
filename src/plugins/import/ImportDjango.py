@@ -55,12 +55,12 @@ from gen.plug import PluginManager, ImportPlugin
 from Utils import create_id
 import const
 
-#django initialization
-if "DJANGO_SETTINGS_MODULE" not in os.environ:
-    loc = os.environ["DJANGO_SETTINGS_MODULE"] = 'grampsweb.settings'
-sys.path += [const.ROOT_DIR + os.sep + '..' + os.sep + 'webapp']
+from django.conf import settings
+import gen.web.settings as default_settings
+try:
+    settings.configure(default_settings, DEBUG=True)
 
-from grampsweb.libdjango import DjangoInterface
+from gen.web.libdjango import DjangoInterface
 
 #-------------------------------------------------------------------------
 #
@@ -79,14 +79,14 @@ class DjangoReader(object):
 
     def process(self):
         sql = None
-        total = (self.dji.Note.objects.count() + 
-                 self.dji.Person.objects.count() + 
-                 self.dji.Event.objects.count() +
-                 self.dji.Family.objects.count() +
-                 self.dji.Repository.objects.count() +
-                 self.dji.Place.objects.count() +
-                 self.dji.Media.objects.count() +
-                 self.dji.Source.objects.count())
+        total = (self.dji.Note.count() + 
+                 self.dji.Person.count() + 
+                 self.dji.Event.count() +
+                 self.dji.Family.count() +
+                 self.dji.Repository.count() +
+                 self.dji.Place.count() +
+                 self.dji.Media.count() +
+                 self.dji.Source.count())
         self.trans = self.db.transaction_begin("",batch=True)
         self.db.disable_signals()
         count = 0.0
@@ -95,7 +95,7 @@ class DjangoReader(object):
         # ---------------------------------
         # Process note
         # ---------------------------------
-        notes = self.dji.Note.objects.all()
+        notes = self.dji.Note.all()
         for note in notes:
             data = self.dji.get_note(note)
             self.db.note_map[str(note.handle)] = data
@@ -105,7 +105,7 @@ class DjangoReader(object):
         # ---------------------------------
         # Process event
         # ---------------------------------
-        events = self.dji.Event.objects.all()
+        events = self.dji.Event.all()
         for event in events:
             data = self.dji.get_event(event)
             self.db.event_map[str(event.handle)] = data
@@ -116,7 +116,7 @@ class DjangoReader(object):
         # Process person
         # ---------------------------------
         ## Do this after Events to get the birth/death data
-        people = self.dji.Person.objects.all()
+        people = self.dji.Person.all()
         for person in people:
             data = self.dji.get_person(person)
             self.db.person_map[str(person.handle)] = data
@@ -126,7 +126,7 @@ class DjangoReader(object):
         # ---------------------------------
         # Process family
         # ---------------------------------
-        families = self.dji.Family.objects.all()
+        families = self.dji.Family.all()
         for family in families:
             data = self.dji.get_family(family)
             self.db.family_map[str(family.handle)] = data
@@ -136,7 +136,7 @@ class DjangoReader(object):
         # ---------------------------------
         # Process repository
         # ---------------------------------
-        repositories = self.dji.Repository.objects.all()
+        repositories = self.dji.Repository.all()
         for repo in repositories:
             data = self.dji.get_repository(repo)
             self.db.repository_map[str(repo.handle)] = data
@@ -146,7 +146,7 @@ class DjangoReader(object):
         # ---------------------------------
         # Process place
         # ---------------------------------
-        places = self.dji.Place.objects.all()
+        places = self.dji.Place.all()
         for place in places:
             data = self.dji.get_place(place)
             self.db.place_map[str(place.handle)] = data
@@ -156,7 +156,7 @@ class DjangoReader(object):
         # ---------------------------------
         # Process source
         # ---------------------------------
-        sources = self.dji.Source.objects.all()
+        sources = self.dji.Source.all()
         for source in sources:
             data = self.dji.get_source(source)
             self.db.source_map[str(source.handle)] = data
@@ -166,7 +166,7 @@ class DjangoReader(object):
         # ---------------------------------
         # Process media
         # ---------------------------------
-        media = self.dji.Media.objects.all()
+        media = self.dji.Media.all()
         for med in media:
             data = self.dji.get_media(med)
             self.db.media_map[str(med.handle)] = data
