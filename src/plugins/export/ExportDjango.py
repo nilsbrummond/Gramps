@@ -60,6 +60,8 @@ from django.conf import settings
 import gen.web.settings as default_settings
 try:
     settings.configure(default_settings, DEBUG=True)
+except:
+    pass
 
 from gen.web.libdjango import DjangoInterface
 
