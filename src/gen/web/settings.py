@@ -12,7 +12,6 @@ DATABASE_ENGINE = 'sqlite3'
 DATABASE_NAME = '/home/dblank/gramps/gep-013-server/src/gen/web/gramps.sql' 
 DATABASE_USER = ''             
 DATABASE_PASSWORD = ''         
-DATABASE_OPTIONS = ''
 DATABASE_HOST = ''             
 DATABASE_PORT = ''             
 TIME_ZONE = 'America/New_York'
@@ -23,12 +22,6 @@ MEDIA_ROOT = ''
 MEDIA_URL = ''
 ADMIN_MEDIA_PREFIX = '/gramps-media/'
 SECRET_KEY = 'zd@%vslj5sqhx94_8)0hsx*rk9tj3^ly$x+^*tq4bggr&uh$ac'
-URL_VALIDATOR_USER_AGENT = ''
-DEFAULT_INDEX_TABLESPACE = ''
-DEFAULT_TABLESPACE = ''
-CACHE_BACKEND = 'locmem://'
-TRANSACTIONS_MANAGED = False
-LOCALE_PATHS = tuple()
 
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.load_template_source',
@@ -58,4 +51,13 @@ INSTALLED_APPS = (
     'gen.web.grampsdb',
 #    'django_extensions',
 )
+
+# Had to add these to use settings.configure():
+DATABASE_OPTIONS = ''
+URL_VALIDATOR_USER_AGENT = ''
+DEFAULT_INDEX_TABLESPACE = ''
+DEFAULT_TABLESPACE = ''
+CACHE_BACKEND = 'locmem://'
+TRANSACTIONS_MANAGED = False
+LOCALE_PATHS = tuple()
 
