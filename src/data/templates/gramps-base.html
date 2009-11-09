@@ -28,7 +28,7 @@
     <ul>
     <li class="{{ cview|currentSection:"home" }}"><a href="/">Home</a></li>
     {% for view in views %}
-         <li class="{{ cview|currentSection:view.name }}"><a href="/{{view.name|lower}}/">{{view.name}}</a></li>
+         <li class="{{ cview|currentSection:view.1 }}"><a href="/{{view.1}}/">{{view.0}}</a></li>
     {% endfor %}
     {% if user.is_authenticated %}
          <li><a href="/logout">Logout</a></li>

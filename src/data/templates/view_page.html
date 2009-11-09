@@ -7,13 +7,21 @@
 {% block content %} 
 
 <p id="description">
+<form>
+<input type="submit" value="Search:"></submit>
+<input name="search" type="input" size="50" value="{{search}}"></input>
+</form>
 </p>
 
 <div class="pagination">
     <span class="step-links">
-        [<a href="?page=1">first</a>]
+        {% ifequal page.number 1 %}
+        [first]
+        {% else %}
+        [<a href="?page=1{{search_query}}">first</a>]
+	{% endifequal %}
         {% if page.has_previous %}
-            [<a href="?page={{page.previous_page_number}}">previous</a>]
+            [<a href="?page={{page.previous_page_number}}{{search_query}}">previous</a>]
 	{% else %}
             [previous]
         {% endif %}
@@ -23,47 +31,32 @@
         </span>
 
         {% if page.has_next %}
-            [<a href="?page={{ page.next_page_number }}">next</a>]
+            [<a href="?page={{ page.next_page_number }}{{search_query}}">next</a>]
 	{% else %}
             [next]
         {% endif %}
-        [<a href="?page={{page.paginator.num_pages}}">last</a>]
+        {% ifequal page.number page.paginator.num_pages %}
+        [last]
+        {% else %}
+        [<a href="?page={{page.paginator.num_pages}}{{search_query}}">last</a>]
+	{% endifequal %}
     </span>
 </div>
 
-<table>
-   <tr>
-   <th>Item #</th>
-   {% with page.object_list.values.0 as row %}
-      {% for key, value in row.items %}
-          {% for header in headers %}
-             {% ifequal header key %}
-                <th>{{key}}</th>
-             {% endifequal %}
-          {% endfor %}
-      {% endfor %}
-   {% endwith %}
-   </tr>
+<p>&nbsp;</p>
 
-{% for row in page.object_list.values %}
-   <tr>
-      <td>{{ forloop.counter|row_count:page }}</td>
-      {% for key, value in row.items %}
-          {% for header in headers %}
-             {% ifequal header key %}
-                <td><a href="/{{view}}/{{row.handle}}/">{{ value }}</a> </td>
-             {% endifequal %}
-          {% endfor %}
-      {% endfor %}
-   </tr>
-{% endfor %}
-</table>
+{% block table_data %} TABLE DATA GOES HERE {% endblock %}
+<table></table>
 
 <div class="pagination">
     <span class="step-links">
-        [<a href="?page=1">first</a>]
+        {% ifequal page.number 1 %}
+        [first]
+        {% else %}
+        [<a href="?page=1{{search_query}}">first</a>]
+	{% endifequal %}
         {% if page.has_previous %}
-            [<a href="?page={{page.previous_page_number}}">previous</a>]
+            [<a href="?page={{page.previous_page_number}}{{search_query}}">previous</a>]
 	{% else %}
             [previous]
         {% endif %}
@@ -73,11 +66,15 @@
         </span>
 
         {% if page.has_next %}
-            [<a href="?page={{ page.next_page_number }}">next</a>]
+            [<a href="?page={{ page.next_page_number }}{{search_query}}">next</a>]
 	{% else %}
             [next]
         {% endif %}
-        [<a href="?page={{page.paginator.num_pages}}">last</a>]
+        {% ifequal page.number page.paginator.num_pages %}
+        [last]
+        {% else %}
+        [<a href="?page={{page.paginator.num_pages}}{{search_query}}">last</a>]
+	{% endifequal %}
     </span>
 </div>
 

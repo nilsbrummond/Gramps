@@ -17,9 +17,10 @@
 Database information:
 <ul>
 {% for view in views %}
-   <li><a href="/{{view|lower}}">{{view}}</a></li>
+   <li><a href="/{{view.1}}">{{view.0}}</a> ({{view.2}} records)</li>
 {% endfor %}
 </ul>
 </p>
+
 {% endblock %}
 
