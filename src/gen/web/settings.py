@@ -47,7 +47,6 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.admin',
-    'gen.web.views',
     'gen.web.grampsdb',
 #    'django_extensions',
 )
@@ -60,4 +59,14 @@ DEFAULT_TABLESPACE = ''
 CACHE_BACKEND = 'locmem://'
 TRANSACTIONS_MANAGED = False
 LOCALE_PATHS = tuple()
+
+VIEWS = [('People', 'person', 'Person'), 
+         ('Families', 'family', 'Family'),
+         ('Events', 'event', 'Event'),
+         ('Notes', 'note', 'Note'),
+         ('Media', 'media', 'Media'),
+         ('Sources', 'source', 'Source'),
+         ('Places', 'place', 'Place'),
+         ('Repositories', 'repository', 'Repository'),
+         ]
 

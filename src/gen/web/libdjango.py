@@ -4,10 +4,358 @@ import gen.web.grampsdb.models as models
 from django.contrib.contenttypes.models import ContentType
 
 import gen.lib 
+import Utils
 
 # 1. djperson = dji.Person.get(handle='djhgsdh324hjg234hj24')
 # 2. tuple = dji.get_person(p)
 # 3. lib.gen.Person(tuple)
+
+class Trans(object):
+    def __init__(self, dji_model):
+        self.dji_model = dji_model
+
+    def get(self, handle):
+        return self.dji_model.filter(handle=handle) == 1
+
+    def keys(self):
+        return [item.handle for item in self.dji_model.all()]
+
+from gen.db.dbconst import (PERSON_KEY, FAMILY_KEY, SOURCE_KEY, EVENT_KEY, 
+                            MEDIA_KEY, PLACE_KEY, REPOSITORY_KEY, NOTE_KEY, 
+                            REFERENCE_KEY, PERSON_COL_KEY, FAMILY_COL_KEY, 
+                            CHILD_COL_KEY, PLACE_COL_KEY, SOURCE_COL_KEY, 
+                            MEDIA_COL_KEY, EVENT_COL_KEY, REPOSITORY_COL_KEY, 
+                            NOTE_COL_KEY)
+class DjangoDB(object):
+    """
+    A Gramps Database Backend. This replicates the grampsdb functions.
+    """
+
+    def __init__(self):
+        self.dji = DjangoInterface()
+        self.readonly = False
+        self.event_prefix = "E000%s"
+        self.id_trans = Trans(self.dji.Person)
+        self.eid_trans = Trans(self.dji.Event)
+        self.fid_trans = Trans(self.dji.Family)
+        self.sid_trans = Trans(self.dji.Source)
+        self.oid_trans = Trans(self.dji.Media)
+        self.rid_trans = Trans(self.dji.Repository)
+        self.nid_trans = Trans(self.dji.Note)
+        self.set_step(0)
+
+    def get_pcnt(self):
+        self.pcnt += 1
+        return self.pcnt
+
+    def get_plcnt(self):
+        self.plcnt += 1
+        return self.plcnt
+
+    def get_ecnt(self):
+        self.ecnt += 1
+        return self.ecnt
+
+    def get_fcnt(self):
+        self.fcnt += 1
+        return self.fcnt
+
+    def get_scnt(self):
+        self.scnt += 1
+        return self.scnt
+
+    def get_ocnt(self):
+        self.ocnt += 1
+        return self.ocnt
+
+    def get_rcnt(self):
+        self.rcnt += 1
+        return self.rcnt
+
+    def get_ncnt(self):
+        self.ncnt += 1
+        return self.ncnt
+
+    def set_step(self, step):
+        self.step = step
+        if step==0:
+            self.lookup = {}
+        self.pcnt = 0
+        self.fcnt = 0
+        self.ncnt = 0
+        self.ecnt = 0
+        self.scnt = 0
+        self.rcnt = 0
+        self.plcnt = 0
+        self.ocnt = 0
+
+    def get_event_from_handle(self, handle):
+        obj = gen.lib.Event()
+        obj.unserialize(self.dji.get_event(self.dji.Event.get(handle=handle)))
+        return obj
+
+    def get_family_from_handle(self, handle):
+        obj = gen.lib.Family()
+        obj.unserialize(self.dji.get_family(self.dji.Family.get(handle=handle)))
+        return obj
+
+    def get_person_from_handle(self, handle):
+        obj = gen.lib.Person()
+        data = self.dji.get_person(self.dji.Person.get(handle=handle))
+        obj.unserialize(data)
+        return obj
+
+    def get_person_from_gramps_id(self, gramps_id):
+        obj = gen.lib.Person()
+        data = self.dji.get_person(self.dji.Person.get(gramps_id=gramps_id))
+        obj.unserialize(data)
+        return obj
+
+    def get_gramps_ids(self, key):
+        if key == EVENT_KEY:
+            return self.eid_trans.keys()
+        elif key == PERSON_KEY:     
+            return self.id_trans.keys()
+        elif key == FAMILY_KEY:     
+            return self.fid_trans.keys()
+        elif key == SOURCE_KEY:     
+            return self.sid_trans.keys()
+        elif key == MEDIA_KEY:      
+            return self.oid_trans.keys()
+        elif key == PLACE_KEY:      
+            return self.pid_trans.keys()
+        elif key == REPOSITORY_KEY: 
+            return self.rid_trans.keys()
+        elif key == NOTE_KEY:       
+            return self.nid_trans.keys()
+
+    def get_event_prefix(self):
+        return self.event_prefix
+
+    def find_next_person_gramps_id(self):
+        return "I-%s" % self.get_pcnt()
+
+    def find_next_event_gramps_id(self):
+        #self.person_gid
+        return "E-%s" % self.get_ecnt()
+
+    def find_next_family_gramps_id(self):
+        return "F-%s" % self.get_fcnt()
+
+    def find_next_source_gramps_id(self):
+        return "S-%s" % self.get_scnt()
+
+    def find_next_object_gramps_id(self):
+        return "O-" % self.get_ocnt()
+
+    def find_next_repository_gramps_id(self):
+        return "R-%s" % self.get_rcnt()
+
+    def find_next_note_gramps_id(self):
+        return "N-%s" % self.get_ncnt()
+
+    def find_next_place_gramps_id(self):
+        return "PL-%s" % self.get_plcnt()
+
+    def get_number_of_people(self):
+        return self.dji.Person.count()
+
+    def get_number_of_families(self):
+        return self.dji.Family.count()
+
+    def get_number_of_notes(self):
+        return self.dji.Note.count()
+
+    def get_number_of_sources(self):
+        return self.dji.Source.count()
+
+    def get_number_of_media_objects(self):
+        return self.dji.Media.count()
+
+    def get_number_of_repositories(self):
+        return self.dji.Repository.count()
+
+    def get_place_cursor(self):
+        # returns (handle, data) of places
+        def place_cursor():
+            for place in self.dji.Place.all():
+                yield (place.handle, self.dji.get_place(place))
+            yield None
+        return place_cursor()
+
+    def transaction_begin(self, *args, **kwargs):
+        pass
+
+    def disable_signals(self):
+        pass
+
+    def enable_signals(self):
+        pass
+
+    def transaction_commit(self, *args, **kwargs):
+        pass
+
+    def request_rebuild(self):
+        pass
+
+    def has_person_handle(self, handle):
+        return self.dji.Person.filter(handle=handle).count() == 1
+
+    def has_family_handle(self, handle):
+        return self.dji.Family.filter(handle=handle).count() == 1
+
+    def has_source_handle(self, handle):
+        return self.dji.Source.filter(handle=handle).count() == 1
+
+    def has_repository_handle(self, handle):
+        return self.dji.Repository.filter(handle=handle).count() == 1
+
+    def has_note_handle(self, handle):
+        return self.dji.Note.filter(handle=handle).count() == 1
+
+    def has_place_handle(self, handle):
+        return self.dji.Place.filter(handle=handle).count() == 1
+
+    def get_raw_person_data(self, handle):
+        return self.dji.get_person(self.dji.Person.get(handle=handle))
+
+    def get_raw_family_data(self, handle):
+        return self.dji.get_family(self.dji.Family.get(handle=handle))
+
+    def get_raw_source_data(self, handle):
+        return self.dji.get_source(self.dji.Source.get(handle=handle))
+
+    def get_raw_repository_data(self, handle):
+        return self.dji.get_repository(self.dji.Repository.get(handle=handle))
+
+    def get_raw_note_data(self, handle):
+        return self.dji.get_note(self.dji.Note.get(handle=handle))
+
+    def get_raw_place_data(self, handle):
+        return self.dji.get_place(self.dji.Place.get(handle=handle))
+
+    def add_person(self, person, trans, set_gid=True):
+        if self.step == 0:
+            if not person.handle:
+                person.handle = Utils.create_id()
+            if not person.gramps_id:
+                person.gramps_id = self.find_next_person_gramps_id()
+            self.lookup[person.gramps_id] = person.handle
+            if self.dji.Person.filter(handle=person.handle).count() == 0:
+                print "add_person:", person.handle
+                self.dji.add_person(person.serialize())
+        else:
+            print "update_person:", person.handle
+            person.handle = self.lookup[person.gramps_id]
+            self.dji.add_person_detail(person.serialize())
+
+    def add_family(self, family, trans, set_gid=True):
+        if self.step == 0:
+            if not family.handle:
+                family.handle = Utils.create_id()
+            if not family.gramps_id:
+                family.gramps_id = self.find_next_family_gramps_id()
+            self.lookup[family.gramps_id] = family.handle
+            if self.dji.Family.filter(handle=family.handle).count() == 0:
+                print "add_family:", family.handle
+                self.dji.add_family(family.serialize())
+        else:
+            family.handle = self.lookup[family.gramps_id]
+            self.dji.add_family_detail(family.serialize())
+
+    def add_source(self, source, trans, set_gid=True):
+        pass
+        #print "add_source:", source.handle
+        #if not source.handle:
+        #    source.handle = Utils.create_id()
+        #    self.dji.add_source(source.serialize())
+        #self.dji.add_source_detail(source.serialize())
+
+    def add_repository(self, repository, trans, set_gid=True):
+        pass
+        #print "add_repository:", repository.handle
+        #if not repository.handle:
+        #    repository.handle = Utils.create_id()
+        #    self.dji.add_repository(repository.serialize())
+        #self.dji.add_repository_detail(repository.serialize())
+
+    def add_note(self, note, trans, set_gid=True):
+        pass
+        #print "add_note:", note.handle
+        #if not note.handle:
+        #    note.handle = Utils.create_id()
+        #    self.dji.add_note(note.serialize())
+        #self.dji.add_note_detail(note.serialize())
+
+    def add_place(self, place, trans, set_gid=True):
+        #print "add_place:", place.handle
+        pass
+
+    def add_event(self, event, trans, set_gid=True):
+        pass
+        #print "add_event:", event.handle
+        #if not event.handle:
+        #    event.handle = Utils.create_id()
+        #    self.dji.add_event(event.serialize())
+        #self.dji.add_event_detail(event.serialize())
+
+    def set_researcher(self, researcher):
+        pass
+
+    def commit_researcher(self, researcher, change_time=None):
+        pass
+
+    def commit_person(self, person, trans, change_time=None):
+        print "commit_person:", person.handle
+        self.add_person(person, trans)
+
+    def commit_family(self, family, trans, change_time=None):
+        print "commit_family:", family.handle
+        self.add_family(family, trans)
+
+    def commit_source(self, source, trans, change_time=None):
+        pass
+        #print "commit_source:", source.handle
+        #self.add_source(source, change_time)
+
+    def commit_repository(self, repository, trans, change_time=None):
+        pass
+        #print "commit_repository:", repository.handle
+        #self.add_repository(repository, change_time)
+
+    def commit_note(self, note, trans, change_time=None):
+        pass
+        #print "commit_note:", note.handle
+        #self.add_note(note, change_time)
+
+    def commit_place(self, place, trans, change_time=None):
+        pass
+        #print "commit_place:", place.handle
+        #if self.dji.Place.filter(handle=place.handle).count() == 0:
+        #    self.dji.add_place(place.serialize())
+        #self.dji.add_place_detail(place.serialize())
+
+    def commit_event(self, event, change_time=None):
+        pass
+        #print "commit_event:", event.handle
+        #self.add_event(event, change_time)
+
+    def find_family_from_handle(self, handle, trans):
+        obj = gen.lib.Family()
+        results = self.dji.Family.filter(handle=handle)
+        if results.count() == 0:
+            obj.handle = handle
+            new = True
+        else:
+            data = self.dji.get_family(results[0])
+            obj.unserialize(data)
+            new = False
+        return obj, new
+
+
+def probably_alive(handle):
+    db = DjangoDB()
+    return Utils.probably_alive(db.get_person_from_handle(handle), db)
 
 #-------------------------------------------------------------------------
 #
@@ -188,6 +536,12 @@ class DjangoInterface(object):
         for sourceref in sourcerefs:
             retval.append(self.pack_source_ref(sourceref))
         return retval
+
+    def get_event_refs(self, obj, order="order"):
+        obj_type = ContentType.objects.get_for_model(obj)
+        eventrefs = models.EventRef.objects.filter(object_id=obj.id, \
+                                  object_type=obj_type).order_by(order)
+        return eventrefs
 
     def get_event_ref_list(self, obj):
         obj_type = ContentType.objects.get_for_model(obj)
@@ -982,6 +1336,12 @@ class DjangoInterface(object):
         self.add_source_ref_list(person, psource_list)
         self.add_address_list("person", person, address_list)
         self.add_lds_list("person", person, lds_ord_list)
+
+    def add_note_detail(self, data):
+        """
+        Dummy method for consistency with other two-pass adds.
+        """
+        pass
     
     def add_note(self, data):
         # Unpack from the BSDDB:

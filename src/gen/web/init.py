@@ -30,10 +30,7 @@ def get_datamap(x):
     """
     return (x[0],x[2])
 
-## Add the data for the Views:
-
 print "["
-
 for table, entries in [("grampsdb.config", 
                         [(("setting", "\"db_version\""), 
                           ("description", "\"database scheme version\""),
@@ -63,27 +60,6 @@ for table, entries in [("grampsdb.config",
         print "         }"
         print "   },"
         entry_count += 1
-
-count = 1
-for name,constr in [("Person", "Person", ), 
-                    ("Event", "Event", ),
-                    ("Family", "Family", ),
-                    ("Place", "Place", ),
-                    ("Source", "Source", ),
-                    ("Media", "MediaObject", ),
-                    ("Repository", "Repository", ),
-                    ("Note", "Note", ),
-                    ]:
-    print "   {"
-    print "      \"model\": \"views.%s\"," % "view"
-    print "      \"pk\": %d," % count
-    print "      \"fields\":"
-    print "         {"
-    print "            \"name\"   : \"%s\"," % name
-    print "            \"constructor\": \"%s\"" % constr
-    print "         }"
-    print "   },"
-    count += 1
 
 ## Add the data for the type models:
 

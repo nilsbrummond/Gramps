@@ -89,9 +89,7 @@ class mGrampsType(models.Model):
 
     name = models.CharField(max_length=40)
     
-    def __unicode__(self): return "%s: (%d,%s)" % (self.__class__.__name__,
-                                                   self.val,
-                                                   self.name)
+    def __unicode__(self): return self.name
 
     def get_default_type(self):
         """ return a tuple default (val,name) """
