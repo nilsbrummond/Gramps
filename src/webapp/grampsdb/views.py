@@ -195,16 +195,18 @@ def process_report_run(request, handle):
         if report.options:
             for pair in str(report.options).split(" "):
                 if "=" in pair:
-                    key, value = pair.split("=", 1)
-                    args[key] = value
+                    key, value = [x.strip() for x in pair.split("=", 1)]
+                    if key and value:
+                        args[key] = value
         # override from options on webpage:
         if request.GET.has_key("options"):
             options = str(request.GET.get("options"))
             if options:
-                for pair in options.split(" "): # from webpage
+                for pair in options.split("\n"): # from webpage
                     if "=" in pair:
-                        key, value = pair.split("=", 1)
-                        args[key] = value
+                        key, value = [x.strip() for x in pair.split("=", 1)]
+                        if key and value:
+                            args[key] = value
         #############################################################################
         if report.report_type == "report":
             filename = "/tmp/%s-%s.%s" % (str(profile.user.username), str(handle), args["off"])
@@ -437,6 +439,7 @@ def action(request, view, handle, act, add_to=None):
     View a particular object given /object/handle (implied view),
     /object/handle/action, or /object/add.
     """
+    from webapp.reports import get_plugin_options
     # redirect:
     rd = None
     obj = None
@@ -529,11 +532,34 @@ def action(request, view, handle, act, add_to=None):
         view_template = 'view_tag_detail.html'
         rd = process_tag(request, context, handle, act, add_to)
     elif view == "report":
-        if act not in ["add", "create", "share", "save-share"]:
+        if act not in ["add", "create"]:
             try:
                 obj = Report.objects.get(handle=handle)
             except:
                 raise Http404(_("Requested %s does not exist.") % view)
+        override = {} 
+        if obj.options:
+            for pair in obj.options.split(" "):
+                key, value = pair.split("=")
+                override[key] = value
+        db = DbDjango()
+        opt_default, opt_help = get_plugin_options(db, obj.handle)
+        retval = ""
+        for key in sorted(opt_default.keys()):
+            if key in override:
+                retval += "%s=%s\n" % (key, override[key])
+                del override[key]
+            else:
+                retval += "%s=%s\n" % (key, repr(opt_default[key]))
+        # Any leftover overrides:
+        for key in sorted(override.keys()):
+            retval += "%s=%s\n" % (key, override[key])
+        obj.options = retval
+        retval = "<ol>"
+        for key in sorted(opt_help.keys()):
+            retval += "<li><b>%s</b>: %s</li>\n" % (key, opt_help[key][1])
+        retval += "</ol>"
+        context["help"] = retval
         view_template = 'view_report_detail.html'
         rd = process_report(request, context, handle, act)
     else:
@@ -1198,6 +1224,58 @@ def safe_int(num):
         return int(num)
     except:
         return -1
+
+def process_child(request, handle, act, child):
+    """
+    handle - Family handle
+    act - 'remove', 'up', or 'down'
+    child - child number
+    """
+    from webapp.grampsdb.forms import FamilyForm
+    context = RequestContext(request)
+    context["view"] = "family"
+    context["tview"] = _("Family")
+    context["tviews"] = _("Familes")
+    family = Family.objects.get(handle=handle)
+    obj_type = ContentType.objects.get_for_model(family)
+    childrefs = dji.ChildRef.filter(object_id=family.id,
+                                    object_type=obj_type).order_by("order")
+
+    if act == "remove":
+        person = childrefs[int(child) - 1].ref_object
+        [f.delete() for f in person.parent_families.filter(handle=handle)]
+        childrefs[int(child) - 1].delete()
+        dji.rebuild_cache(person)
+        dji.rebuild_cache(family)
+    elif act == "up":
+        if int(child) >= 2:
+            for ref in childrefs:
+                if ref.order == int(child):
+                    ref.order = ref.order - 1
+                elif ref.order == int(child) - 1:
+                    ref.order = ref.order + 1
+                else:
+                    ref.order = ref.order
+            for ref in childrefs:
+                ref.save()
+            dji.rebuild_cache(family)
+    elif act == "down":
+        if int(child) <= len(childrefs) - 1:
+            childrefs[int(child) - 1].order = int(child) + 1
+            childrefs[int(child)].order = int(child) 
+            childrefs[int(child) - 1].save()
+            childrefs[int(child)].save()
+            dji.rebuild_cache(family)
+    else:
+        raise Exception("invalid child action: %s" % act)
+    familyform = FamilyForm(instance=family)
+    familyform.model = family
+    context["familyform"] = familyform
+    context["object"] = family
+    context["family"] = family
+    context["action"] = "view"
+    view_template = "view_family_detail.html"
+    return render_to_response(view_template, context)
 
 def process_reference(request, ref_by, handle, ref_to, order):
     # FIXME: can I make this work for all?
