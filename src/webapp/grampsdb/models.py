@@ -459,16 +459,27 @@ class PrimaryObject(models.Model):
         return "/%s/%s" % (self.__class__.__name__.lower(),
                            self.handle)
 
+class PersonFamilyOrder(models.Model):
+    person = models.ForeignKey("Person")
+    family = models.ForeignKey("Family")
+    order = models.PositiveIntegerField(default=1)
+
+class PersonParentFamilyOrder(models.Model):
+    person = models.ForeignKey("Person")
+    family = models.ForeignKey("Family")
+    order = models.PositiveIntegerField(default=1)
+
 class Person(PrimaryObject):
     """
     The model for the person object
     """
     gender_type = models.ForeignKey('GenderType', verbose_name="Gender")
     probably_alive = models.BooleanField("Probably alive")
-    families = models.ManyToManyField('Family', blank=True, null=True)
+    families = models.ManyToManyField('Family', blank=True, null=True, through="PersonFamilyOrder")
     parent_families = models.ManyToManyField('Family', 
                                              related_name="parent_families",
-                                             blank=True, null=True)
+                                             blank=True, null=True, 
+                                             through='PersonParentFamilyOrder')
     #addresses = models.ManyToManyField('Address', null=True, blank=True)
     references = generic.GenericRelation('PersonRef', related_name="refs",
                                          content_type_field="object_type",

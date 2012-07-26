@@ -259,7 +259,7 @@ class DjangoInterface(object):
         return map(self.pack_event_ref, eventrefs)
 
     def get_family_list(self, person): # person has families
-        return [fam.handle for fam in person.families.all()]
+        return [fam.handle for fam in person.families.all().order_by("order")]
 
     def get_parent_family_list(self, person):
         return [fam.handle for fam in person.parent_families.all()]
