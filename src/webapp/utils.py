@@ -581,7 +581,7 @@ def data_table(obj, user, act, url=None, *args):
     if user.is_authenticated():
         item_class = obj.__class__.__name__.lower()
         if item_class == "citation":
-            refs = models.CitationDatamap.objects.filter(citatioon=obj).order_by("order")
+            refs = models.CitationDatamap.objects.filter(citation=obj).order_by("order")
         elif item_class == "source":
             refs = models.SourceDatamap.objects.filter(source=obj).order_by("order")
         count = 1
