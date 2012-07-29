@@ -47,6 +47,7 @@ from django.shortcuts import get_object_or_404, render_to_response, redirect
 from django.template import Context, RequestContext
 from django.db.models import Q
 from django.forms.models import modelformset_factory
+from django.utils import simplejson
 
 #------------------------------------------------------------------------
 #
@@ -1386,3 +1387,32 @@ def process_list_item(request, view, handle, act, item, index):
             count += 1
     dji.rebuild_cache(obj)
     return redirect("/%s/%s/%s" % (view, handle, tab[item]))
+
+def process_json_request(request):
+    """
+    Process an Ajax/Json query request.
+    """
+    if not request.user.is_authenticated():
+        response_data = {"results": [], "total": 0}
+        return HttpResponse(simplejson.dumps(response_data), mimetype="application/json")
+    field = request.GET.get("field", None)
+    query = request.GET.get("q", "")
+    page = int(request.GET.get("p", "1"))
+    size = int(request.GET.get("s", "10"))
+    if field == "mother":
+        q, order, terms = build_person_query(request, query)
+        q &= Q(person__gender_type__name="Female")
+        matches = Name.objects.filter(q).order_by(*order)
+    elif field == "father":
+        q, order, terms = build_person_query(request, query)
+        q &= Q(person__gender_type__name="Male")
+        matches = Name.objects.filter(q).order_by(*order)
+    else:
+        raise Exception("""Invalid field: '%s'; Example: /json/?field=mother&q=Smith&p=1&size=10""" % field)
+    response_data = {"results": [], "total": len(matches)}
+    for match in matches[(page - 1) * size:page * size]:
+        response_data["results"].append(
+            {"id": match.person.handle,
+             "name": match.get_selection_string(), 
+             })
+    return HttpResponse(simplejson.dumps(response_data), mimetype="application/json")

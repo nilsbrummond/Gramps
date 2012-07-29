@@ -124,34 +124,66 @@ def process_family(request, context, handle, act, add_to=None): # view, edit, sa
         familyform.model = family
     elif act == "save": # editing an existing family
         family = Family.objects.get(handle=handle)
+        # mother and father removed from FamilyForm
         old_family_mother = family.mother
         old_family_father = family.father
         familyform = FamilyForm(request.POST, instance=family)
         familyform.model = family
         if familyform.is_valid():
-            update_last_changed(family, request.user.username)
-            family = familyform.save()
-            # Remove family from previous mother/father if changed
-            if familyform.cleaned_data["mother"] != old_family_mother and old_family_mother:
-                MyFamilies.objects.get(person=old_family_mother, family=family).delete()
-            if familyform.cleaned_data["father"] != old_family_father and old_family_father:
-                MyFamilies.objects.get(person=old_family_father, family=family).delete()
-            # Add family to newly selected mother/father if needed:
-            if familyform.cleaned_data["mother"]:
-                if family not in familyform.cleaned_data["mother"].families.all():
-                    #family.mother.families.add(family)
-                    pfo = MyFamilies(person=familyform.cleaned_data["mother"], family=family, 
-                                     order=len(familyform.cleaned_data["mother"].families.all())+1)
-                    pfo.save()
-            if familyform.cleaned_data["father"]:
-                if family not in familyform.cleaned_data["father"].families.all():
-                    #family.father.families.add(family)
-                    pfo = MyFamilies(person=family.father, family=family, 
-                                     order=len(familyform.cleaned_data["father"].families.all())+1)
-                    pfo.save()
-            familyform.save()
-            dji.rebuild_cache(family)
-            act = "view"
+            # Get mother and father from input items:
+            mother_return = request.POST.get("mother_return", None)
+            father_return = request.POST.get("father_return", None)
+            # Mother is either: string of original, or selected then handle
+            old_mother_str = family.mother.get_selection_string() if family.mother else ""
+            is_valid = True
+            if mother_return == old_mother_str: # no change
+                pass
+            elif mother_return == "":
+                family.mother = None # clear mother
+            else:
+                try:
+                    family.mother = Person.objects.get(handle=mother_return)
+                except:
+                    request.user.message_set.create(message="Please select a valid mother")  
+                    is_valid = False
+            # Father is either: string of original, or selected then handle
+            old_father_str = family.father.get_selection_string() if family.father else ""
+            if father_return == old_father_str: # no change
+                pass
+            elif father_return == "":
+                family.father = None # clear father
+            else:
+                try:
+                    family.father = Person.objects.get(handle=father_return)
+                except:
+                    request.user.message_set.create(message="Please select a valid father")
+                    is_valid = False
+            if is_valid:
+                update_last_changed(family, request.user.username)
+                family = familyform.save()
+                # Remove family from previous mother/father if changed
+                if family.mother != old_family_mother and old_family_mother:
+                    MyFamilies.objects.get(person=old_family_mother, family=family).delete()
+                if family.father != old_family_father and old_family_father:
+                    MyFamilies.objects.get(person=old_family_father, family=family).delete()
+                # Add family to newly selected mother/father if needed:
+                if family.mother:
+                    if family not in family.mother.families.all():
+                        #family.mother.families.add(family)
+                        pfo = MyFamilies(person=family.mother, family=family, 
+                                         order=len(family.mother.families.all())+1)
+                        pfo.save()
+                if family.father:
+                    if family not in family.father.families.all():
+                        #family.father.families.add(family)
+                        pfo = MyFamilies(person=family.father, family=family, 
+                                         order=len(family.father.families.all())+1)
+                        pfo.save()
+                familyform.save()
+                dji.rebuild_cache(family)
+                act = "view"
+            else:
+                act = "edit"
         else:
             act = "edit"
     elif act == "create": 
@@ -161,34 +193,51 @@ def process_family(request, context, handle, act, add_to=None): # view, edit, sa
         familyform = FamilyForm(request.POST, instance=family)
         familyform.model = family
         if familyform.is_valid():
-            update_last_changed(family, request.user.username)
-            family = familyform.save()
-            if family.mother:
-                #family.mother.families.add(family)
-                pfo = MyFamilies(person=family.mother, family=family, 
-                                 order=len(family.mother.families.all())+1)
-                pfo.save()
-            if family.father:
-                #family.father.families.add(family)
-                pfo = MyFamilies(person=family.father, family=family,
-                                 order=len(family.father.families.all())+1)
-                pfo.save()
-            dji.rebuild_cache(family)
-            if add_to: # add child or spouse to family
-                item, handle = add_to
-                person = Person.objects.get(handle=handle)
-                if item == "child":
-                    dji.add_child_ref_default(family, person) # add person to family
-                    ##person.parent_families.add(family) # add family to child
-                    pfo = MyParentFamilies(person=person, family=family,
-                                           order=len(person.parent_families.all())+1)
+            # Get mother and father from input items:
+            mother_return = request.POST.get("mother_return", None)
+            father_return = request.POST.get("father_return", None)
+            is_valid = True
+            try:
+                family.mother = Person.objects.get(handle=mother_return)
+            except:
+                request.user.message_set.create(message="Please select a valid mother")
+                is_valid = False
+            try:
+                family.father = Person.objects.get(handle=father_return)
+            except:
+                request.user.message_set.create(message="Please select a valid father")
+                is_valid = False
+            if is_valid:
+                update_last_changed(family, request.user.username)
+                family = familyform.save()
+                if family.mother:
+                    #family.mother.families.add(family)
+                    pfo = MyFamilies(person=family.mother, family=family, 
+                                     order=len(family.mother.families.all())+1)
                     pfo.save()
-                #elif item == "spouse":
-                # already added by selecting
-                    person.save()
-                    dji.rebuild_cache(person) # rebuild child
-                return redirect("/%s/%s%s#tab-references" % ("person", handle, build_search(request)))
-            act = "view"
+                if family.father:
+                    #family.father.families.add(family)
+                    pfo = MyFamilies(person=family.father, family=family,
+                                     order=len(family.father.families.all())+1)
+                    pfo.save()
+                dji.rebuild_cache(family)
+                if add_to: # add child or spouse to family
+                    item, handle = add_to
+                    person = Person.objects.get(handle=handle)
+                    if item == "child":
+                        dji.add_child_ref_default(family, person) # add person to family
+                        ##person.parent_families.add(family) # add family to child
+                        pfo = MyParentFamilies(person=person, family=family,
+                                               order=len(person.parent_families.all())+1)
+                        pfo.save()
+                    #elif item == "spouse":
+                    # already added by selecting
+                        person.save()
+                        dji.rebuild_cache(person) # rebuild child
+                    return redirect("/%s/%s%s#tab-references" % ("person", handle, build_search(request)))
+                act = "view"
+            else:
+                act = "add"
         else:
             act = "add"
     elif act == "delete": 

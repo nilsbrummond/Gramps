@@ -513,6 +513,9 @@ class Person(PrimaryObject):
     def make_tag_list(self):
         return tuple()
 
+    def get_selection_string(self):
+        return self.name_set.get(preferred=True).get_selection_string()
+
 class Family(PrimaryObject):
     father = models.ForeignKey('Person', related_name="father_ref", 
                                null=True, blank=True)
@@ -719,6 +722,14 @@ class Name(DateObject, SecondaryObject):
             surname = "[No primary surname]"
         return "%s, %s" % (surname,
                            self.first_name)
+
+    def get_selection_string(self):
+        try:
+            surname = self.surname_set.get(primary=True)
+        except:
+            surname = "[No primary surname]"
+        return "%s, %s [%s]" % (surname, self.first_name, self.person.gramps_id)
+
     @staticmethod
     def get_dummy():
         name = Name()

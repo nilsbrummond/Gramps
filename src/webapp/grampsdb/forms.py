@@ -27,7 +27,7 @@
 from django import forms
 from django.forms.models import inlineformset_factory
 from django.forms.models import BaseModelFormSet
-from django.forms.widgets import TextInput
+from django.forms.widgets import TextInput, HiddenInput
 
 # Gramps Modules:
 from webapp.grampsdb.models import *
@@ -132,16 +132,7 @@ class SurnameForm(forms.ModelForm):
 class FamilyForm(forms.ModelForm):
     class Meta:
         model = Family
-        exclude = ["handle", "cache"] 
-
-    def __init__(self, *args, **kwargs):
-        super(FamilyForm, self).__init__(*args, **kwargs)
-        self.fields['father'].queryset = Person.objects.filter(
-            gender_type=get_type_from_name(GenderType, "Male")) \
-            .order_by("name__surname__surname", "name__first_name")
-        self.fields['mother'].queryset = Person.objects.filter(
-            gender_type=get_type_from_name(GenderType, "Female")) \
-            .order_by("name__surname__surname", "name__first_name")
+        exclude = ["handle", "cache", "mother", "father"] 
 
 class EventForm(forms.ModelForm):
     class Meta:
