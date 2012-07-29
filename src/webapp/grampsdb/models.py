@@ -791,11 +791,13 @@ class SourceDatamap(models.Model):
     key = models.CharField(max_length=80, blank=True)
     value = models.CharField(max_length=80, blank=True)
     source = models.ForeignKey("Source")
+    order = models.PositiveIntegerField()
 
 class CitationDatamap(models.Model):
     key = models.CharField(max_length=80, blank=True)
     value = models.CharField(max_length=80, blank=True)
     citation = models.ForeignKey("Citation")
+    order = models.PositiveIntegerField()
 
 class Address(DateObject, SecondaryObject):
     #locations = models.ManyToManyField('Location', null=True)

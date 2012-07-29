@@ -1314,13 +1314,14 @@ def process_list_item(request, view, handle, act, item, index):
     # /citation/872323636232635/down/attribute/2
     index = int(index)
     tab = {
-        "eventref":     "#tab-events", 
-        "citationref":  "#tab-citations", 
-        "attribute":    "#tab-attributes", 
-        "media":        "#tab-media", 
-        "lds":          "#tab-lds",
-        "parentfamily": "#tab-references",
-        "family":       "#tab-references",
+        "eventref":       "#tab-events", 
+        "citationref":    "#tab-citations", 
+        "repositoryref":  "#tab-repositories", 
+        "attribute":      "#tab-attributes", 
+        "media":          "#tab-media", 
+        "lds":            "#tab-lds",
+        "parentfamily":   "#tab-references",
+        "family":         "#tab-references",
         }
     if view == "person":
         obj = dji.Person.get(handle=handle)
@@ -1330,6 +1331,10 @@ def process_list_item(request, view, handle, act, item, index):
         obj = dji.Family.get(handle=handle)
     elif view == "citation":
         obj = dji.Citation.get(handle=handle)
+    elif view == "source":
+        obj = dji.Source.get(handle=handle)
+    else:
+        raise Exception("add '%s' to list" % view)
     obj_type = ContentType.objects.get_for_model(obj)
     # Next, get reference
     if item == "eventref":
@@ -1338,10 +1343,15 @@ def process_list_item(request, view, handle, act, item, index):
     elif item == "citationref":
         refs = dji.CitationRef.filter(object_id=obj.id,
                                       object_type=obj_type).order_by("order")
+    elif item == "repositoryref":
+        refs = dji.RepositoryRef.filter(object_id=obj.id,
+                                        object_type=obj_type).order_by("order")
     elif item == "parentfamily":
-        refs = dji.PersonParentFamilyOrder.filter(person=obj).order_by("order")
+        refs = dji.MyParentFamilies.filter(person=obj).order_by("order")
     elif item == "family":
-        refs = dji.PersonFamilyOrder.filter(person=obj).order_by("order")
+        refs = dji.MyFamilies.filter(person=obj).order_by("order")
+    else:
+        raise Exception("add '%s' to reference list" % item)
     # Next, perform action:
     if act == "remove":
         count = 1

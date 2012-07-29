@@ -90,12 +90,10 @@ util_tags = [
     "attribute_table",
     "data_table",
     "address_table",
-    "location_table",
     "media_table",
     "internet_table",
     "association_table",
     "lds_table",
-    "reference_table",
     "repository_table",
     "person_reference_table",
     "note_reference_table",
@@ -501,14 +499,37 @@ def repository_table(obj, user, act, url=None, *args):
     cssid = "tab-repositories"
     table = Table("repository_table")
     table.columns(
+        "",
         _("ID"),
+        _("Title"),
+        _("Call number"),
         _("Type"),
-        _("Note"))
+        )
     if user.is_authenticated():
-        pass
-    retval += table.get_html()
-    ## FIXME: missing table
-    ## has_data = True
+        obj_type = ContentType.objects.get_for_model(obj)
+        refs = dji.RepositoryRef.filter(object_type=obj_type,
+                                        object_id=obj.id)
+        count = 1
+        for repo_ref in refs:
+            repository = repo_ref.ref_object
+            table.row(
+                Link("[[x%d]][[^%d]][[v%d]]" % (count, count, count)) if user.is_superuser else "",
+                repository.gramps_id,
+                repository.name,
+                repo_ref.call_number, 
+                str(repository.repository_type),
+                )
+            has_data = True
+            count += 1
+        text = table.get_html()
+        count = 1
+        for repo_ref in refs:
+            item = obj.__class__.__name__.lower()
+            text = text.replace("[[x%d]]" % count, make_button("x", "/%s/%s/remove/repositoryref/%d" % (item, obj.handle, count)))
+            text = text.replace("[[^%d]]" % count, make_button("^", "/%s/%s/up/repositoryref/%d" % (item, obj.handle, count)))
+            text = text.replace("[[v%d]]" % count, make_button("v", "/%s/%s/down/repositoryref/%d" % (item, obj.handle, count)))
+            count += 1
+        retval += text
     if user.is_superuser and url and act == "view":
         retval += make_button(_("Add New Repository"), (url % args).replace("$act", "add"))
         retval += make_button(_("Add Existing Repository"), (url % args).replace("$act", "share"))
@@ -532,11 +553,10 @@ def note_table(obj, user, act, url=None, *args):
         note_refs = dji.NoteRef.filter(object_type=obj_type,
                                        object_id=obj.id)
         for note_ref in note_refs:
-            note = table.db.get_note_from_handle(
-                note_ref.ref_object.handle)
-            table.row(table.db.get_note_from_handle(note.handle),
-                      str(note_ref.ref_object.note_type),
-                      note_ref.ref_object.text[:50])
+            note = note_ref.ref_object
+            table.row(note,
+                      str(note.note_type),
+                      note.text[:50])
             has_data = True
     retval += table.get_html()
     if user.is_superuser and url and act == "view":
@@ -551,18 +571,43 @@ def note_table(obj, user, act, url=None, *args):
 def data_table(obj, user, act, url=None, *args):
     retval = ""
     has_data = False
-    cssid = "has_data"
+    cssid = "tab-data"
     table = Table("data_table")
-    table.columns(_("Type"), 
-                  _("Value"),
-                  )
+    table.columns(
+        "",
+        _("Type"), 
+        _("Value"),
+        )
     if user.is_authenticated():
-        pass
-    ## FIXME: missing table
-    ## has_data = True
-    retval += table.get_html()
+        item_class = obj.__class__.__name__.lower()
+        if item_class == "citation":
+            refs = models.CitationDatamap.objects.filter(citatioon=obj).order_by("order")
+        elif item_class == "source":
+            refs = models.SourceDatamap.objects.filter(source=obj).order_by("order")
+        count = 1
+        for ref in refs:
+            if item_class == "citation":
+                ref_obj = ref.citation
+            elif item_class == "source":
+                ref_obj = ref.source
+            table.row(
+                Link("[[x%d]][[^%d]][[v%d]]" % (count, count, count)) if user.is_superuser else "",
+                ref_obj.key,
+                ref_obj.value,
+                )
+            has_data = True
+            count += 1
+        text = table.get_html()
+        count = 1
+        for repo_ref in refs:
+            text = text.replace("[[x%d]]" % count, make_button("x", "/%s/%s/remove/datamap/%d" % (item_class, obj.handle, count)))
+            text = text.replace("[[^%d]]" % count, make_button("^", "/%s/%s/up/datamap/%d" % (item_class, obj.handle, count)))
+            text = text.replace("[[v%d]]" % count, make_button("v", "/%s/%s/down/datamap/%d" % (item_class, obj.handle, count)))
+            count += 1
+        retval += text
     if user.is_superuser and url and act == "view":
-        retval += make_button(_("Add Data"), (url % args))
+        # /data/$act/citation/%s
+        retval += make_button(_("Add Data"), (url.replace("$act", "add") % args))
     else:
         retval += nbsp("") # to keep tabs same height
     if has_data:
@@ -614,29 +659,6 @@ def address_table(obj, user, act, url=None, *args):
                           location.state,
                           location.country)
                 has_data = True
-    retval += table.get_html()
-    if user.is_superuser and url and act == "view":
-        retval += make_button(_("Add Address"), (url % args))
-    else:
-        retval += nbsp("") # to keep tabs same height
-    if has_data:
-        retval += """ <SCRIPT LANGUAGE="JavaScript">setHasData("%s", 1)</SCRIPT>\n""" % cssid
-    return retval
-
-def location_table(obj, user, act, url=None, *args):
-    retval = ""
-    has_data = False
-    cssid = "tab-locations"
-    table = Table("location_table")
-    table.columns(_("Date"), 
-                  _("Address"),
-                  _("City"),
-                  _("State"),
-                  _("Country"))
-    if user.is_authenticated():
-        pass # FIXME
-    ## FIXME: missing table
-    ## has_data = True
     retval += table.get_html()
     if user.is_superuser and url and act == "view":
         retval += make_button(_("Add Address"), (url % args))
@@ -709,13 +731,28 @@ def association_table(obj, user, act, url=None, *args):
                   _("ID"),
                   _("Association"))
     if user.is_authenticated():
-        gperson = table.db.get_person_from_handle(obj.handle)
-        if gperson:
-            associations = gperson.get_person_ref_list()
-            for association in associations:
-                table.row() # FIXME: missing table
+        person = table.db.get_person_from_handle(obj.handle)
+        if person:
+            links = []
+            count = 1
+            associations = person.get_person_ref_list()
+            for association in associations: # PersonRef
+                table.row(Link("[[x%d]][[^%d]][[v%d]]" % (count, count, count)) if user.is_superuser and url and act == "view" else "",
+                          association.ref_obj.get_primary_name(), 
+                          association.ref_obj.gramps_id, 
+                          association.description, 
+                          )
+                links.append(('URL', "/person/%s/association/%d" % (obj.handle, count))) 
                 has_data = True
-    retval += table.get_html()
+                count += 1
+            table.links(links)
+            text = table.get_html()
+            count = 1
+            for association in associations: # PersonRef
+                text = text.replace("[[x%d]]" % count, make_button("x", "/person/%s/remove/association/%d" % (obj.handle, count)))
+                text = text.replace("[[^%d]]" % count, make_button("^", "/person/%s/up/association/%d" % (obj.handle, count)))
+                text = text.replace("[[v%d]]" % count, make_button("v", "/person/%s/down/association/%d" % (obj.handle, count)))
+            retval += text
     if user.is_superuser and url and act == "view":
         retval += make_button(_("Add Association"), (url % args))
     else:
@@ -752,24 +789,6 @@ def lds_table(obj, user, act, url=None, *args):
     if has_data:
         retval += """ <SCRIPT LANGUAGE="JavaScript">setHasData("%s", 1)</SCRIPT>\n""" % cssid
     return retval
-
-def reference_table(obj, user, act, url=None, *args):
-    retval = ""
-    has_data = False
-    cssid = "tab-references"
-    table = Table("reference_table")
-    table.columns(
-        _("Type"),
-        _("Reference"), 
-        _("ID"))
-    if user.is_authenticated():
-        pass
-    ## FIXME: missing table?
-    retval += table.get_html()
-    retval += nbsp("") # to keep tabs same height
-    if has_data:
-        retval += """ <SCRIPT LANGUAGE="JavaScript">setHasData("%s", 1)</SCRIPT>\n""" % cssid
-    return retval 
 
 def person_reference_table(obj, user, act):
     retval = """<div style="overflow: auto; height:%spx;">""" % TAB_HEIGHT
@@ -953,8 +972,12 @@ def source_reference_table(obj, user, act):
         _("Reference"), 
         _("ID"))
     if user.is_authenticated() and act != "add":
-        pass
-    # FIXME: where is source ref?
+        for item in obj.citation_set.all():
+            table.row(
+                item.__class__.__name__,
+                item,
+                item.gramps_id)
+            has_data = True
     retval += table.get_html()
     retval += nbsp("") # to keep tabs same height
     if has_data:
@@ -995,8 +1018,15 @@ def place_reference_table(obj, user, act):
         _("Reference"), 
         _("ID"))
     if user.is_authenticated() and act != "add":
-        pass # FIXME
-    ## FIXME: missing table
+        # location, url, event, lds
+        querysets = [obj.location_set, obj.url_set, obj.event_set, obj.lds_set]
+        for queryset in querysets:
+            for item in queryset.all():
+                table.row(
+                    item.__class__.__name__,
+                    item,
+                    item.gramps_id)
+                has_data = True
     retval += table.get_html()
     retval += nbsp("") # to keep tabs same height
     if has_data:
@@ -1115,20 +1145,6 @@ def get_title(place):
         return place.title
     else:
         return ""
-
-def person_get_birth_date(person):
-    #db = DbDjango()
-    #event = get_birth_or_fallback(db, db.get_person_from_handle(person.handle))
-    #if event:
-    #    return event.date
-    return None
-
-def person_get_death_date(person):
-    #db = DbDjango()
-    #event = get_death_or_fallback(db, db.get_person_from_handle(person.handle))
-    #if event:
-    #    return event.date
-    return None
 
 def display_date(obj):
     date_tuple = dji.get_date(obj)
@@ -1489,3 +1505,17 @@ def make_log(obj, log_type, last_changed_by, reason, cache):
                      cache=cache)
     log.save()
     
+def person_get_birth_date(person):
+    #db = DbDjango()
+    #event = get_birth_or_fallback(db, db.get_person_from_handle(person.handle))
+    #if event:
+    #    return event.date
+    return None
+
+def person_get_death_date(person):
+    #db = DbDjango()
+    #event = get_death_or_fallback(db, db.get_person_from_handle(person.handle))
+    #if event:
+    #    return event.date
+    return None
+

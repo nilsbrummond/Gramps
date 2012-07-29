@@ -211,10 +211,10 @@ class DjangoInterface(object):
             return map(self.pack_name, names)
      
     def get_source_datamap(self, source): 
-        return dict([map.key, map.value] for map in source.sourcedatamap_set.all())
+        return dict([map.key, map.value] for map in source.sourcedatamap_set.all().order_by("order"))
 
     def get_citation_datamap(self, citation): 
-        return dict([map.key, map.value] for map in citation.citationdatamap_set.all())
+        return dict([map.key, map.value] for map in citation.citationdatamap_set.all().order_by("order"))
 
     def get_media_list(self, obj):
         obj_type = ContentType.objects.get_for_model(obj)
@@ -1021,18 +1021,22 @@ class DjangoInterface(object):
     ## Export individual objects:
     
     def add_source_datamap_dict(self, source, datamap_dict):
+        count = 1
         for key in datamap_dict:
             value = datamap_dict[key]
-            datamap = models.SourceDatamap(key=key, value=value)
+            datamap = models.SourceDatamap(key=key, value=value, order=count)
             datamap.source = source
             datamap.save()
+            count += 1
     
     def add_citation_datamap_dict(self, citation, datamap_dict):
+        count = 1
         for key in datamap_dict:
             value = datamap_dict[key]
-            datamap = models.CitationDatamap(key=key, value=value)
+            datamap = models.CitationDatamap(key=key, value=value, order=count)
             datamap.citation = citation
             datamap.save()
+            count += 1
     
     def add_lds(self, field, obj, data, order):
         (lcitation_list, lnote_list, date, type, place_handle,
