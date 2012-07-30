@@ -889,10 +889,10 @@ def build_place_query(request, search):
         order = ["gramps_id"]
     if search:
         if "[" in search: # "Place [I0002]" to match Flexbox and obj.get_select_string()
-            search = search.replace("[", "| id=^")
+            search = search.replace("[", "; id=^")
             search = search.replace("]", "$")
-        if "|" in search or "=" in search:
-            for term in [term.strip() for term in search.split("|")]:
+        if ";" in search or "=" in search:
+            for term in [term.strip() for term in search.split(";")]:
                 startswith = False
                 endswith = False
                 exact = False
@@ -1208,7 +1208,7 @@ def build_event_query(request, search):
                 elif field == "id":
                     query &= build_string_query("gramps_id", value, exact, startswith, endswith)
                 elif field == "description":
-                    query &= build_string_query("desc", value, exact, startswith, endswith)
+                    query &= build_string_query("description", value, exact, startswith, endswith)
                 elif field == "type":
                     query &= build_string_query("event_type__name", value, exact, startswith, endswith)
                 elif field == "place":
@@ -1218,12 +1218,12 @@ def build_event_query(request, search):
         else: # no search fields, just raw search
             if protect:
                 query &= (Q(gramps_id__icontains=search) |
-                          Q(desc__icontains=search) |
+                          Q(description__icontains=search) |
                           Q(event_type__name__icontains=search) |
                           Q(place__title__icontains=search))
             else:
                 query &= (Q(gramps_id__icontains=search) |
-                          Q(desc__icontains=search) |
+                          Q(description__icontains=search) |
                           Q(event_type__name__icontains=search) |
                           Q(place__title__icontains=search))
     else: # no search
@@ -1418,6 +1418,15 @@ def process_json_request(request):
     elif field == "father":
         q, order, terms = build_person_query(request, query)
         q &= Q(person__gender_type__name="Male")
+        matches = Name.objects.filter(q).order_by(*order)
+        response_data = {"results": [], "total": len(matches)}
+        for match in matches[(page - 1) * size:page * size]:
+            response_data["results"].append(
+                {"id": match.person.handle,
+                 "name": match.get_selection_string(), 
+                 })
+    elif field == "person":
+        q, order, terms = build_person_query(request, query)
         matches = Name.objects.filter(q).order_by(*order)
         response_data = {"results": [], "total": len(matches)}
         for match in matches[(page - 1) * size:page * size]:
