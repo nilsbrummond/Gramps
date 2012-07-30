@@ -138,7 +138,8 @@ class EventForm(forms.ModelForm):
     class Meta:
         model = Event
         exclude = ["handle", "sortval", "month1", "year1", "day1",
-                   "newyear", "calendar", "modifier", "quality", "cache"]
+                   "newyear", "calendar", "modifier", "quality", "cache",
+                   "place"]
 
     def clean(self):
         from webapp.utils import dp

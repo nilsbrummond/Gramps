@@ -612,6 +612,9 @@ class Place(PrimaryObject):
     lat = models.TextField(blank=True)
     #url_list = models.ManyToManyField('Url', null=True, blank=True)
 
+    def get_selection_string(self):
+        return "%s [%s]" % (self.title, self.gramps_id)
+
     def __unicode__(self):
         return str(self.title)
 

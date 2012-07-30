@@ -260,7 +260,8 @@ function setReturnValues() {
     var elems = document.getElementsByTagName('*'), i;
     for (i in elems) {
         if ((" " + elems[i].name + " ").indexOf("_return ") > -1) {
-            var s = elems[i].name.substring(0, 6);
+	    var pos = (" " + elems[i].name + " ").indexOf("_return ");
+            var s = elems[i].name.substring(0, pos - 1);
 	    var v = document.getElementsByName(s)[0];
 	    elems[i].value = v.value;
 	}

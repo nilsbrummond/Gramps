@@ -602,7 +602,7 @@ def build_person_query(request, search):
     """
     protect = not request.user.is_authenticated()
     ### Build the order:
-    terms = ["surname", "given", "tag"]
+    terms = ["surname", "given", "id", "tag"]
     if protect:
         # Do this to get the names sorted by private/alive 
         query = Q(private=False) & Q(person__private=False)
@@ -879,7 +879,7 @@ def build_note_query(request, search):
     return query, order, terms
 
 def build_place_query(request, search):
-    terms = ["id", "title"]
+    terms = ["title", "id"]
     protect = not request.user.is_authenticated()
     if protect:
         query = Q(private=False) # general privacy
@@ -888,8 +888,11 @@ def build_place_query(request, search):
         query = Q()
         order = ["gramps_id"]
     if search:
-        if "," in search or "=" in search:
-            for term in [term.strip() for term in search.split(",")]:
+        if "[" in search: # "Place [I0002]" to match Flexbox and obj.get_select_string()
+            search = search.replace("[", "| id=^")
+            search = search.replace("]", "$")
+        if "|" in search or "=" in search:
+            for term in [term.strip() for term in search.split("|")]:
                 startswith = False
                 endswith = False
                 exact = False
@@ -1406,16 +1409,31 @@ def process_json_request(request):
         q, order, terms = build_person_query(request, query)
         q &= Q(person__gender_type__name="Female")
         matches = Name.objects.filter(q).order_by(*order)
+        response_data = {"results": [], "total": len(matches)}
+        for match in matches[(page - 1) * size:page * size]:
+            response_data["results"].append(
+                {"id": match.person.handle,
+                 "name": match.get_selection_string(), 
+                 })
     elif field == "father":
         q, order, terms = build_person_query(request, query)
         q &= Q(person__gender_type__name="Male")
         matches = Name.objects.filter(q).order_by(*order)
+        response_data = {"results": [], "total": len(matches)}
+        for match in matches[(page - 1) * size:page * size]:
+            response_data["results"].append(
+                {"id": match.person.handle,
+                 "name": match.get_selection_string(), 
+                 })
+    elif field == "place":
+        q, order, terms = build_place_query(request, query)
+        matches = Place.objects.filter(q).order_by(*order)
+        response_data = {"results": [], "total": len(matches)}
+        for match in matches[(page - 1) * size:page * size]:
+            response_data["results"].append(
+                {"id": match.handle,
+                 "name": match.get_selection_string(), 
+                 })
     else:
         raise Exception("""Invalid field: '%s'; Example: /json/?field=mother&q=Smith&p=1&size=10""" % field)
-    response_data = {"results": [], "total": len(matches)}
-    for match in matches[(page - 1) * size:page * size]:
-        response_data["results"].append(
-            {"id": match.person.handle,
-             "name": match.get_selection_string(), 
-             })
     return HttpResponse(simplejson.dumps(response_data), mimetype="application/json")

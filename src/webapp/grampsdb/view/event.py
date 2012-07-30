@@ -187,17 +187,35 @@ def process_event(request, context, handle, act, add_to=None): # view, edit, sav
         eventform.model = event
     elif act == "save": 
         event = Event.objects.get(handle=handle)
+        old_place = event.place
+        old_place_handle = event.place.handle if event.place else ""
         eventform = EventForm(request.POST, instance=event)
         eventform.model = event
         if eventform.is_valid():
-            update_last_changed(event, request.user.username)
-            event = eventform.save()
-            # Check any person that might be referenced to see if
-            # birth/death issues changed:
-            check_event(event)
-            event.save()
-            dji.rebuild_cache(event)
-            act = "view"
+            place_return = request.POST.get("place_return", "")
+            is_valid = True
+            if place_return == old_place_handle: # same!
+                pass
+            else: # diff!
+                if place_return == "": # clear it
+                    event.place = None
+                else:
+                    try:
+                        event.place = Place.objects.get(handle=place_return)
+                    except:
+                        request.user.message_set.create(message="Please select a valid place")  
+                        is_valid = False
+            if is_valid:
+                update_last_changed(event, request.user.username)
+                event = eventform.save()
+                # Check any person that might be referenced to see if
+                # birth/death issues changed:
+                check_event(event)
+                event.save()
+                dji.rebuild_cache(event)
+                act = "view"
+            else:
+                act = "edit"
         else:
             act = "edit"
     elif act == "create": 
@@ -205,20 +223,31 @@ def process_event(request, context, handle, act, add_to=None): # view, edit, sav
         eventform = EventForm(request.POST, instance=event)
         eventform.model = event
         if eventform.is_valid():
-            update_last_changed(event, request.user.username)
-            event = eventform.save()
-            dji.rebuild_cache(event)
-            if add_to:
-                item, handle = add_to
-                model = dji.get_model(item)
-                obj = model.objects.get(handle=handle)
-                dji.add_event_ref_default(obj, event)
-                if item == "person": # then need to recheck birth/death indexes:
-                    recheck_birth_death_refs(obj)
-                    obj.save()
-                dji.rebuild_cache(obj)                
-                return redirect("/%s/%s#tab-events" % (item, handle))
-            act = "view"
+            place_return = request.POST.get("place_return", "")
+            is_valid = True
+            if place_return:
+                try:
+                    event.place = Place.objects.get(handle=place_return)
+                except:
+                    request.user.message_set.create(message="Please select a valid place")
+                    is_valid = False
+            if is_valid:
+                update_last_changed(event, request.user.username)
+                event = eventform.save()
+                dji.rebuild_cache(event)
+                if add_to:
+                    item, handle = add_to
+                    model = dji.get_model(item)
+                    obj = model.objects.get(handle=handle)
+                    dji.add_event_ref_default(obj, event)
+                    if item == "person": # then need to recheck birth/death indexes:
+                        recheck_birth_death_refs(obj)
+                        obj.save()
+                    dji.rebuild_cache(obj)                
+                    return redirect("/%s/%s#tab-events" % (item, handle))
+                act = "view"
+            else:
+                act = "add"
         else:
             act = "add"
     elif act == "delete": 
