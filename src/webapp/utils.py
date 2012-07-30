@@ -449,6 +449,8 @@ def surname_table(obj, user, act, url=None, *args):
     return retval
 
 def citation_table(obj, user, act, url=None, *args):
+    # FIXME: how can citation_table and source_table both be on same
+    # page? This causes problems with form names, tab names, etc.
     retval = ""
     has_data = False
     cssid = "tab-sources"
@@ -739,8 +741,8 @@ def association_table(obj, user, act, url=None, *args):
             associations = person.get_person_ref_list()
             for association in associations: # PersonRef
                 table.row(Link("[[x%d]][[^%d]][[v%d]]" % (count, count, count)) if user.is_superuser and url and act == "view" else "",
-                          association.ref_obj.get_primary_name(), 
-                          association.ref_obj.gramps_id, 
+                          association.ref_object.get_primary_name(), 
+                          association.ref_object.gramps_id, 
                           association.description, 
                           )
                 links.append(('URL', "/person/%s/association/%d" % (obj.handle, count))) 
