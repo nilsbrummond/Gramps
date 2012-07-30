@@ -17,7 +17,7 @@
     <script type="text/javascript" src="/styles/javascript/jquery-ui-1.7.2.custom.min.js"></script>
     <script type="text/javascript" src="/styles/jhtmlarea/scripts/jHtmlArea-0.7.0.js"></script>	 
     <link rel="Stylesheet" type="text/css" href="/styles/jhtmlarea/style/jHtmlArea.css" />
-    <script type="text/javascript" src="/styles/javascript/jquery.flexbox.min.js"></script></p>  
+    <script type="text/javascript" src="/styles/javascript/jquery.flexbox.min.js"></script>
     <link type="text/css" rel="stylesheet" href="/styles/css/jquery.flexbox.css" />  
     {% endblock %}
 
@@ -362,11 +362,11 @@ function setReturnValues() {
    </div>
     <div class="grampsweb">
      {% for message in messages %}
-        <font color="red">{{message}}</font>
+        <font color="red">{{message}}</font><br/>
      {% endfor %}
      {% if message %}
         <div id="system_message" class="{{ message_type }}">
-           <font color="red">{{message}}</font>
+           <font color="red">{{message}}</font><br/>
         </div>
     {% endif %}
     {% block content %}

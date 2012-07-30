@@ -613,6 +613,9 @@ def build_person_query(request, search):
         order = ["surname__surname", "first_name"]
     ### Build the query:
     if search:
+        if "[" in search: # "Surname, Given [I0002]" to match Flexbox and obj.get_select_string()
+            search = search.replace("[", ", id=^")
+            search = search.replace("]", "$")
         if "," in search or "=" in search:
             for term in [term.strip() for term in search.split(",")]:
                 startswith = False

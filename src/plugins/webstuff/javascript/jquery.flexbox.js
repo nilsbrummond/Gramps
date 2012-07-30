@@ -59,7 +59,7 @@
         var $hdn = $('<input type="hidden"/>')
             .attr('id', $div.attr('id') + '_hidden')
             .attr('name', $div.attr('id'))
-            .val(o.initialValue)
+            .val(o.initialId)
             .appendTo($div);
         var $input = $('<input/>')
             .attr('id', $div.attr('id') + '_input')
@@ -835,6 +835,7 @@
         displayValue: 'name', // json element whose value is displayed on select
         hiddenValue: 'id', // json element whose value is submitted when form is submitted
         initialValue: '', // what should the value of the input field be when the form is loaded?
+        initialId: '', // what should the value of the hidden field be when the form is loaded?
         watermark: '', // text that appears when flexbox is loaded, if no initialValue is specified.  style with css class '.ffb-input.watermark'
         width: 200, // total width of flexbox.  auto-adjusts based on showArrow value
         resultsProperty: 'results', // json property in response that references array of results

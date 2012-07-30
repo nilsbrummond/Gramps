@@ -46,7 +46,8 @@
 	        paging: {  
                   pageSize: 10  
 	        },
-  	        initialValue: '{{family.father.get_selection_string}}'
+  	        initialValue: '{{family.father.get_selection_string}}',
+  	        initialId: '{{family.father.handle}}'
 	        });
         });  
     // </script>
@@ -71,7 +72,8 @@
 	        paging: {  
                   pageSize: 10  
 	        },
-	        initialValue: '{{family.mother.get_selection_string}}'
+	        initialValue: '{{family.mother.get_selection_string}}',
+  	        initialId: '{{family.mother.handle}}'
 	        });
         });  
     // </script>
@@ -181,6 +183,8 @@
   {% else %}
     {% ifequal action "add" %}
       {% make_button "Cancel" "/family/" args %}
+      <input type="hidden" id="father_return" name="father_return" value=""/>
+      <input type="hidden" id="mother_return" name="mother_return" value=""/>
       <input type="hidden" name="action" value="create"/>
       <input type="hidden" name="search" value="{{search}}"/>
       <input type="hidden" name="page" value="{{page}}"/>

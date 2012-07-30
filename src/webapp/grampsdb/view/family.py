@@ -125,47 +125,50 @@ def process_family(request, context, handle, act, add_to=None): # view, edit, sa
     elif act == "save": # editing an existing family
         family = Family.objects.get(handle=handle)
         # mother and father removed from FamilyForm
-        old_family_mother = family.mother
-        old_family_father = family.father
+        old_mother = family.mother
+        old_father = family.father
+        old_mother_handle = family.mother.handle if family.mother else ""
+        old_father_handle = family.father.handle if family.father else ""
         familyform = FamilyForm(request.POST, instance=family)
         familyform.model = family
         if familyform.is_valid():
             # Get mother and father from input items:
-            mother_return = request.POST.get("mother_return", None)
-            father_return = request.POST.get("father_return", None)
-            # Mother is either: string of original, or selected then handle
-            old_mother_str = family.mother.get_selection_string() if family.mother else ""
+            mother_return = request.POST.get("mother_return", "")
+            father_return = request.POST.get("father_return", "")
+            # Editing an existing family
             is_valid = True
-            if mother_return == old_mother_str: # no change
+            # Handle changing mother:
+            if mother_return == old_mother_handle: # no change
+                pass # either none, or the same; either way nothing to change!
+            else: # They are different!
+                if mother_return == "": # must be a clear
+                    family.mother = None # clear mother
+                else: # must be a new pick
+                    try:
+                        family.mother = Person.objects.get(handle=mother_return)
+                    except:
+                        request.user.message_set.create(message="Please select a valid mother")  
+                        is_valid = False
+            # Handle changing father:
+            if father_return == old_father_handle: # no change
                 pass
-            elif mother_return == "":
-                family.mother = None # clear mother
-            else:
-                try:
-                    family.mother = Person.objects.get(handle=mother_return)
-                except:
-                    request.user.message_set.create(message="Please select a valid mother")  
-                    is_valid = False
-            # Father is either: string of original, or selected then handle
-            old_father_str = family.father.get_selection_string() if family.father else ""
-            if father_return == old_father_str: # no change
-                pass
-            elif father_return == "":
-                family.father = None # clear father
-            else:
-                try:
-                    family.father = Person.objects.get(handle=father_return)
-                except:
-                    request.user.message_set.create(message="Please select a valid father")
-                    is_valid = False
+            else: # They are different!
+                if father_return == "":
+                    family.father = None # clear father
+                else:
+                    try:
+                        family.father = Person.objects.get(handle=father_return)
+                    except:
+                        request.user.message_set.create(message="Please select a valid father")
+                        is_valid = False
             if is_valid:
                 update_last_changed(family, request.user.username)
                 family = familyform.save()
                 # Remove family from previous mother/father if changed
-                if family.mother != old_family_mother and old_family_mother:
-                    MyFamilies.objects.get(person=old_family_mother, family=family).delete()
-                if family.father != old_family_father and old_family_father:
-                    MyFamilies.objects.get(person=old_family_father, family=family).delete()
+                if family.mother != old_mother and old_mother:
+                    MyFamilies.objects.get(person=old_mother, family=family).delete()
+                if family.father != old_father and old_father:
+                    MyFamilies.objects.get(person=old_father, family=family).delete()
                 # Add family to newly selected mother/father if needed:
                 if family.mother:
                     if family not in family.mother.families.all():
@@ -197,16 +200,18 @@ def process_family(request, context, handle, act, add_to=None): # view, edit, sa
             mother_return = request.POST.get("mother_return", None)
             father_return = request.POST.get("father_return", None)
             is_valid = True
-            try:
-                family.mother = Person.objects.get(handle=mother_return)
-            except:
-                request.user.message_set.create(message="Please select a valid mother")
-                is_valid = False
-            try:
-                family.father = Person.objects.get(handle=father_return)
-            except:
-                request.user.message_set.create(message="Please select a valid father")
-                is_valid = False
+            if mother_return:
+                try:
+                    family.mother = Person.objects.get(handle=mother_return)
+                except:
+                    request.user.message_set.create(message="Please select a valid mother")
+                    is_valid = False
+            if father_return:
+                try:
+                    family.father = Person.objects.get(handle=father_return)
+                except:
+                    request.user.message_set.create(message="Please select a valid father")
+                    is_valid = False
             if is_valid:
                 update_last_changed(family, request.user.username)
                 family = familyform.save()

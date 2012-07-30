@@ -93,6 +93,7 @@ util_tags = [
     "media_table",
     "internet_table",
     "association_table",
+    "location_table",
     "lds_table",
     "repository_table",
     "person_reference_table",
@@ -761,6 +762,39 @@ def association_table(obj, user, act, url=None, *args):
         retval += """ <SCRIPT LANGUAGE="JavaScript">setHasData("%s", 1)</SCRIPT>\n""" % cssid
     return retval
 
+def location_table(obj, user, act, url=None, *args):	 
+    # obj is Place or Address
+    retval = ""	 
+    has_data = False	 
+    cssid = "tab-alternatelocations"	 
+    table = Table("location_table")	 
+    table.columns(_("Street"),	 
+                  _("Locality"),	 
+                  _("City"),	 
+                  _("State"),	 
+                  _("Country"))	 
+    if user.is_authenticated():	 
+        # FIXME: location confusion!
+        # The single Location on the Location Tab is here too?
+        # I think if Parish is None, then these are single Locations;
+        # else they are in the table of alternate locations
+        for location in obj.location_set.all().order_by("order"):
+            table.row(
+                location.street,
+                location.locality,
+                location.city,
+                location.state,
+                location.country)
+            has_data = True
+    retval += table.get_html()	 
+    if user.is_superuser and url and act == "view":	 
+        retval += make_button(_("Add Address"), (url % args))	 
+    else:	 
+        retval += nbsp("") # to keep tabs same height	 
+    if has_data:	 
+        retval += """ <SCRIPT LANGUAGE="JavaScript">setHasData("%s", 1)</SCRIPT>\n""" % cssid	 
+    return retval	 
+
 def lds_table(obj, user, act, url=None, *args):
     retval = ""
     has_data = False
@@ -1015,8 +1049,7 @@ def place_reference_table(obj, user, act):
     table = Table("place_reference_table")
     table.columns(
         _("Type"),
-        _("Reference"), 
-        _("ID"))
+        _("Reference"))
     if user.is_authenticated() and act != "add":
         # location, url, event, lds
         querysets = [obj.location_set, obj.url_set, obj.event_set, obj.lds_set]
@@ -1024,8 +1057,7 @@ def place_reference_table(obj, user, act):
             for item in queryset.all():
                 table.row(
                     item.__class__.__name__,
-                    item,
-                    item.gramps_id)
+                    item)
                 has_data = True
     retval += table.get_html()
     retval += nbsp("") # to keep tabs same height
