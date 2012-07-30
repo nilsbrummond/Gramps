@@ -451,7 +451,7 @@ def surname_table(obj, user, act, url=None, *args):
 def citation_table(obj, user, act, url=None, *args):
     retval = ""
     has_data = False
-    cssid = "tab-citations"
+    cssid = "tab-sources"
     table = Table("citation_table")
     table.columns("", 
                   _("ID"), 
