@@ -533,7 +533,7 @@
                         pattern = '(>)([^<]*?)(' + q + ')((.|\n)*?)(<)'; // TODO: look for a better way
                         replaceString = '$1$2<span class="' + o.matchClass + '">$3</span>$4$6';
                     }
-                    result = result.replace(new RegExp(pattern, o.highlightMatchesRegExModifier), replaceString);
+                    result = result.replace(new RegExp(pattern.replace("[", "\\["), o.highlightMatchesRegExModifier), replaceString);
                 }
 
                 // write the value of the first match to the input box, and select the remainder,
