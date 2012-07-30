@@ -18,19 +18,19 @@
     <td>{{ forloop.counter|row_count:page }}</td>
     <td><a href="/{{view}}/{{media.handle|escape}}{{args}}" class="noThumb browsecell"
 	{% if media.tags.all %}
-            style="color: {{media.tags.all.0.color}};"
+            style="color: {{media.tags.all.0.color|format_color}};"
 	{% endif %}
         >
            <span class="grampsid">[{{media.gramps_id}}]</span></a>
     {% if user.is_authenticated %}
     <td><a href="/{{view}}/{{media.handle|escape}}{{args}}" class="browsecell"
 	{% if media.tags.all %}
-            style="color: {{media.tags.all.0.color}};"
+            style="color: {{media.tags.all.0.color|format_color}};"
 	{% endif %}
         >{{media.desc|escape}}</a>
     <td><a href="/{{view}}/{{media.handle|escape}}{{args}}" class="browsecell"
 	{% if media.tags.all %}
-            style="color: {{media.tags.all.0.color}};"
+            style="color: {{media.tags.all.0.color|format_color}};"
 	{% endif %}
         >{{media.path|escape}}</a>
     {% else %}
