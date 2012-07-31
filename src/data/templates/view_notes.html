@@ -22,7 +22,7 @@
 	{% endif %}
         >
            <span class="grampsid">[{{note.gramps_id}}]</span></a>
-    {% if user.is_authenticated %}
+    {% if user.is_authenticated or note.public %}
     <td><a href="/{{view}}/{{note.handle|escape}}{{args}}" class="browsecell"
 	{% if note.tags.all %}
             style="color: {{note.tags.all.0.color|format_color}};"
@@ -34,8 +34,8 @@
 	{% endif %}
         >{{note.text|preview:70|nbsp}}</a>
     {% else %}
-      <td></td>
-      <td></td>
+      <td>[Private]</td>
+      <td>[Private]</td>
     {% endif %}
   </tr>
   {% endfor %}

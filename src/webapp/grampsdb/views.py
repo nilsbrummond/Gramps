@@ -604,6 +604,7 @@ def build_person_query(request, search):
     terms = ["surname", "given", "id", "tag", "public", "private"]
     if protect:
         # Do this to get the names sorted by private/alive 
+        # NOTE: names can be private
         query = Q(private=False) & Q(person__private=False)
         order = ["surname__surname", "private", "person__probably_alive", 
                  "first_name"]

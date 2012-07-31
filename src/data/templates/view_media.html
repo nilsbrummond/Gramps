@@ -22,7 +22,7 @@
 	{% endif %}
         >
            <span class="grampsid">[{{media.gramps_id}}]</span></a>
-    {% if user.is_authenticated %}
+    {% if user.is_authenticated or media.public %}
     <td><a href="/{{view}}/{{media.handle|escape}}{{args}}" class="browsecell"
 	{% if media.tags.all %}
             style="color: {{media.tags.all.0.color|format_color}};"

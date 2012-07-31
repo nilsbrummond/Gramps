@@ -310,7 +310,7 @@ def event_table(obj, user, act, url, args):
         _("Place"),
         _("Role"))
     table.column_widths = [10, 20, 10, 7, 20, 23, 10]
-    if user.is_authenticated():
+    if user.is_authenticated() or obj.public:
         obj_type = ContentType.objects.get_for_model(obj)
         event_ref_list = models.EventRef.objects.filter(
             object_id=obj.id, 
@@ -356,7 +356,7 @@ def history_table(obj, user, act):
         _("Action"), 
         _("Comment"),
         )
-    if user.is_authenticated():
+    if user.is_authenticated() or obj.public:
         obj_type = ContentType.objects.get_for_model(obj)
         for entry in models.Log.objects.filter(
             object_id=obj.id, 
@@ -387,7 +387,7 @@ def name_table(obj, user, act, url=None, *args):
                   _("Group As"),
                   _("Source"),
                   _("Note Preview"))
-    if user.is_authenticated():
+    if user.is_authenticated() or obj.public:
         links = []
         for name in obj.name_set.all().order_by("order"):
             obj_type = ContentType.objects.get_for_model(name)
@@ -428,7 +428,7 @@ def surname_table(obj, user, act, url=None, *args):
     cssid = "tab-surnames"
     table = Table("surname_table")
     table.columns(_("Order"), _("Surname"),)
-    if user.is_authenticated():
+    if user.is_authenticated() or obj.public:
         try:
             name = obj.name_set.filter(order=order)[0]
         except:
@@ -460,7 +460,7 @@ def citation_table(obj, user, act, url=None, *args):
                   _("Confidence"),
                   _("Page"))
     table.column_widths = [10, 10, 50, 30]
-    if user.is_authenticated():
+    if user.is_authenticated() or obj.public:
         obj_type = ContentType.objects.get_for_model(obj)
         citation_refs = dji.CitationRef.filter(object_type=obj_type,
                                                object_id=obj.id).order_by("order")
@@ -508,7 +508,7 @@ def repository_table(obj, user, act, url=None, *args):
         _("Call number"),
         _("Type"),
         )
-    if user.is_authenticated():
+    if user.is_authenticated() or obj.public:
         obj_type = ContentType.objects.get_for_model(obj)
         refs = dji.RepositoryRef.filter(object_type=obj_type,
                                         object_id=obj.id)
@@ -551,7 +551,7 @@ def note_table(obj, user, act, url=None, *args):
         _("ID"),
         _("Type"),
         _("Note"))
-    if user.is_authenticated():
+    if user.is_authenticated() or obj.public:
         obj_type = ContentType.objects.get_for_model(obj)
         note_refs = dji.NoteRef.filter(object_type=obj_type,
                                        object_id=obj.id)
@@ -581,7 +581,7 @@ def data_table(obj, user, act, url=None, *args):
         _("Type"), 
         _("Value"),
         )
-    if user.is_authenticated():
+    if user.is_authenticated() or obj.public:
         item_class = obj.__class__.__name__.lower()
         if item_class == "citation":
             refs = models.CitationDatamap.objects.filter(citation=obj).order_by("order")
@@ -625,7 +625,7 @@ def attribute_table(obj, user, act, url=None, *args):
     table.columns(_("Type"), 
                   _("Value"),
                   )
-    if user.is_authenticated():
+    if user.is_authenticated() or obj.public:
         obj_type = ContentType.objects.get_for_model(obj)
         attributes = dji.Attribute.filter(object_type=obj_type,
                                           object_id=obj.id)
@@ -652,7 +652,7 @@ def address_table(obj, user, act, url=None, *args):
                   _("City"),
                   _("State"),
                   _("Country"))
-    if user.is_authenticated():
+    if user.is_authenticated() or obj.public:
         for address in obj.address_set.all().order_by("order"):
             locations = address.location_set.all().order_by("order")
             for location in locations:
@@ -680,7 +680,7 @@ def media_table(obj, user, act, url=None, *args):
                   _("Type"),
                   _("Path/Filename"),
                   )
-    if user.is_authenticated():
+    if user.is_authenticated() or obj.public:
         obj_type = ContentType.objects.get_for_model(obj)
         media_refs = dji.MediaRef.filter(object_type=obj_type,
                                         object_id=obj.id)
@@ -709,7 +709,7 @@ def internet_table(obj, user, act, url=None, *args):
     table.columns(_("Type"),
                   _("Path"),
                   _("Description"))
-    if user.is_authenticated():
+    if user.is_authenticated() or obj.public:
         urls = dji.Url.filter(person=obj)
         for url_obj in urls:
             table.row(str(url_obj.url_type),
@@ -733,7 +733,7 @@ def association_table(obj, user, act, url=None, *args):
     table.columns(_("Name"), 
                   _("ID"),
                   _("Association"))
-    if user.is_authenticated():
+    if user.is_authenticated() or obj.public:
         person = table.db.get_person_from_handle(obj.handle)
         if person:
             links = []
@@ -775,7 +775,7 @@ def location_table(obj, user, act, url=None, *args):
                   _("City"),	 
                   _("State"),	 
                   _("Country"))	 
-    if user.is_authenticated():	 
+    if user.is_authenticated() or obj.public:
         # FIXME: location confusion!
         # The single Location on the Location Tab is here too?
         # I think if Parish is None, then these are single Locations;
@@ -807,7 +807,7 @@ def lds_table(obj, user, act, url=None, *args):
                   _("Status"),
                   _("Temple"),
                   _("Place"))
-    if user.is_authenticated():
+    if user.is_authenticated() or obj.public:
         obj_type = ContentType.objects.get_for_model(obj)
         ldss = obj.lds_set.all().order_by("order")
         for lds in ldss:
@@ -846,7 +846,7 @@ def person_reference_table(obj, user, act):
         _("Reference"), 
         )
     table2.column_widths = [10, 10, 82]
-    if user.is_authenticated() and act != "add":
+    if (user.is_authenticated() or obj.public) and act != "add":
         count = 1
         for through in models.MyFamilies.objects.filter(person=obj).order_by("order"):
             reference = through.family
@@ -907,7 +907,7 @@ def note_reference_table(obj, user, act):
         _("Type"),
         _("Reference"), 
         _("ID"))
-    if user.is_authenticated() and act != "add":
+    if (user.is_authenticated()  or obj.public) and act != "add":
         for reference in models.NoteRef.objects.filter(ref_object=obj):
             ref_from_class = reference.object_type.model_class()
             item = ref_from_class.objects.get(id=reference.object_id)
@@ -931,7 +931,7 @@ def event_reference_table(obj, user, act):
         _("Type"),
         _("Reference"), 
         _("ID"))
-    if user.is_authenticated() and act != "add":
+    if (user.is_authenticated() or obj.public) and act != "add":
         for reference in models.EventRef.objects.filter(ref_object=obj):
             ref_from_class = reference.object_type.model_class()
             try:
@@ -959,7 +959,7 @@ def repository_reference_table(obj, user, act):
         _("Type"),
         _("Reference"), 
         _("ID"))
-    if user.is_authenticated() and act != "add":
+    if (user.is_authenticated() or obj.public) and act != "add":
         for reference in models.RepositoryRef.objects.filter(ref_object=obj):
             ref_from_class = reference.object_type.model_class()
             item = ref_from_class.objects.get(id=reference.object_id)
@@ -984,7 +984,7 @@ def citation_reference_table(obj, user, act):
         _("Reference"), 
 #        _("ID")
         )
-    if user.is_authenticated() and act != "add":
+    if (user.is_authenticated() or obj.public) and act != "add":
         for reference in models.CitationRef.objects.filter(citation=obj):
             ref_from_class = reference.object_type.model_class()
             item = ref_from_class.objects.get(id=reference.object_id)
@@ -1007,7 +1007,7 @@ def source_reference_table(obj, user, act):
         _("Type"),
         _("Reference"), 
         _("ID"))
-    if user.is_authenticated() and act != "add":
+    if (user.is_authenticated() or obj.public) and act != "add":
         for item in obj.citation_set.all():
             table.row(
                 item.__class__.__name__,
@@ -1029,7 +1029,7 @@ def media_reference_table(obj, user, act):
         _("Type"),
         _("Reference"), 
         _("ID"))
-    if user.is_authenticated() and act != "add":
+    if (user.is_authenticated() or obj.public) and act != "add":
         for reference in models.MediaRef.objects.filter(ref_object=obj):
             ref_from_class = reference.object_type.model_class()
             item = ref_from_class.objects.get(id=reference.object_id)
@@ -1052,7 +1052,7 @@ def place_reference_table(obj, user, act):
     table.columns(
         _("Type"),
         _("Reference"))
-    if user.is_authenticated() and act != "add":
+    if (user.is_authenticated() or obj.public) and act != "add":
         # location, url, event, lds
         querysets = [obj.location_set, obj.url_set, obj.event_set, obj.lds_set]
         for queryset in querysets:
@@ -1076,7 +1076,7 @@ def tag_reference_table(obj, user, act):
         _("Type"),
         _("Reference"), 
         _("ID"))
-    if user.is_authenticated() and act != "add":
+    if (user.is_authenticated() or obj.public) and act != "add":
         querysets = [obj.person_set, obj.family_set, obj.note_set, obj.media_set]
         for queryset in querysets:
             for item in queryset.all():
@@ -1125,7 +1125,7 @@ def children_table(obj, user, act, url=None, *args):
     count = 1
     for childref in childrefs:
         child = childref.ref_object
-        if user.is_authenticated():
+        if user.is_authenticated() or obj.public:
             table.row(Link("[[x%d]][[^%d]][[v%d]]" % (count, count, count)) if user.is_superuser and url and act == "view" else "",
                       str(count), 
                       "[%s]" % child.gramps_id,
@@ -1212,7 +1212,7 @@ def render(formfield, user, act, id=None, url=None, *args):
                 else:
                     retval = str(item)
                 #### Some cleanup:
-                if fieldname == "private":
+                if fieldname == "private": # obj.private
                     if retval == "True":
                         retval = "Private"
                     elif retval == "False":
@@ -1294,15 +1294,15 @@ def date_as_text(obj, user):
     Given a Django object, render the date as text and return.  This
     function uses authentication settings.
     """
-    if (user.is_authenticated() or 
-        (not user.is_authenticated() and obj and not obj.private)):
+    if user.is_authenticated() or (obj and obj.public):
         if obj:
             date_tuple = dji.get_date(obj)
             if date_tuple:
                 gdate = GDate().unserialize(date_tuple)
                 return dd(gdate)
         return ""
-    return "[Private]"
+    else:
+        return "[Private]"
 
 def person_get_event(person, event_type=None):
     event_ref_list = dji.get_event_ref_list(person)
