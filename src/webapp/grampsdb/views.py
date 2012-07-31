@@ -61,7 +61,8 @@ from webapp.grampsdb.view import *
 from webapp.dbdjango import DbDjango
 import cli.user
 import gen.proxy
-from gen.const import VERSION
+from gen.const import VERSION_TUPLE
+from gen.utils.svn import get_svn_revision
 
 # Menu: (<Nice name>, /<path>/, <Model> | None, Need authentication ) 
 MENU = [
@@ -96,7 +97,7 @@ def context_processor(request):
     else:
         context["css_theme"] = "Web_Mainz.css"
     # Other things for all environments:
-    context["gramps_version"] = VERSION
+    context["gramps_version"] = ".".join([str(v) for v in VERSION_TUPLE]) + " " + get_svn_revision()
     context["views"] = VIEWS
     context["menu"] = MENU
     context["None"] = None
