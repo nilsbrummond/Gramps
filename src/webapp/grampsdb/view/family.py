@@ -248,6 +248,7 @@ def process_family(request, context, handle, act, add_to=None): # view, edit, sa
     elif act == "delete": 
         family = Family.objects.get(handle=handle)
         family.delete()
+        # FIXME: update caches, publics, etc.
         return redirect("/family/")
     else:
         raise Exception("Unhandled act: '%s'" % act)

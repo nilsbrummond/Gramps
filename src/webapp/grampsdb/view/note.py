@@ -136,6 +136,7 @@ def process_note(request, context, handle, act, add_to=None): # view, edit, save
         # FIXME: delete markup too for this note
         note = Note.objects.get(handle=handle)
         note.delete()
+        # FIXME: update caches, publics, etc.
         return redirect("/note/")
     else:
         raise Exception("Unhandled act: '%s'" % act)

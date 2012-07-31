@@ -112,6 +112,7 @@ def process_source(request, context, handle, act, add_to=None): # view, edit, sa
     elif act == "delete": 
         source = Source.objects.get(handle=handle)
         source.delete()
+        # FIXME: update caches, publics, etc.
         return redirect("/source/")
     else:
         raise Exception("Unhandled act: '%s'" % act)

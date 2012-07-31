@@ -1701,6 +1701,7 @@ class DjangoInterface(object):
         """
         Resets the cache version of an object, and saves it to the database.
         """
+        self.update_public(item, save=False)
         self.reset_cache(item)
         item.save()
     
@@ -1726,72 +1727,52 @@ class DjangoInterface(object):
                  self.Tag.all().count())
 
         for item in self.Note.all():
-            raw = self.get_person(item)
-            item.cache = base64.encodestring(cPickle.dumps(raw))
-            item.save()
+            self.rebuild_cache(item)
             count += 1
         callback(100 * (count/total if total else 0))
 
         for item in self.Person.all():
-            raw = self.get_person(item)
-            item.cache = base64.encodestring(cPickle.dumps(raw))
-            item.save()
+            self.rebuild_cache(item)
             count += 1
         callback(100 * (count/total if total else 0))
 
         for item in self.Family.all():
-            raw = self.get_family(item)
-            item.cache = base64.encodestring(cPickle.dumps(raw))
-            item.save()
+            self.rebuild_cache(item)
             count += 1
         callback(100 * (count/total if total else 0))
 
         for item in self.Source.all():
-            raw = self.get_source(item)
-            item.cache = base64.encodestring(cPickle.dumps(raw))
-            item.save()
+            self.rebuild_cache(item)
             count += 1
         callback(100 * (count/total if total else 0))
 
         for item in self.Event.all():
-            raw = self.get_event(item)
-            item.cache = base64.encodestring(cPickle.dumps(raw))
-            item.save()
+            self.rebuild_cache(item)
             count += 1
         callback(100 * (count/total if total else 0))
 
         for item in self.Repository.all():
-            raw = self.get_repository(item)
-            item.cache = base64.encodestring(cPickle.dumps(raw))
-            item.save()
+            self.rebuild_cache(item)
             count += 1
         callback(100 * (count/total if total else 0))
 
         for item in self.Place.all():
-            raw = self.get_place(item)
-            item.cache = base64.encodestring(cPickle.dumps(raw))
-            item.save()
+            self.rebuild_cache(item)
             count += 1
         callback(100 * (count/total if total else 0))
 
         for item in self.Media.all():
-            raw = self.get_media(item)
-            item.cache = base64.encodestring(cPickle.dumps(raw))
-            item.save()
+            self.rebuild_cache(item)
             count += 1
         callback(100 * (count/total if total else 0))
 
         for item in self.Citation.all():
-            raw = self.get_citation(item)
-            item.cache = base64.encodestring(cPickle.dumps(raw))
-            item.save()
+            self.rebuild_cache(item)
             count += 1
         callback(100 * (count/total if total else 0))
 
         for item in self.Tag.all():
-            raw = self.get_tag(item)
-            item.cache = base64.encodestring(cPickle.dumps(raw))
-            item.save()
+            self.rebuild_cache(item)
             count += 1
         callback(100)
 
@@ -1934,6 +1915,7 @@ class DjangoInterface(object):
             public, reason = self.is_public(obj.father, self.PersonRef)
             if not public:
                 return public, reason
+        # FIXME: what about Associations... anything else? Check PrivateProxy
         if objref:
             obj_ref_list = objref.filter(ref_object=obj)
             for reference in obj_ref_list:
@@ -1952,7 +1934,7 @@ class DjangoInterface(object):
                     return (False, "It is referenced by an item which is marked private.")
         return (True, "It is visible to the public.")
 
-    def update_public(self, obj):
+    def update_public(self, obj, save=True):
         """
         >>> dji.update_public(event)
 
@@ -1966,7 +1948,7 @@ class DjangoInterface(object):
         if obj.__class__.__name__ == "Event":
             objref = self.EventRef
         elif obj.__class__.__name__ == "Person":
-            objref = self.PersonRef
+            objref = self.PersonRef 
         elif obj.__class__.__name__ == "Note":
             objref = self.NoteRef
         elif obj.__class__.__name__ == "Repository":
@@ -1987,7 +1969,8 @@ class DjangoInterface(object):
         # Ok, update, if needed:
         if obj.public != public:
             obj.public = public
-            obj.save()
+            if save:
+                obj.save()
 
     def update_publics(self, callback=None):
         """

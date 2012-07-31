@@ -89,6 +89,7 @@ def process_place(request, context, handle, act, add_to=None): # view, edit, sav
     elif act == "delete": 
         place = Place.objects.get(handle=handle)
         place.delete()
+        # FIXME: update caches, publics, etc.
         return redirect("/place/")
     else:
         raise Exception("Unhandled act: '%s'" % act)

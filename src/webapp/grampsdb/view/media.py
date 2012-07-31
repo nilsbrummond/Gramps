@@ -179,6 +179,7 @@ def process_media(request, context, handle, act, add_to=None): # view, edit, sav
                 obj = model.objects.get(handle=handle)
                 dji.add_media_ref_default(obj, media)
                 dji.rebuild_cache(obj)
+                dji.rebuild_cache(media)
                 return redirect("/%s/%s#tab-gallery" % (item, handle))
             else:
                 dji.rebuild_cache(media)
@@ -188,6 +189,7 @@ def process_media(request, context, handle, act, add_to=None): # view, edit, sav
     elif act == "delete": 
         media = Media.objects.get(handle=handle)
         media.delete()
+        # FIXME: update caches, publics, etc.
         return redirect("/media/")
     else:
         raise Exception("Unhandled act: '%s'" % act)

@@ -583,7 +583,6 @@ def process_report(request, context, handle, act):
     context["tviews"] = _("Reports")
 
 def build_string_query(field, value, exact=False, startswith=False, endswith=False):
-    print field, value
     retval = None
     if exact:
         retval = Q(**{"%s" % field: value})

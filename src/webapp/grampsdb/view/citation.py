@@ -130,6 +130,7 @@ def process_citation(request, context, handle, act, add_to=None): # view, edit, 
     elif act == "delete": 
         citation = Citation.objects.get(handle=handle)
         citation.delete()
+        # FIXME: update caches, publics, etc.
         return redirect("/citation/")
     else:
         raise Exception("Unhandled act: '%s'" % act)

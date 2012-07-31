@@ -236,8 +236,8 @@ class DbDjango(DbWriteBase, DbReadBase):
         pass
 
     def request_rebuild(self):
-        #self.dji.rebuild_caches()
-        pass
+        # caches are ok, but let's compute public's
+        self.dji.update_publics()
 
     def get_undodb(self):
         return None

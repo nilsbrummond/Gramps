@@ -117,6 +117,7 @@ def process_repository(request, context, handle, act, add_to=None): # view, edit
     elif act == "delete": 
         repository = Repository.objects.get(handle=handle)
         repository.delete()
+        # FIXME: update caches, publics, etc.
         return redirect("/repository/")
     else:
         raise Exception("Unhandled act: '%s'" % act)

@@ -391,6 +391,7 @@ def process_person(request, context, handle, act, add_to=None): # view, edit, sa
         elif act == "delete":
             pf, nf, sf, person = get_person_forms(handle, protect=False, empty=True)
             person.delete()
+            # FIXME: update caches, publics, etc.
             return redirect("/person/%s" % build_search(request))
         elif act in ["save", "create"]: # could be create a new person
             # look up old data, if any:
