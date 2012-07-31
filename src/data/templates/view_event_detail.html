@@ -32,14 +32,17 @@
 <td class="ColumnValue" id="data"> {% render eventform.event_type user action %}</td>
 <td class="ColumnAttribute">{{eventform.text.label}}:</td>
 <td class="ColumnValue" id="data">{% render eventform.text user action %}</td>
+<td></td>
 </tr>
 <tr>
 <td class="ColumnAttribute">Description:</td>
 <td  class="ColumnValue" id="data" colspan="3">{% render eventform.description user action %}</td>
+<td></td>
 </tr>
 <tr>
 <td class="ColumnAttribute">ID:</td>
 <td  class="ColumnValue" id="data" colspan="3">{% render eventform.gramps_id user action %}</td>
+<td></td>
 </tr>
 <tr>
 <td class="ColumnAttribute">Place:</td>
@@ -62,6 +65,9 @@
 {% else %}
     <a href="/place/?search={{event.place}}">{{event.place}}</a>
 {% endif %}
+</td>
+<td>
+<td  class="ColumnValue" id="data" colspan="3">{% render eventform.private user action %}
 </td>
 </tr>
 </table>
