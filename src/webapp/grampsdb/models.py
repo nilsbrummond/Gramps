@@ -448,6 +448,7 @@ class PrimaryObject(models.Model):
     last_changed_by = models.TextField(blank=True, null=True)
 
     private = models.BooleanField('private')
+    public = models.BooleanField('public', default=True)
     #attributes = models.ManyToManyField("Attribute", blank=True, null=True)
     cache = models.TextField(blank=True, null=True)
 

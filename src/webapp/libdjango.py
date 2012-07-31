@@ -1725,6 +1725,13 @@ class DjangoInterface(object):
                  self.Citation.all().count() +
                  self.Tag.all().count())
 
+        for item in self.Note.all():
+            raw = self.get_person(item)
+            item.cache = base64.encodestring(cPickle.dumps(raw))
+            item.save()
+            count += 1
+        callback(100 * (count/total if total else 0))
+
         for item in self.Person.all():
             raw = self.get_person(item)
             item.cache = base64.encodestring(cPickle.dumps(raw))
@@ -1808,6 +1815,13 @@ class DjangoInterface(object):
                  self.Citation.all().count() +
                  self.Tag.all().count())
 
+        for item in self.Note.all():
+            raw = self.get_note(item)
+            if item.cache == base64.encodestring(cPickle.dumps(raw)):
+                print "Different!", item
+            count += 1
+        callback(100 * (count/total if total else 0))
+
         for item in self.Person.all():
             raw = self.get_person(item)
             if item.cache == base64.encodestring(cPickle.dumps(raw)):
@@ -1872,6 +1886,9 @@ class DjangoInterface(object):
         callback(100)
 
     def check_families(self):
+        """
+        Check family structures.
+        """
         for family in self.Family.all():
             if family.mother:
                 if not family in family.mother.families.all():
@@ -1889,3 +1906,150 @@ class DjangoInterface(object):
             for family in person.parent_families.all():
                 if person not in family.get_children():
                     print "Child not in family", person, family
+
+    def is_public(self, obj, objref):
+        """
+        Returns whether or not an item is "public", and the reason
+        why/why not.
+
+        @param obj - an instance of any Primary object
+        @param objref - one of the PrimaryRef.objects 
+        @return - a tuple containing a boolean (public?) and reason.
+
+        There are three reasons why an item might not be public:
+           1) The item itself is private.
+           2) The item is referenced by a living Person.
+           3) The item is referenced by some other private item.
+        """
+        # If it is private, then no:
+        if obj.private:
+            return (False, "It is marked private.")
+        elif hasattr(obj, "probably_alive") and obj.probably_alive:
+            return (False, "It is marked probaby alive.")
+        elif hasattr(obj, "mother") and obj.mother:
+            public, reason = self.is_public(obj.mother, self.PersonRef)
+            if not public:
+                return public, reason
+        elif hasattr(obj, "father") and obj.father:
+            public, reason = self.is_public(obj.father, self.PersonRef)
+            if not public:
+                return public, reason
+        if objref:
+            obj_ref_list = objref.filter(ref_object=obj)
+            for reference in obj_ref_list:
+                ref_from_class = reference.object_type.model_class()
+                item = None
+                try:
+                    item = ref_from_class.objects.get(id=reference.object_id)
+                except:
+                    print "Warning: Corrupt reference: %s" % reference
+                    continue
+                # If it is linked to by someone alive? public = False
+                if hasattr(item, "probably_alive") and item.probably_alive:
+                    return (False, "It is referenced by someone who is probaby alive.")
+                # If it is linked to by something private? public = False
+                elif item.private:
+                    return (False, "It is referenced by an item which is marked private.")
+        return (True, "It is visible to the public.")
+
+    def update_public(self, obj):
+        """
+        >>> dji.update_public(event)
+
+        Given an Event or other instance, update the event's public
+        status, or any event referenced to by the instance.
+
+        For example, if a person is found to be alive, then the
+        referenced events should be marked not public (public = False).
+
+        """
+        if obj.__class__.__name__ == "Event":
+            objref = self.EventRef
+        elif obj.__class__.__name__ == "Person":
+            objref = self.PersonRef
+        elif obj.__class__.__name__ == "Note":
+            objref = self.NoteRef
+        elif obj.__class__.__name__ == "Repository":
+            objref = self.RepositoryRef
+        elif obj.__class__.__name__ == "Citation":
+            objref = self.CitationRef
+        elif obj.__class__.__name__ == "Media":
+            objref = self.MediaRef
+        elif  obj.__class__.__name__ == "Place": # no need for dependency
+            objref = None
+        elif  obj.__class__.__name__ == "Source": # no need for dependency
+            objref = None
+        elif  obj.__class__.__name__ == "Family":
+            objref = self.ChildRef # correct?
+        else:
+            raise Exception("Can't compute public of type '%s'" % obj)
+        public, reason = self.is_public(obj, objref) # correct?
+        # Ok, update, if needed:
+        if obj.public != public:
+            obj.public = public
+            obj.save()
+
+    def update_publics(self, callback=None):
+        """
+        Call this to check the caches for all primary models.
+        """
+        if not callable(callback): 
+            callback = lambda (percent): None # dummy
+
+        callback(0)
+        count = 0.0
+        total = (self.Note.all().count() + 
+                 self.Person.all().count() +
+                 self.Event.all().count() + 
+                 self.Family.all().count() +
+                 self.Repository.all().count() +
+                 self.Place.all().count() +
+                 self.Media.all().count() +
+                 self.Source.all().count() +
+                 self.Citation.all().count())
+
+        for item in self.Note.all():
+            self.update_public(item)
+            count += 1
+        callback(100 * (count/total if total else 0))
+
+        for item in self.Person.all():
+            self.update_public(item)
+            count += 1
+        callback(100 * (count/total if total else 0))
+
+        for item in self.Family.all():
+            self.update_public(item)
+            count += 1
+        callback(100 * (count/total if total else 0))
+
+        for item in self.Source.all():
+            self.update_public(item)
+            count += 1
+        callback(100 * (count/total if total else 0))
+
+        for item in self.Event.all():
+            self.update_public(item)
+            count += 1
+        callback(100 * (count/total if total else 0))
+
+        for item in self.Repository.all():
+            self.update_public(item)
+            count += 1
+        callback(100 * (count/total if total else 0))
+
+        for item in self.Place.all():
+            self.update_public(item)
+            count += 1
+        callback(100 * (count/total if total else 0))
+
+        for item in self.Media.all():
+            self.update_public(item)
+            count += 1
+        callback(100 * (count/total if total else 0))
+
+        for item in self.Citation.all():
+            self.update_public(item)
+            count += 1
+        callback(100 * (count/total if total else 0))
+

@@ -1212,10 +1212,16 @@ def render(formfield, user, act, id=None, url=None, *args):
                 else:
                     retval = str(item)
                 #### Some cleanup:
-                if retval == "True":
-                    retval = "Yes"
-                elif retval == "False":
-                    retval = "No"
+                if fieldname == "private":
+                    if retval == "True":
+                        retval = "Private"
+                    elif retval == "False":
+                        retval = "Not private"
+                else:
+                    if retval == "True":
+                        retval = "Yes"
+                    elif retval == "False":
+                        retval = "No"
         except:
             # name, "prefix"
             try:
@@ -1227,6 +1233,8 @@ def render(formfield, user, act, id=None, url=None, *args):
             retval = formfield.as_widget(attrs={"id": id})
         else:
             retval = formfield.as_widget()
+        if formfield.name == "private":
+            retval += " Private"
     return retval
 
 def render_name(name, user, act=None):
