@@ -1133,7 +1133,7 @@ def children_table(obj, user, act, url=None, *args):
                       child.gender_type,
                       childref.father_rel_type,
                       childref.mother_rel_type,
-                      date_as_text(child.birth, user),
+                      date_as_text(child.birth, user) if child.birth else "",
                       )
             has_data = True
             links.append(('URL', childref.get_url()))
@@ -1302,7 +1302,7 @@ def date_as_text(obj, user):
                 return dd(gdate)
         return ""
     else:
-        return "[Private]"
+        return ""
 
 def person_get_event(person, event_type=None):
     event_ref_list = dji.get_event_ref_list(person)
