@@ -56,12 +56,13 @@ class Cursor(object):
     def __next__(self):
         for item in self.model.all():
             yield (item.handle, self.func(item.handle))
+        raise StopIteration
     def __exit__(self, *args, **kwargs):
         pass
     def iter(self):
         for item in self.model.all():
             yield (item.handle, self.func(item.handle))
-        yield None
+        raise StopIteration
 
 class Bookmarks:
     def get(self):
@@ -99,6 +100,88 @@ class DbDjango(DbWriteBase, DbReadBase):
     def __init__(self):
         DbReadBase.__init__(self)
         DbWriteBase.__init__(self)
+        self._tables = {
+            'Person':
+                {
+                "handle_func": self.get_person_from_handle, 
+                "gramps_id_func": self.get_person_from_gramps_id,
+                "class_func": gen.lib.Person,
+                "cursor_func": self.get_person_cursor,
+                "handles_func": self.get_person_handles,
+                },
+            'Family':
+                {
+                "handle_func": self.get_family_from_handle, 
+                "gramps_id_func": self.get_family_from_gramps_id,
+                "class_func": gen.lib.Family,
+                "cursor_func": self.get_family_cursor,
+                "handles_func": self.get_family_handles,
+                },
+            'Source':
+                {
+                "handle_func": self.get_source_from_handle, 
+                "gramps_id_func": self.get_source_from_gramps_id,
+                "class_func": gen.lib.Source,
+                "cursor_func": self.get_source_cursor,
+                "handles_func": self.get_source_handles,
+                },
+            'Citation':
+                {
+                "handle_func": self.get_citation_from_handle, 
+                "gramps_id_func": self.get_citation_from_gramps_id,
+                "class_func": gen.lib.Citation,
+                "cursor_func": self.get_citation_cursor,
+                "handles_func": self.get_citation_handles,
+                },
+            'Event':
+                {
+                "handle_func": self.get_event_from_handle, 
+                "gramps_id_func": self.get_event_from_gramps_id,
+                "class_func": gen.lib.Event,
+                "cursor_func": self.get_event_cursor,
+                "handles_func": self.get_event_handles,
+                },
+            'Media':
+                {
+                "handle_func": self.get_object_from_handle, 
+                "gramps_id_func": self.get_object_from_gramps_id,
+                "class_func": gen.lib.MediaObject,
+                "cursor_func": self.get_media_cursor,
+                "handles_func": self.get_media_object_handles,
+                },
+            'Place':
+                {
+                "handle_func": self.get_place_from_handle, 
+                "gramps_id_func": self.get_place_from_gramps_id,
+                "class_func": gen.lib.Place,
+                "cursor_func": self.get_place_cursor,
+                "handles_func": self.get_place_handles,
+                },
+            'Repository':
+                {
+                "handle_func": self.get_repository_from_handle, 
+                "gramps_id_func": self.get_repository_from_gramps_id,
+                "class_func": gen.lib.Repository,
+                "cursor_func": self.get_repository_cursor,
+                "handles_func": self.get_repository_handles,
+                },
+            'Note':
+                {
+                "handle_func": self.get_note_from_handle, 
+                "gramps_id_func": self.get_note_from_gramps_id,
+                "class_func": gen.lib.Note,
+                "cursor_func": self.get_note_cursor,
+                "handles_func": self.get_note_handles,
+                },
+            'Tag':
+                {
+                "handle_func": self.get_tag_from_handle, 
+                "gramps_id_func": None,
+                "class_func": gen.lib.Tag,
+                "cursor_func": self.get_tag_cursor,
+                "handles_func": self.get_tag_handles,
+                },
+            }
         # skip GEDCOM cross-ref check for now:
         self.set_feature("skip-check-xref", True)
         self.dji = DjangoInterface()
@@ -798,7 +881,7 @@ class DbDjango(DbWriteBase, DbReadBase):
     def get_family_cursor(self):
         return Cursor(self.dji.Family, self.get_raw_family_data).iter()
 
-    def get_events_cursor(self):
+    def get_event_cursor(self):
         return Cursor(self.dji.Event, self.get_raw_event_data).iter()
 
     def get_citation_cursor(self):
@@ -806,6 +889,18 @@ class DbDjango(DbWriteBase, DbReadBase):
 
     def get_source_cursor(self):
         return Cursor(self.dji.Source, self.get_raw_source_data).iter()
+
+    def get_note_cursor(self):
+        return Cursor(self.dji.Note, self.get_raw_note_data).iter()
+
+    def get_tag_cursor(self):
+        return Cursor(self.dji.Tag, self.get_raw_tag_data).iter()
+
+    def get_repository_cursor(self):
+        return Cursor(self.dji.Repository, self.get_raw_repository_data).iter()
+
+    def get_media_cursor(self):
+        return Cursor(self.dji.Media, self.get_raw_object_data).iter()
 
     def has_gramps_id(self, obj_key, gramps_id):
         key2table = {
@@ -952,6 +1047,24 @@ class DbDjango(DbWriteBase, DbReadBase):
     def get_raw_object_data(self, handle):
         try:
             return self.dji.get_media(self.dji.Media.get(handle=handle))
+        except:
+            if handle in self.import_cache:
+                return self.import_cache[handle].serialize()
+            else:
+                return None
+
+    def get_raw_tag_data(self, handle):
+        try:
+            return self.dji.get_tag(self.dji.Tag.get(handle=handle))
+        except:
+            if handle in self.import_cache:
+                return self.import_cache[handle].serialize()
+            else:
+                return None
+
+    def get_raw_event_data(self, handle):
+        try:
+            return self.dji.get_event(self.dji.Event.get(handle=handle))
         except:
             if handle in self.import_cache:
                 return self.import_cache[handle].serialize()

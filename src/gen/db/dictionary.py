@@ -55,16 +55,16 @@ class Cursor(object):
     def __enter__(self):
         return self
     def __iter__(self):
-        return self.__next__()
+        return self
     def __next__(self):
-        for item in self.model.all():
+        for item in self.model.keys():
             yield (item.handle, self.func(item.handle))
     def __exit__(self, *args, **kwargs):
         pass
     def iter(self):
-        for item in self.model.all():
-            yield (item.handle, self.func(item.handle))
-        yield None
+        for handle in self.model.keys():
+            yield (handle, self.func(handle))
+        raise StopIteration
 
 class Bookmarks:
     def get(self):
@@ -660,7 +660,7 @@ class DictionaryDb(DbWriteBase, DbReadBase):
     def get_family_cursor(self):
         return Cursor(self.family_map, self.get_raw_family_data).iter()
 
-    def get_events_cursor(self):
+    def get_event_cursor(self):
         return Cursor(self.event_map, self.get_raw_event_data).iter()
 
     def get_citation_cursor(self):
@@ -668,6 +668,18 @@ class DictionaryDb(DbWriteBase, DbReadBase):
 
     def get_source_cursor(self):
         return Cursor(self.source_map, self.get_raw_source_data).iter()
+
+    def get_note_cursor(self):
+        return Cursor(self.note_map, self.get_raw_note_data).iter()
+
+    def get_tag_cursor(self):
+        return Cursor(self.tag_map, self.get_raw_tag_data).iter()
+
+    def get_repository_cursor(self):
+        return Cursor(self.repository_map, self.get_raw_repository_data).iter()
+
+    def get_media_cursor(self):
+        return Cursor(self.media_map, self.get_raw_object_data).iter()
 
     def has_gramps_id(self, obj_key, gramps_id):
         key2table = {
@@ -769,6 +781,11 @@ class DictionaryDb(DbWriteBase, DbReadBase):
     def get_raw_object_data(self, handle):
         if handle in self.media_map:
             return self.media_map[handle].serialize()
+        return None
+
+    def get_raw_tag_data(self, handle):
+        if handle in self.tag_map:
+            return self.tag_map[handle].serialize()
         return None
 
     def add_person(self, person, trans, set_gid=True):
@@ -911,4 +928,12 @@ class DictionaryDb(DbWriteBase, DbReadBase):
 
     def request_rebuild(self):
         pass
+
+    def copy_from_db(self, db):
+        for key in db._tables.keys():
+            cursor = db._tables[key]["cursor_func"]
+            class_ = db._tables[key]["class_func"]
+            for (handle, data) in cursor():
+                map = getattr(self, "%s_map" % key.lower())
+                map[handle] = class_.create(data)
 
