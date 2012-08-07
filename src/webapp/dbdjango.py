@@ -1214,3 +1214,57 @@ class DbDjango(DbWriteBase, DbReadBase):
     def set_researcher(self, owner):
         pass
 
+    def copy_from_db(self, db):
+        """
+        A (possibily) implementation-specific method to get data from
+        db into this database.
+        """
+        # First we add the primary objects:
+        for key in db._tables.keys():
+            cursor = db._tables[key]["cursor_func"]
+            for (handle, data) in cursor():
+                if key == "Person":
+                    self.dji.add_person(data)
+                elif key == "Family":
+                    self.dji.add_family(data)
+                elif key == "Event":
+                    self.dji.add_event(data)
+                elif key == "Place":
+                    self.dji.add_place(data)
+                elif key == "Repository":
+                    self.dji.add_repository(data)
+                elif key "Citation":
+                    self.dji.add_citation(data)
+                elif key == "Source":
+                    self.dji.add_source(data)
+                elif key == "Note":
+                    self.dji.add_note(data)
+                elif key == "Media":
+                    self.dji.add_media(data)
+                elif key == "Tag":
+                    self.dji.add_tag(data)
+        for key in db._tables.keys():
+            cursor = db._tables[key]["cursor_func"]
+            for (handle, data) in cursor():
+                if key == "Person":
+                    self.dji.add_person_detail(data)
+                elif key == "Family":
+                    self.dji.add_family_detail(data)
+                elif key == "Event":
+                    self.dji.add_event_detail(data)
+                elif key == "Place":
+                    self.dji.add_place_detail(data)
+                elif key == "Repository":
+                    self.dji.add_repository_detail(data)
+                elif key "Citation":
+                    self.dji.add_citation_detail(data)
+                elif key == "Source":
+                    self.dji.add_source_detail(data)
+                elif key == "Note":
+                    self.dji.add_note_detail(data)
+                elif key == "Media":
+                    self.dji.add_media_detail(data)
+                elif key == "Tag":
+                    self.dji.add_tag_detail(data)
+            # Next we add the links:
+        self.dji.update_publics()

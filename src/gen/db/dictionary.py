@@ -930,6 +930,10 @@ class DictionaryDb(DbWriteBase, DbReadBase):
         pass
 
     def copy_from_db(self, db):
+        """
+        A (possibily) implementation-specific method to get data from
+        db into this database.
+        """
         for key in db._tables.keys():
             cursor = db._tables[key]["cursor_func"]
             class_ = db._tables[key]["class_func"]
