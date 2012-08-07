@@ -1917,7 +1917,12 @@ class DjangoInterface(object):
                 return public, reason
         # FIXME: what about Associations... anything else? Check PrivateProxy
         if objref:
-            obj_ref_list = objref.filter(ref_object=obj)
+            if hasattr(objref.model, "ref_object"):
+                obj_ref_list = objref.filter(ref_object=obj)
+            elif hasattr(objref.model, "citation"):
+                obj_ref_list = objref.filter(citation=obj)
+            else:
+                raise Exception("objref '%s' needs a ref for '%s'" % (objref.model, obj))
             for reference in obj_ref_list:
                 ref_from_class = reference.object_type.model_class()
                 item = None

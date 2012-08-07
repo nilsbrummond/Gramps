@@ -111,13 +111,20 @@ def context_processor(request):
     context["page"] = page 
     context["search"] = search 
     context["args"] = build_args(search=search, page=page)
+    svn_version = get_svn_revision()
+    context["gramps_version"] = (".".join([str(v) for v in VERSION_TUPLE]) + 
+                                 ("." if svn_version else "") + 
+                                 svn_version)
     return context
 
 def main_page(request):
     """
     Show the main page.
     """
-    context = RequestContext(request)
+    try:
+        context = RequestContext(request)
+    except:
+        raise Http404(_("Database is currently locked. Please try again in a few moments."))
     context["view"] = 'home'
     context["tview"] = _('Home')
     return render_to_response("main_page.html", context)
@@ -126,7 +133,10 @@ def logout_page(request):
     """
     Logout a user.
     """
-    context = RequestContext(request)
+    try:
+        context = RequestContext(request)
+    except:
+        raise Http404(_("Database is currently locked. Please try again in a few moments."))
     context["view"] = 'home'
     context["tview"] = _('Home')
     logout(request)
@@ -142,7 +152,10 @@ def browse_page(request):
     """
     Show the main list under 'Browse' on the main menu.
     """
-    context = RequestContext(request)
+    try:
+        context = RequestContext(request)
+    except:
+        raise Http404(_("Database is currently locked. Please try again in a few moments."))
     context["view"] = 'browse'
     context["tview"] = _('Browse')
     return render_to_response('browse_page.html', context)
