@@ -512,7 +512,7 @@ class Person(PrimaryObject):
         return "%s [%s]" % (self.get_primary_name(), self.gramps_id)
 
     def make_tag_list(self):
-        return tuple()
+        return tuple([tag.handle for tag in self.tags.all()])
 
     def get_selection_string(self):
         return self.name_set.get(preferred=True).get_selection_string()
@@ -526,7 +526,7 @@ class Family(PrimaryObject):
     tags = models.ManyToManyField('Tag', blank=True, null=True)
 
     def make_tag_list(self):
-        return tuple()
+        return tuple([tag.handle for tag in self.tags.all()])
 
     #lds_list = models.ManyToManyField('Lds', null=True, blank=True)
 
@@ -633,7 +633,7 @@ class Media(DateObject, PrimaryObject):
     tags = models.ManyToManyField('Tag', blank=True, null=True)
 
     def make_tag_list(self):
-        return tuple()
+        return tuple([tag.handle for tag in self.tags.all()])
 
     def __unicode__(self):
         return str(self.desc)
@@ -648,7 +648,7 @@ class Note(PrimaryObject):
     tags = models.ManyToManyField('Tag', blank=True, null=True)
 
     def make_tag_list(self):
-        return tuple()
+        return tuple([tag.handle for tag in self.tags.all()])
 
     def __unicode__(self):
         return str(self.gramps_id)
