@@ -1233,7 +1233,7 @@ class DbDjango(DbWriteBase, DbReadBase):
                     self.dji.add_place(data)
                 elif key == "Repository":
                     self.dji.add_repository(data)
-                elif key "Citation":
+                elif key == "Citation":
                     self.dji.add_citation(data)
                 elif key == "Source":
                     self.dji.add_source(data)
@@ -1256,7 +1256,7 @@ class DbDjango(DbWriteBase, DbReadBase):
                     self.dji.add_place_detail(data)
                 elif key == "Repository":
                     self.dji.add_repository_detail(data)
-                elif key "Citation":
+                elif key == "Citation":
                     self.dji.add_citation_detail(data)
                 elif key == "Source":
                     self.dji.add_source_detail(data)
