@@ -461,21 +461,30 @@ class PrimaryObject(models.Model):
                            self.handle)
 
 class MyFamilies(models.Model):
+    # Delete this object if foreign key is deleted:
     person = models.ForeignKey("Person")
     family = models.ForeignKey("Family")
     order = models.PositiveIntegerField(default=1)
 
 class MyParentFamilies(models.Model):
+    # Delete this object if foreign key is deleted:
     person = models.ForeignKey("Person")
     family = models.ForeignKey("Family")
     order = models.PositiveIntegerField(default=1)
 
+#def delete_birth_event():
+#    return models.SET_NULL
+
+#def delete_death_event():
+#    return models.SET_NULL
+    
 class Person(PrimaryObject):
     """
     The model for the person object
     """
     gender_type = models.ForeignKey('GenderType', verbose_name="Gender")
     probably_alive = models.BooleanField("Probably alive")
+    # If you delete the family, don't delete person:
     families = models.ManyToManyField('Family', blank=True, null=True, through="MyFamilies")
     parent_families = models.ManyToManyField('Family', 
                                              related_name="parent_families",
@@ -485,8 +494,11 @@ class Person(PrimaryObject):
     references = generic.GenericRelation('PersonRef', related_name="refs",
                                          content_type_field="object_type",
                                          object_id_field="object_id")
-    birth = models.ForeignKey("Event", related_name="birth", blank=True, null=True)
-    death = models.ForeignKey("Event", related_name="death", blank=True, null=True)
+#    birth = models.ForeignKey("Event", related_name="birth", blank=True, null=True, on_delete=models.SET(delete_birth_event))
+#    death = models.ForeignKey("Event", related_name="death", blank=True, null=True, on_delete=models.SET(delete_death_event))
+    # When the associated event is deleted, do not delete this person:
+    birth = models.ForeignKey("Event", related_name="birth", blank=True, null=True, on_delete=models.SET_NULL)
+    death = models.ForeignKey("Event", related_name="death", blank=True, null=True, on_delete=models.SET_NULL)
 
     birth_ref_index = models.IntegerField("Birth Reference Index", default=-1)
     death_ref_index = models.IntegerField("Death Reference Index", default=-1)
@@ -518,10 +530,11 @@ class Person(PrimaryObject):
         return self.name_set.get(preferred=True).get_selection_string()
 
 class Family(PrimaryObject):
+    # When person is deleted, don't delete family:
     father = models.ForeignKey('Person', related_name="father_ref", 
-                               null=True, blank=True)
+                               null=True, blank=True, on_delete=models.SET_NULL)
     mother = models.ForeignKey('Person', related_name="mother_ref", 
-                               null=True, blank=True)
+                               null=True, blank=True, on_delete=models.SET_NULL)
     family_rel_type = models.ForeignKey('FamilyRelType', verbose_name="Type")
     tags = models.ManyToManyField('Tag', blank=True, null=True)
 
@@ -550,7 +563,8 @@ class Family(PrimaryObject):
 class Citation(DateObject, PrimaryObject):
     confidence = models.IntegerField(blank=True, null=True)
     page = models.CharField("Volume/Page", max_length=50, blank=True, null=True)
-    source = models.ForeignKey('Source', null=True, blank=True)
+    # FIXME: Don't delete citation when source is deleted?
+    source = models.ForeignKey('Source', null=True, blank=True, on_delete=models.SET_NULL)
     references = generic.GenericRelation('CitationRef', related_name="refs",
                                          content_type_field="object_type",
                                          object_id_field="object_id")
@@ -580,7 +594,8 @@ class Source(PrimaryObject):
 class Event(DateObject, PrimaryObject):
     event_type = models.ForeignKey('EventType', verbose_name="Type")
     description = models.CharField('description', max_length=50, blank=True)
-    place = models.ForeignKey('Place', null=True, blank=True)
+    # Don't delete Event when place is deleted:
+    place = models.ForeignKey('Place', null=True, blank=True, on_delete=models.SET_NULL)
     references = generic.GenericRelation('EventRef', related_name="refs",
                                          content_type_field="object_type",
                                          object_id_field="object_id")
@@ -685,6 +700,7 @@ class Surname(models.Model):
     prefix = models.TextField(blank=True)
     primary = models.BooleanField('Primary surname?')
     connector = models.TextField(blank=True)
+    # Delete surname if Name is deleted:
     name = models.ForeignKey("Name")
     order = models.PositiveIntegerField()
 
@@ -716,6 +732,7 @@ class Name(DateObject, SecondaryObject):
                                    related_name="display_as",
                                    default=1)
     ## Key:
+    # Delete name if person is deleted:
     person = models.ForeignKey("Person")
     _sanitized = False
 
@@ -787,15 +804,19 @@ class Lds(DateObject, SecondaryObject):
     DEFAULT_STATUS = STATUS_NONE
     """
     lds_type = models.ForeignKey('LdsType')
-    place = models.ForeignKey('Place', null=True)
-    famc = models.ForeignKey('Family', related_name="famc", null=True)
+    # Don't delete LDS if place is deleted:
+    place = models.ForeignKey('Place', null=True, on_delete=models.SET_NULL)
+    # Don't delete LDS if family is deleted:
+    famc = models.ForeignKey('Family', related_name="famc", null=True, on_delete=models.SET_NULL)
     temple = models.TextField(blank=True)
     status = models.ForeignKey('LdsStatus') 
 
+    # Delete this LDS if either person or family is deleted:
     person = models.ForeignKey("Person", null=True, blank=True)
     family = models.ForeignKey("Family", null=True, blank=True)
 
 class Markup(models.Model):
+    # Delete Markup if note is deleted:
     note = models.ForeignKey('Note')
     styled_text_tag_type = models.ForeignKey('StyledTextTagType')
     order = models.PositiveIntegerField()
@@ -805,17 +826,20 @@ class Markup(models.Model):
 class SourceDatamap(models.Model):
     key = models.CharField(max_length=80, blank=True)
     value = models.CharField(max_length=80, blank=True)
+    # Delete SourceDatamap if Source is deleted:
     source = models.ForeignKey("Source")
     order = models.PositiveIntegerField()
 
 class CitationDatamap(models.Model):
     key = models.CharField(max_length=80, blank=True)
     value = models.CharField(max_length=80, blank=True)
+    # Delete Datamap if Citation is deleted:
     citation = models.ForeignKey("Citation")
     order = models.PositiveIntegerField()
 
 class Address(DateObject, SecondaryObject):
     #locations = models.ManyToManyField('Location', null=True)
+    # Delete Address if Person or Repository is deleted:
     person = models.ForeignKey('Person', null=True, blank=True)
     repository = models.ForeignKey('Repository', null=True, blank=True)
 
@@ -835,6 +859,7 @@ class Location(models.Model):
     parish = models.TextField(blank=True, null=True)
     order = models.PositiveIntegerField()
 
+    # Delete Location if place or address is deleted:
     place = models.ForeignKey("Place", null=True, blank=True)
     address = models.ForeignKey("Address", null=True, blank=True)
 
@@ -845,6 +870,7 @@ class Url(models.Model):
     url_type = models.ForeignKey('UrlType') 
     order = models.PositiveIntegerField()
 
+    # FIXME: Delete this object if foreign key is deleted?
     person = models.ForeignKey("Person", null=True, blank=True)
     place = models.ForeignKey("Place", null=True, blank=True)
     repository = models.ForeignKey("Repository", null=True, blank=True)
@@ -902,6 +928,7 @@ class Log(BaseRef):
                                        self.last_changed_by)
 
 class NoteRef(BaseRef):
+    # Delete this object if foreign key is deleted:
     ref_object = models.ForeignKey('Note') 
 
     def get_reference_to(self):
@@ -911,6 +938,7 @@ class NoteRef(BaseRef):
         return "NoteRef to " + str(self.ref_object)
 
 class EventRef(BaseRef):
+    # Delete this object if foreign key is deleted:
     ref_object = models.ForeignKey('Event')
     role_type = models.ForeignKey('EventRoleType')
 
@@ -930,6 +958,7 @@ class EventRef(BaseRef):
                                            self.order)
 
 class RepositoryRef(BaseRef):
+    # Delete this object if foreign key is deleted:
     ref_object = models.ForeignKey('Repository')
     source_media_type = models.ForeignKey('SourceMediaType')
     call_number = models.CharField(max_length=50)
@@ -941,6 +970,7 @@ class RepositoryRef(BaseRef):
         return "RepositoryRef to " + str(self.ref_object)
 
 class PersonRef(BaseRef):
+    # Delete this object if foreign key is deleted:
     ref_object = models.ForeignKey('Person')
     description = models.CharField(max_length=50, blank=True, null=True)
 
@@ -951,6 +981,7 @@ class PersonRef(BaseRef):
         return "PersonRef to " + str(self.ref_object)
 
 class CitationRef(BaseRef):
+    # Delete this object if foreign key is deleted:
     citation = models.ForeignKey('Citation') 
 
     def __unicode__(self):
@@ -964,6 +995,7 @@ class ChildRef(BaseRef):
                                         related_name="child_father_rel")
     mother_rel_type = models.ForeignKey('ChildRefType', 
                                         related_name="child_mother_rel")
+    # Delete this object if foreign key is deleted:
     ref_object = models.ForeignKey('Person')
 
     def get_reference_to(self):
@@ -981,6 +1013,7 @@ class MediaRef(BaseRef):
     y1 = models.IntegerField()
     x2 = models.IntegerField()
     y2 = models.IntegerField()
+    # Delete this object if foreign key is deleted:
     ref_object = models.ForeignKey('Media')
 
     def get_reference_to(self):

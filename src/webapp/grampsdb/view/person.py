@@ -390,6 +390,7 @@ def process_person(request, context, handle, act, add_to=None): # view, edit, sa
             logform = LogForm()
         elif act == "delete":
             pf, nf, sf, person = get_person_forms(handle, protect=False, empty=True)
+            # ChildRefs get deleted automatically
             person.delete()
             # FIXME: update caches, publics, etc.
             return redirect("/person/%s" % build_search(request))

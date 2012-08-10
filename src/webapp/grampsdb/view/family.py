@@ -23,7 +23,7 @@
 
 ## Gramps Modules
 from webapp.utils import _, boolean, update_last_changed, build_search
-from webapp.grampsdb.models import Family
+from webapp.grampsdb.models import Family, ChildRef
 from webapp.grampsdb.forms import *
 from webapp.libdjango import DjangoInterface
 from gen.utils.id import create_id
@@ -247,6 +247,10 @@ def process_family(request, context, handle, act, add_to=None): # view, edit, sa
             act = "add"
     elif act == "delete": 
         family = Family.objects.get(handle=handle)
+        # Delete the ChildRef's that point to this family:
+        obj_type = ContentType.objects.get_for_model(family)
+        childrefs = dji.ChildRef.filter(object_id=family.id,
+                                        object_type=obj_type).delete()
         family.delete()
         # FIXME: update caches, publics, etc.
         return redirect("/family/")

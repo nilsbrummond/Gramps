@@ -108,6 +108,7 @@ class DbDjango(DbWriteBase, DbReadBase):
                 "class_func": gen.lib.Person,
                 "cursor_func": self.get_person_cursor,
                 "handles_func": self.get_person_handles,
+                "iter_func": self.iter_people,
                 },
             'Family':
                 {
@@ -116,6 +117,7 @@ class DbDjango(DbWriteBase, DbReadBase):
                 "class_func": gen.lib.Family,
                 "cursor_func": self.get_family_cursor,
                 "handles_func": self.get_family_handles,
+                "iter_func": self.iter_families,
                 },
             'Source':
                 {
@@ -124,6 +126,7 @@ class DbDjango(DbWriteBase, DbReadBase):
                 "class_func": gen.lib.Source,
                 "cursor_func": self.get_source_cursor,
                 "handles_func": self.get_source_handles,
+                "iter_func": self.iter_sources,
                 },
             'Citation':
                 {
@@ -132,6 +135,7 @@ class DbDjango(DbWriteBase, DbReadBase):
                 "class_func": gen.lib.Citation,
                 "cursor_func": self.get_citation_cursor,
                 "handles_func": self.get_citation_handles,
+                "iter_func": self.iter_citations,
                 },
             'Event':
                 {
@@ -140,6 +144,7 @@ class DbDjango(DbWriteBase, DbReadBase):
                 "class_func": gen.lib.Event,
                 "cursor_func": self.get_event_cursor,
                 "handles_func": self.get_event_handles,
+                "iter_func": self.iter_events,
                 },
             'Media':
                 {
@@ -148,6 +153,7 @@ class DbDjango(DbWriteBase, DbReadBase):
                 "class_func": gen.lib.MediaObject,
                 "cursor_func": self.get_media_cursor,
                 "handles_func": self.get_media_object_handles,
+                "iter_func": self.iter_media_objects,
                 },
             'Place':
                 {
@@ -156,6 +162,7 @@ class DbDjango(DbWriteBase, DbReadBase):
                 "class_func": gen.lib.Place,
                 "cursor_func": self.get_place_cursor,
                 "handles_func": self.get_place_handles,
+                "iter_func": self.iter_places,
                 },
             'Repository':
                 {
@@ -164,6 +171,7 @@ class DbDjango(DbWriteBase, DbReadBase):
                 "class_func": gen.lib.Repository,
                 "cursor_func": self.get_repository_cursor,
                 "handles_func": self.get_repository_handles,
+                "iter_func": self.iter_repositories,
                 },
             'Note':
                 {
@@ -172,6 +180,7 @@ class DbDjango(DbWriteBase, DbReadBase):
                 "class_func": gen.lib.Note,
                 "cursor_func": self.get_note_cursor,
                 "handles_func": self.get_note_handles,
+                "iter_func": self.iter_notes,
                 },
             'Tag':
                 {
@@ -180,6 +189,7 @@ class DbDjango(DbWriteBase, DbReadBase):
                 "class_func": gen.lib.Tag,
                 "cursor_func": self.get_tag_cursor,
                 "handles_func": self.get_tag_handles,
+                "iter_func": self.iter_tags,
                 },
             }
         # skip GEDCOM cross-ref check for now:
@@ -824,6 +834,55 @@ class DbDjango(DbWriteBase, DbReadBase):
     def iter_family_handles(self):
         return (family.handle for family in self.dji.Family.all())
 
+    def iter_notes(self):
+        return (self.get_note_from_handle(note.handle) 
+                for note in self.dji.Note.all())
+
+    def iter_note_handles(self):
+        return (note.handle for note in self.dji.Note.all())
+
+    def iter_events(self):
+        return (self.get_event_from_handle(event.handle) 
+                for event in self.dji.Event.all())
+
+    def iter_event_handles(self):
+        return (event.handle for event in self.dji.Event.all())
+
+    def iter_places(self):
+        return (self.get_place_from_handle(place.handle) 
+                for place in self.dji.Place.all())
+
+    def iter_place_handles(self):
+        return (place.handle for place in self.dji.Place.all())
+
+    def iter_repositories(self):
+        return (self.get_repository_from_handle(repository.handle) 
+                for repository in self.dji.Repository.all())
+
+    def iter_repository_handles(self):
+        return (repository.handle for repository in self.dji.Repository.all())
+
+    def iter_sources(self):
+        return (self.get_source_from_handle(source.handle) 
+                for source in self.dji.Source.all())
+
+    def iter_source_handles(self):
+        return (source.handle for source in self.dji.Source.all())
+
+    def iter_citations(self):
+        return (self.get_citation_from_handle(citation.handle) 
+                for citation in self.dji.Citation.all())
+
+    def iter_citation_handles(self):
+        return (citation.handle for citation in self.dji.Citation.all())
+
+    def iter_tags(self):
+        return (self.get_tag_from_handle(tag.handle) 
+                for tag in self.dji.Tag.all())
+
+    def iter_tag_handles(self):
+        return (tag.handle for tag in self.dji.Tag.all())
+
     def get_tag_from_name(self, name):
         try:
             tag = self.dji.Tag.filter(name=name)
@@ -1268,3 +1327,11 @@ class DbDjango(DbWriteBase, DbReadBase):
                     self.dji.add_tag_detail(data)
             # Next we add the links:
         self.dji.update_publics()
+
+    def compare(self, db):
+        pass
+        #for key in db._tables.keys():
+        #    iterator = db._tables[key]["iter_func"]
+        #    for item in iterator():
+                
+# FIXME: Deleted family; added new family and children were still listed!
