@@ -4,6 +4,8 @@
 ####    $ PYTHONPATH=..:../plugins/lib python -i shell.py 
 ####    >>> Person.objects.all()
 
+import os
+execfile(os.path.expanduser("~/.pystartup"))
 from django.conf import settings
 import webapp.settings as default_settings
 try:
