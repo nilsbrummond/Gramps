@@ -64,7 +64,7 @@ class Cursor(object):
     def iter(self):
         for handle in self.model.keys():
             yield (handle, self.func(handle))
-        raise StopIteration
+        yield None
 
 class Bookmarks:
     def get(self):

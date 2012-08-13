@@ -56,13 +56,12 @@ class Cursor(object):
     def __next__(self):
         for item in self.model.all():
             yield (item.handle, self.func(item.handle))
-        raise StopIteration
     def __exit__(self, *args, **kwargs):
         pass
     def iter(self):
         for item in self.model.all():
             yield (item.handle, self.func(item.handle))
-        raise StopIteration
+        yield None
 
 class Bookmarks:
     def get(self):
@@ -1328,10 +1327,3 @@ class DbDjango(DbWriteBase, DbReadBase):
             # Next we add the links:
         self.dji.update_publics()
 
-    def compare(self, db):
-        pass
-        #for key in db._tables.keys():
-        #    iterator = db._tables[key]["iter_func"]
-        #    for item in iterator():
-                
-# FIXME: Deleted family; added new family and children were still listed!
