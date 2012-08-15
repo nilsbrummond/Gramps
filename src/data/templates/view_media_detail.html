@@ -95,9 +95,9 @@
       <input type="hidden" name="page" value="{{page}}"/>
       <input type="submit" value="Create"/>
     {% else %}
-      {% make_button "Add Media" "/media/add" args %}
-      {% make_button "Edit Media" "/media/%s/edit" media.handle args %}
-      {% make_button "Delete Media" "/media/%s/delete" media.handle args %}
+      {% make_button "+Add Media" "/media/add" args %}
+      {% make_button "?Edit Media" "/media/%s/edit" media.handle args %}
+      {% make_button "-Delete Media" "/media/%s/delete" media.handle args %}
     {% endifequal %}
   {% endif %}
 {% else %}

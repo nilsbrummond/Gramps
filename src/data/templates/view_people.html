@@ -56,9 +56,11 @@
 </tbody>
 </table>
 
-{% if user.is_superuser %}
-   {% make_button "Add Person" "/person/add" args %}
-{% endif %}
+{% endblock %}
 
+{% block admin_functions %}
+{% if user.is_superuser %}
+   {% make_button "+Add Person" "/person/add" args %}
+{% endif %}
 {% endblock %}
 

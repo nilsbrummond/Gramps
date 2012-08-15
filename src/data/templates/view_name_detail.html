@@ -134,9 +134,9 @@
     <input type="hidden" name="page" value="{{page}}"/>
     <input type="submit" value="Save"/>
   {% else %}
-    {% make_button "Add Name" "/person/%s/name/add" person.handle args %}
-    {% make_button "Edit Name" "/person/%s/name/%s/edit" person.handle order args %}
-    {% make_button "Delete Name" "/person/%s/name/%s/delete" person.handle order args %}
+    {% make_button "+Add Name" "/person/%s/name/add" person.handle args %}
+    {% make_button "?Edit Name" "/person/%s/name/%s/edit" person.handle order args %}
+    {% make_button "-Delete Name" "/person/%s/name/%s/delete" person.handle order args %}
   {% endifequal %}
  {% endifequal %}
 {% else %}

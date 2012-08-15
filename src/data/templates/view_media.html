@@ -1,8 +1,12 @@
 {% extends "view_page.html" %}
 {% load my_tags %}
 
+{% block admin_functions %}
+{% if user.is_superuser %}
+   {% make_button "+Add Media" "/media/add" args %}
+{% endif %}
+{% endblock %}
 {% block table_data %} 
-
 <table cellspacing="0" class="infolist surname" width="95%">
 <thead>
   <tr>
@@ -43,8 +47,5 @@
 </tbody>
 </table>
 
-{% if user.is_superuser %}
-   {% make_button "Add Media" "/media/add" args %}
-{% endif %}
 {% endblock %}
 

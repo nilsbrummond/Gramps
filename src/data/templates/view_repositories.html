@@ -31,8 +31,10 @@
 </tbody>
 </table>
 
-{% if user.is_superuser %}
-   {% make_button "Add Repository" "/repository/add" args %}
-{% endif %}
 {% endblock %}
 
+{% block admin_functions %}
+{% if user.is_superuser %}
+   {% make_button "+Add Repository" "/repository/add" args %}
+{% endif %}
+{% endblock %}
