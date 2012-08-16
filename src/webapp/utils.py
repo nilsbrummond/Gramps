@@ -1197,7 +1197,7 @@ def children_table(obj, user, act, url=None, *args):
         _("Maternal"),
         _("Birth Date"),
         )
-    table.column_widths = [10, 3, 8, 30, 8, 8, 8, 25] 
+    table.column_widths = [12, 3, 8, 30, 8, 8, 8, 23] 
 
     family = obj
     obj_type = ContentType.objects.get_for_model(family)
