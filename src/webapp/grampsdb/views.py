@@ -388,9 +388,9 @@ def view_list(request, view):
         raise Http404("Requested page type '%s' not known" % view)
 
     if request.user.is_authenticated():
-        paginator = Paginator(object_list, 20) 
+        paginator = Paginator(object_list, 50) 
     else:
-        paginator = Paginator(object_list, 20) 
+        paginator = Paginator(object_list, 50) 
 
     try:
         page = int(request.GET.get('page', '1'))
