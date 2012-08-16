@@ -5,7 +5,9 @@
 ####    >>> Person.objects.all()
 
 import os
-execfile(os.path.expanduser("~/.pystartup"))
+pystartup = os.path.expanduser("~/.pystartup")
+if os.path.exists(pystartup):
+    execfile(pystartup)
 from django.conf import settings
 import webapp.settings as default_settings
 try:

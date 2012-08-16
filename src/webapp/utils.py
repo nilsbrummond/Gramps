@@ -340,27 +340,27 @@ def make_image_button(text, url, kwargs, last):
 
 def make_image_button2(button, text, url, kwargs="", last=""):
     if button == "cancel": 
-        filename = "/gnome/22x22/actions/gtk-remove.png"
+        filename = "/images/gtk-remove.png"
     elif button == "x": # delete
-        filename = "/gnome/22x22/actions/gtk-remove.png"
+        filename = "/images/gtk-remove.png"
     elif button == "^": # move up
-        filename = "/gnome/22x22/actions/up.png"
+        filename = "/images/up.png"
     elif button == "v": # move down
-        filename = "/gnome/22x22/actions/down.png"
+        filename = "/images/down.png"
     elif button == "<": # prev
-        filename = "/gnome/22x22/actions/previous.png"
+        filename = "/images/previous.png"
     elif button == "<<": # start
-        filename = "/gnome/22x22/actions/player-start.png"
+        filename = "/images/player-start.png"
     elif button == ">": # next
-        filename = "/gnome/22x22/actions/next.png"
+        filename = "/images/next.png"
     elif button == ">>": # end
-        filename = "/gnome/22x22/actions/player-end.png"
+        filename = "/images/player-end.png"
     elif button == "+": # add
-        filename = "/gnome/22x22/actions/add.png"
+        filename = "/images/add.png"
     elif button == "$": # pick, share
         filename = "/images/stock_index_24.png"
     elif button == "?": # edit
-        filename = "/gnome/22x22/apps/text-editor.png"
+        filename = "/images/text-editor.png"
     elif button == "add child to existing family":
         filename = "/images/scalable/gramps-parents-open.svg"
     elif button == "add child to new family":
@@ -369,7 +369,7 @@ def make_image_button2(button, text, url, kwargs="", last=""):
         filename = "/images/scalable/add-parent-existing-family.svg"
     elif button == "add spouse to new family":
         filename = "/images/scalable/gramps-parents.svg"
-    return """<img height="22" width="22" alt="%s" title="%s" src="%s" onclick="document.location.href='%s%s%s'" style="border:1px solid gray; border-radius:5px; margin: 0px 1px; padding: 1px;" />""" % (text, text, filename, url, kwargs, last)
+    return """<img height="22" width="22" alt="%s" title="%s" src="%s" onclick="document.location.href='%s%s%s'" style="background-color: lightgray; border:1px solid gray; border-radius:5px; margin: 0px 1px; padding: 1px;" />""" % (text, text, filename, url, kwargs, last)
 
 def event_table(obj, user, act, url, args):
     retval = ""
@@ -1237,18 +1237,19 @@ def children_table(obj, user, act, url=None, *args):
             has_data = True
             count += 1
     table.links(links)
+    text = table.get_html()
     if user.is_superuser and url and act == "view":
         count = 1
         for childref in childrefs:
-            retval = retval.replace("[[x%d]]" % count, make_button("x", "/family/%s/remove/child/%d" % (family.handle, count)))
-            retval = retval.replace("[[^%d]]" % count, make_button("^", "/family/%s/up/child/%d" % (family.handle, count)))
-            retval = retval.replace("[[v%d]]" % count, make_button("v", "/family/%s/down/child/%d" % (family.handle, count)))
+            text = text.replace("[[x%d]]" % count, make_button("x", "/family/%s/remove/child/%d" % (family.handle, count)))
+            text = text.replace("[[^%d]]" % count, make_button("^", "/family/%s/up/child/%d" % (family.handle, count)))
+            text = text.replace("[[v%d]]" % count, make_button("v", "/family/%s/down/child/%d" % (family.handle, count)))
             count += 1
         retval += make_button(_("+Add New Person as Child"), (url.replace("$act", "add") % args))
         retval += make_button(_("$Add Existing Person as Child"), (url.replace("$act", "share") % args))
     else:
         retval += nbsp("") # to keep tabs same height
-    retval += table.get_html()
+    retval += text
     if has_data:
         retval += """ <SCRIPT LANGUAGE="JavaScript">setHasData("%s", 1)</SCRIPT>\n""" % cssid
     return retval

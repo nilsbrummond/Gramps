@@ -56,10 +56,6 @@ urlpatterns += patterns('',
       {'document_root': IMAGE_DIR,
        'show_indexes':  True},
       ),
-     (r'^gnome/(?P<path>.*)$', 'django.views.static.serve',
-      {'document_root': "/usr/share/icons/gnome/",
-       'show_indexes':  True},
-      ),
 )
 
 # The rest will match views:
