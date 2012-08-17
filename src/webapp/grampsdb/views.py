@@ -599,13 +599,13 @@ def process_report(request, context, handle, act):
 def build_string_query(field, value, exact=False, startswith=False, endswith=False):
     retval = None
     if exact:
-        retval = Q(**{"%s" % field: value})
+        retval = Q(**{str("%s" % field): value})
     elif startswith:
-        retval = Q(**{"%s__istartswith" % field: value}) 
+        retval = Q(**{str("%s__istartswith" % field): value}) 
     elif endswith:
-        retval = Q(**{"%s__iendswith" % field: value}) 
+        retval = Q(**{str("%s__iendswith" % field): value}) 
     else: # default
-        retval = Q(**{"%s__icontains" % field: value}) 
+        retval = Q(**{str("%s__icontains" % field): value}) 
     return retval
 
 def build_person_query(request, search):
