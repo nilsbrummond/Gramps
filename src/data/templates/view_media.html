@@ -1,11 +1,6 @@
 {% extends "view_page.html" %}
 {% load my_tags %}
 
-{% block admin_functions %}
-{% if user.is_superuser %}
-   {% make_button "+Add Media" "/media/add" args %}
-{% endif %}
-{% endblock %}
 {% block table_data %} 
 <table cellspacing="0" class="infolist surname" width="95%">
 <thead>
@@ -49,3 +44,10 @@
 
 {% endblock %}
 
+{% block admin_functions %}
+{% if user.is_superuser %}
+   <div style="background-color: lightgray; padding: 2px 0px 0px 2px">
+   {% make_button "+Add Media" "/media/add" args %}
+   </div>
+{% endif %}
+{% endblock %}
