@@ -955,14 +955,14 @@ def person_reference_table(obj, user, act):
         _("ID"),
         _("Reference"), 
         )
-    table1.column_widths = [10, 10, 80]
+    table1.column_widths = [11, 10, 79]
     table2 = Table("person_reference_table", style="background-color: #f4f0ec;")
     table2.columns(
         "As Child",
         _("ID"),
         _("Reference"), 
         )
-    table2.column_widths = [10, 10, 80]
+    table2.column_widths = [11, 10, 79]
     if (user.is_authenticated() or obj.public) and act != "add":
         count = 1
         for through in models.MyFamilies.objects.filter(person=obj).order_by("order"):
