@@ -384,7 +384,7 @@ def event_table(obj, user, act, url, args):
         _("Date"),
         _("Place"),
         _("Role"))
-    table.column_widths = [10, 20, 10, 7, 20, 23, 10]
+    table.column_widths = [11, 19, 10, 7, 20, 23, 10]
     if user.is_authenticated() or obj.public:
         obj_type = ContentType.objects.get_for_model(obj)
         event_ref_list = models.EventRef.objects.filter(
@@ -543,7 +543,7 @@ def citation_table(obj, user, act, url=None, *args):
                   _("ID"), 
                   _("Confidence"),
                   _("Page"))
-    table.column_widths = [10, 10, 50, 30]
+    table.column_widths = [11, 10, 49, 30]
     if user.is_authenticated() or obj.public:
         obj_type = ContentType.objects.get_for_model(obj)
         citation_refs = dji.CitationRef.filter(object_type=obj_type,
@@ -597,6 +597,7 @@ def repository_table(obj, user, act, url=None, *args):
         _("Call number"),
         _("Type"),
         )
+    table.column_widths = [11, 49, 20, 20]
     retval += """<div style="background-color: lightgray; padding: 2px 0px 0px 2px">"""
     if user.is_superuser and url and act == "view":
         retval += make_button(_("+Add New Repository"), (url % args).replace("$act", "add"))
@@ -676,6 +677,7 @@ def data_table(obj, user, act, url=None, *args):
         _("Type"), 
         _("Value"),
         )
+    table.column_widths = [11, 39, 50]
     retval += """<div style="background-color: lightgray; padding: 2px 0px 0px 2px">"""
     if user.is_superuser and url and act == "view":
         # /data/$act/citation/%s
@@ -1242,7 +1244,7 @@ def children_table(obj, user, act, url=None, *args):
         _("Maternal"),
         _("Birth Date"),
         )
-    table.column_widths = [10, 5, 10, 29, 8, 8, 10, 20] 
+    table.column_widths = [11, 5, 10, 29, 8, 8, 10, 19] 
 
     family = obj
     obj_type = ContentType.objects.get_for_model(family)
